@@ -1,3 +1,4 @@
+cat > src/pages/Dashboard.tsx << 'INNER_EOF'
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -426,3 +427,4 @@ function ChartCard({ title, subtitle, children }: { title: string, subtitle: str
     </div>
   );
 }
+INNER_EOF
