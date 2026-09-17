@@ -9,7 +9,7 @@ import os from 'os';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '200mb' }));
 
@@ -199,7 +199,7 @@ const chunkUpload = multer({
 
 const activeUploads = new Map<string, string>();
 
-app.post('/api/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
+app.post('/api/upload-chunk', chunkUpload.single('chunk'), async (req: any, res) => {
   try {
     const { uploadId, fileName } = req.body;
     if (!uploadId || !req.file) {
@@ -246,7 +246,7 @@ app.post('/api/extract-text', async (req, res) => {
     try {
       uploadResponse = await genai.files.upload({
         file: tmpFilePath,
-        mimeType: mimeType || 'application/pdf',
+        config: { mimeType: mimeType || 'application/pdf' }
       });
     } finally {
       // Clean up local temp file

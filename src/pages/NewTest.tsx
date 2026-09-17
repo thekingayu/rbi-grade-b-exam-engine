@@ -26,7 +26,7 @@ export function NewTest({ user }: { user: User }) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null);
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
+      const newFiles = Array.from(e.target.files) as File[];
       let errorFiles: string[] = [];
       const validFiles = newFiles.filter(f => {
         if (f.size > 200 * 1024 * 1024) {

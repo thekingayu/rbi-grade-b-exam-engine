@@ -30,9 +30,16 @@ export function Exam({ user }: { user: User }) {
       if (snap.exists()) {
         const data = snap.data() as TestAttempt;
         setTest({ ...data, id: snap.id });
-        setTimeLeft(data.durationSeconds);
+        
+        let currentLeft = data.durationSeconds;
+        if (data.status === 'in-progress' && data.startedAt) {
+          const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
+          currentLeft = Math.max(0, data.durationSeconds - elapsed);
+        }
+        setTimeLeft(currentLeft);
+
         if (data.status === 'setup') {
-          await updateDoc(docRef, { status: 'in-progress', startedAt: Date.now() });
+          await updateDoc(docRef, { status: 'in-progress', startedAt: Date.now(), userId: user.uid });
         }
       }
       setLoading(false);
@@ -95,7 +102,7 @@ export function Exam({ user }: { user: User }) {
     let mcqScore = 0;
     const evaluatedQuestions = test.questions.map((q, i) => {
       const qId = q.id || i.toString();
-      const ans = answers[qId];
+      const ans = answers[qId] || null;
       if (q.type === 'MCQ') {
         let score = 0;
         if (ans) {

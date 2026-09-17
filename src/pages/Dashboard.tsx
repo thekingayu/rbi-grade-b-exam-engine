@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import { TestAttempt } from '../types';
@@ -45,6 +45,17 @@ export function Dashboard({ user }: { user: User }) {
     };
     fetchTests();
   }, [user.uid]);
+
+  const handleTerminate = async (testId: string) => {
+    if (!window.confirm("Are you sure you want to terminate and delete this in-progress test?")) return;
+    try {
+      await deleteDoc(doc(db, 'tests', testId));
+      setTests(prev => prev.filter(t => t.id !== testId));
+    } catch (e) {
+      console.error(e);
+      alert("Error terminating test. Please try again.");
+    }
+  };
 
   if (loading) {
     return <div className="flex justify-center py-32 text-slate-500 dark:text-slate-400 font-medium">Loading your dashboard...</div>;
@@ -374,12 +385,22 @@ export function Dashboard({ user }: { user: User }) {
                         <span className="text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
                       </div>
                     )}
-                    <Link 
-                      to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                      className="h-14 px-8 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg"
-                    >
-                      {test.status === 'completed' ? 'View Results' : 'Resume'}
-                    </Link>
+                    <div className="flex gap-4">
+                      {test.status !== 'completed' && (
+                        <button
+                          onClick={() => handleTerminate(test.id)}
+                          className="h-14 px-8 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-1 hover:shadow-lg"
+                        >
+                          Terminate
+                        </button>
+                      )}
+                      <Link 
+                        to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
+                        className="h-14 px-8 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        {test.status === 'completed' ? 'View Results' : 'Resume'}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
