@@ -1,3 +1,4 @@
+cat > src/pages/Exam.tsx << 'INNER_EOF'
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -58,7 +59,7 @@ export function Exam({ user }: { user: User }) {
   useEffect(() => {
     if (!testId || loading || Object.keys(answers).length === 0) return;
     const save = async () => {
-      await updateDoc(doc(db, 'tests', testId), { answers, userId: user.uid });
+      await updateDoc(doc(db, 'tests', testId), { answers });
     };
     const t = setTimeout(save, 2000);
     return () => clearTimeout(t);
@@ -114,8 +115,7 @@ export function Exam({ user }: { user: User }) {
         submittedAt: Date.now(),
         questions: evaluatedQuestions,
         totalScore: mcqScore,
-        answers,
-        userId: user.uid // Include userId to satisfy security rules
+        answers
       });
       navigate(`/results/${test.id}`);
     } catch (e) {
@@ -353,3 +353,4 @@ export function Exam({ user }: { user: User }) {
     </div>
   );
 }
+INNER_EOF
