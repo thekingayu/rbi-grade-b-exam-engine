@@ -39,7 +39,13 @@ export function Dashboard({ user }: { user: User }) {
 
   const completedTests = tests.filter(t => t.status === 'completed');
   const avgScore = completedTests.length > 0 
-    ? completedTests.reduce((acc, t) => acc + (t.totalScore || 0), 0) / completedTests.length 
+    ? completedTests.reduce((acc, test) => {
+        const mcqMax = test.questions?.filter(q => q.type === 'MCQ').reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 0;
+        const descMax = test.questions?.filter(q => q.type === 'Descriptive').reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 0;
+        const totalMax = mcqMax + descMax;
+        const percent = totalMax > 0 ? ((test.totalScore || 0) / totalMax) * 100 : 0;
+        return acc + percent;
+      }, 0) / completedTests.length 
     : 0;
 
   if (loading) {
@@ -96,7 +102,10 @@ export function Dashboard({ user }: { user: User }) {
               const mcqScore = mcqQs.reduce((sum, q) => sum + Math.max(0, q.score || 0), 0);
               const mcqMax = mcqQs.reduce((sum, q) => sum + (q.maxMarks || 0), 0);
               
-              const descScore = descQs.reduce((sum, q) => sum + Math.max(0, q.score || 0), 0);
+              const descScore = descQs.reduce((sum, q) => {
+                const qId = q.id || test.questions?.indexOf(q).toString();
+                return sum + (test.evaluations?.[qId]?.totalScore || 0);
+              }, 0);
               const descMax = descQs.reduce((sum, q) => sum + (q.maxMarks || 0), 0);
               
               const totalMax = mcqMax + descMax;

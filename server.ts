@@ -59,7 +59,7 @@ Schema for output:
       "options": ["opt1", "opt2", "opt3", "opt4"], // Only if MCQ, else null
       "correctAnswer": "optX", // Only if MCQ, else null
       "explanation": "Explanation for the correct answer", // Only if MCQ, else null
-      "modelAnswer": "Detailed ideal answer...", // Only if Descriptive, else null
+      "modelAnswer": "Detailed ideal answer formatted with appropriate headings, paragraph breaks (using \\n\\n), bullet points, and strictly matching the specified word limit...", // Only if Descriptive, else null
       "markingScheme": { "Content Coverage": 4, "Structure": 3, "Language": 3 }, // Only if Descriptive, else null
       "maxMarks": 1, // 1 for MCQ, e.g., 10 or 15 for Descriptive
       "wordLimit": 250 // Only if Descriptive, else null
