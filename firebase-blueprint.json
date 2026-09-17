@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "Test": {
+      "title": "Test",
+      "description": "A generated mock exam",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "status": { "type": "string", "enum": ["setup", "in-progress", "completed"] },
+        "config": {
+          "type": "object",
+          "properties": {
+            "mcqStatic": { "type": "number" },
+            "mcqDynamic": { "type": "number" },
+            "descStatic": { "type": "number" },
+            "descDynamic": { "type": "number" }
+          }
+        },
+        "sourceNoteFileRefs": { "type": "array", "items": { "type": "string" } },
+        "extractedNotesText": { "type": "string" },
+        "durationSeconds": { "type": "number" },
+        "startedAt": { "type": "number" },
+        "submittedAt": { "type": "number" },
+        "answers": {
+          "type": "object",
+          "description": "questionId to userAnswer mapping"
+        },
+        "totalScore": { "type": "number" },
+        "sectionScores": { "type": "object" },
+        "feedback": { "type": "object" }
+      },
+      "required": ["userId", "createdAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A single question in a test",
+      "type": "object",
+      "properties": {
+        "testId": { "type": "string" },
+        "type": { "type": "string", "enum": ["MCQ", "Descriptive"] },
+        "sourceTag": { "type": "string", "enum": ["Static", "Dynamic"] },
+        "text": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctAnswer": { "type": "string" },
+        "modelAnswer": { "type": "string" },
+        "markingScheme": { "type": "object" },
+        "wordLimit": { "type": "number" },
+        "maxMarks": { "type": "number" },
+        "userAnswer": { "type": "string" },
+        "score": { "type": "number" },
+        "evaluation": { "type": "object" }
+      },
+      "required": ["testId", "type", "sourceTag", "text"]
+    }
+  },
+  "firestore": {
+    "/tests/{testId}": {
+      "schema": { "$ref": "#/entities/Test" },
+      "description": "Test records"
+    },
+    "/tests/{testId}/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Questions for a test"
+    }
+  }
+}

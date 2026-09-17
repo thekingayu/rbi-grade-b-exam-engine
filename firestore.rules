@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    match /tests/{testId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+
+      match /questions/{questionId} {
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow update: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow delete: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+      }
+    }
+  }
+}
