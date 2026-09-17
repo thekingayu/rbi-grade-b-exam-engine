@@ -200,7 +200,7 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Top Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <StatCard icon={<CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />} title="Tests taken" value={testsTaken.toString()} />
         <StatCard icon={<TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />} title="Average score" value={testsTaken > 0 ? `${avgScore}%` : '-'} />
         <StatCard icon={<Trophy className="w-5 h-5 text-[#9A7D3C]" />} title="Best score" value={testsTaken > 0 ? `${bestScore}%` : '-'} />
@@ -208,7 +208,7 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
         {/* Score Trend */}
         <ChartCard title="Score trend" subtitle="Overall % across every attempt">
@@ -305,7 +305,7 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Insight Callouts */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <InsightCard icon={<Target className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />} title="Strongest area" value={validCats.length > 0 ? `${strongestArea.name}` : '-'} subValue={validCats.length > 0 ? `${Math.round(strongestArea.value)}%` : ''} />
         <InsightCard icon={<AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />} title="Needs work" value={validCats.length > 0 ? `${weakestArea.name}` : '-'} subValue={validCats.length > 0 ? `${Math.round(weakestArea.value)}%` : ''} />
         <InsightCard icon={<ListOrdered className="w-5 h-5 text-blue-600 dark:text-blue-400" />} title="Avg. MCQ accuracy" value={testsTaken > 0 ? `${avgMcqAcc}%` : '-'} />
@@ -315,8 +315,8 @@ export function Dashboard({ user }: { user: User }) {
       {/* Test History */}
       <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
         <div className="flex items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
               <Clock className="w-6 h-6 text-[#9A7D3C]" />
             </div>
             <div>
@@ -358,7 +358,7 @@ export function Dashboard({ user }: { user: User }) {
               const timePct = Math.min(100, Math.max(0, Math.round((timeUsedSecs / allotted) * 100)));
 
               return (
-                <div key={test.id} className="p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group">
+                <div key={test.id} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group border-b border-slate-200/50 dark:border-white/5 last:border-0">
                   <div className="flex-1">
                     <h4 className="font-bold text-slate-900 dark:text-white mb-3 text-lg">
                       {test.status === 'in-progress' ? 'Test in progress' : `Mock Exam • ${format(test.createdAt, 'MMMM d, yyyy')}`}
@@ -378,25 +378,25 @@ export function Dashboard({ user }: { user: User }) {
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-8">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 w-full md:w-auto">
                     {test.status === 'completed' && (
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1 uppercase tracking-wider">Total Score</span>
                         <span className="text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
                       </div>
                     )}
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 w-full sm:w-auto">
                       {test.status !== 'completed' && (
                         <button
                           onClick={() => handleTerminate(test.id)}
-                          className="h-14 px-8 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-1 hover:shadow-lg"
+                          className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
                         >
                           Terminate
                         </button>
                       )}
                       <Link 
                         to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                        className="h-14 px-8 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg"
+                        className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
                       >
                         {test.status === 'completed' ? 'View Results' : 'Resume'}
                       </Link>
@@ -414,27 +414,27 @@ export function Dashboard({ user }: { user: User }) {
 
 function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex flex-col justify-between h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
-      <div className="absolute top-0 right-0 p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
+      <div className="absolute top-0 right-0 p-4 sm:p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
         {icon}
       </div>
       <div>
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{title}</p>
+        <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{title}</p>
       </div>
-      <p className="text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm">{value}</p>
+      <p className="text-3xl sm:text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm">{value}</p>
     </div>
   );
 }
 
 function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, title: string, value: string, subValue?: string }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex items-center gap-5 hover:bg-white/80 dark:hover:bg-white/[0.05] transition-colors group">
-      <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 hover:bg-white/80 dark:hover:bg-white/[0.05] transition-colors group">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">{title}</p>
-        <p className="text-xl font-bold text-slate-900 dark:text-white truncate">
+      <div className="min-w-0 w-full">
+        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 sm:mb-1.5">{title}</p>
+        <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
           {value} {subValue && <span className="text-[#9A7D3C] ml-1">{subValue}</span>}
         </p>
       </div>
