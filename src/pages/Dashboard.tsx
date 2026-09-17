@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import { TestAttempt } from '../types';
 import { format } from 'date-fns';
+import { Plus } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -165,6 +166,22 @@ export function Dashboard({ user }: { user: User }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-7xl mx-auto pt-4 pb-12">
       
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-2">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">
+            Welcome back, {user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Student'}
+          </h1>
+        </div>
+        <Link 
+          to="/new" 
+          className="inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 px-6 py-3 rounded-xl font-medium transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Start New Exam</span>
+        </Link>
+      </div>
+
       {/* Top Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title="Tests taken" value={testsTaken.toString()} />
