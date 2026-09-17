@@ -1,3 +1,4 @@
+cat > src/pages/Dashboard.tsx << 'INNER_EOF'
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -12,7 +13,7 @@ import {
 
 const ACCENT_COLOR = '#9A7D3C';
 const WARNING_COLOR = '#ef4444';
-const CHART_TEXT = '#64748b';
+const CHART_BG = '#1e293b';
 
 export function Dashboard({ user }: { user: User }) {
   const [tests, setTests] = useState<TestAttempt[]>([]);
@@ -43,7 +44,7 @@ export function Dashboard({ user }: { user: User }) {
   }, [user.uid]);
 
   if (loading) {
-    return <div className="flex justify-center py-20 text-slate-500 dark:text-slate-400">Loading dashboard...</div>;
+    return <div className="flex justify-center py-20 text-slate-400">Loading dashboard...</div>;
   }
 
   const completedTests = tests.filter(t => t.status === 'completed');
@@ -168,7 +169,7 @@ export function Dashboard({ user }: { user: User }) {
       {/* Top Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title="Tests taken" value={testsTaken.toString()} />
-        <StatCard title="Average score" value={testsTaken > 0 ? `${avgScore}%` : '-'} />
+        <StatCard title="Average score" value={`${avgScore}%`} />
         <StatCard title="Best score" value={testsTaken > 0 ? `${bestScore}%` : '-'} />
         <StatCard title="Last test vs. previous" value={lastVsPrevLabel} />
       </div>
@@ -181,10 +182,10 @@ export function Dashboard({ user }: { user: User }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={scoreTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-              <XAxis dataKey="name" stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+              <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
                 itemStyle={{ color: ACCENT_COLOR }}
               />
               <Line type="monotone" dataKey="percent" stroke={ACCENT_COLOR} strokeWidth={3} dot={{ r: 4, fill: ACCENT_COLOR, strokeWidth: 0 }} />
@@ -195,13 +196,13 @@ export function Dashboard({ user }: { user: User }) {
         {/* Accuracy by Category */}
         <ChartCard title="Accuracy by category" subtitle="Averaged across all tests">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={categoryData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
+            <BarChart data={categoryData} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-              <XAxis type="number" stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
-              <YAxis dataKey="name" type="category" stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} width={80} />
+              <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+              <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={80} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                cursor={{ fill: 'rgba(51, 65, 85, 0.2)' }}
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                cursor={{ fill: '#1e293b' }}
               />
               <Bar dataKey="value" fill={ACCENT_COLOR} radius={[0, 4, 4, 0]} barSize={24} />
             </BarChart>
@@ -226,10 +227,10 @@ export function Dashboard({ user }: { user: User }) {
                   <Cell key={`cell-${index}`} fill={index === 0 ? ACCENT_COLOR : '#475569'} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex justify-center gap-6 mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex justify-center gap-6 mt-2 text-sm text-slate-400">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ACCENT_COLOR }}></div>
               Static
@@ -246,11 +247,11 @@ export function Dashboard({ user }: { user: User }) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={timeManagementData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-              <XAxis dataKey="name" stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke={CHART_TEXT} fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+              <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                cursor={{ fill: 'rgba(51, 65, 85, 0.2)' }}
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                cursor={{ fill: '#1e293b' }}
               />
               <Bar dataKey="percent" radius={[4, 4, 0, 0]} barSize={32}>
                 {timeManagementData.map((entry, index) => (
@@ -272,16 +273,17 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Test History */}
-      <div className="bg-white dark:bg-[#101726] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Test history</h3>
-          <span className="text-sm text-slate-500 dark:text-slate-400">Per-attempt section breakdown</span>
+      <div className="bg-[#101726] border border-slate-800 rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+          <h3 className="text-base font-bold text-white">Test history</h3>
+          <span className="text-sm text-slate-400">Per-attempt section breakdown</span>
         </div>
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
+        <div className="divide-y divide-slate-800">
           {tests.length === 0 ? (
             <div className="p-8 text-center text-slate-500">No tests taken yet.</div>
           ) : (
             tests.map(test => {
+              // Calculate specific test metrics
               const mcqQs = test.questions?.filter(q => q.type === 'MCQ') || [];
               const descQs = test.questions?.filter(q => q.type === 'Descriptive') || [];
               
@@ -304,18 +306,18 @@ export function Dashboard({ user }: { user: User }) {
               const timePct = Math.min(100, Math.max(0, Math.round((timeUsedSecs / allotted) * 100)));
 
               return (
-                <div key={test.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#151e32] transition-colors">
+                <div key={test.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#151e32] transition-colors">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-slate-900 dark:text-white mb-1">
+                    <h4 className="font-semibold text-white mb-1">
                       {test.status === 'in-progress' ? 'Test in progress' : `Exam • ${format(test.createdAt, 'MMM d, yyyy')}`}
                     </h4>
                     {test.status === 'completed' && (
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-                        <span>MCQ: <span className="text-slate-900 dark:text-white font-medium">{tMcqAcc}%</span></span>
-                        <span className="text-slate-300 dark:text-slate-600">•</span>
-                        <span>Desc: <span className="text-slate-900 dark:text-white font-medium">{tDescAcc}%</span></span>
-                        <span className="text-slate-300 dark:text-slate-600">•</span>
-                        <span>Time used: <span className={timePct >= 95 ? 'text-red-500 dark:text-red-400 font-medium' : 'text-slate-900 dark:text-white font-medium'}>{timePct}%</span></span>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
+                        <span>MCQ: <span className="text-white">{tMcqAcc}%</span></span>
+                        <span className="text-slate-600">•</span>
+                        <span>Desc: <span className="text-white">{tDescAcc}%</span></span>
+                        <span className="text-slate-600">•</span>
+                        <span>Time used: <span className={timePct >= 95 ? 'text-red-400' : 'text-white'}>{timePct}%</span></span>
                       </div>
                     )}
                   </div>
@@ -323,12 +325,12 @@ export function Dashboard({ user }: { user: User }) {
                   <div className="flex items-center gap-6">
                     {test.status === 'completed' && (
                       <div className="text-right">
-                        <span className="text-xl font-bold text-slate-900 dark:text-white">{tOverall}%</span>
+                        <span className="text-xl font-bold text-white">{tOverall}%</span>
                       </div>
                     )}
                     <Link 
                       to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 dark:bg-[#1e293b] text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-[#2d3b54]"
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-[#1e293b] text-white hover:bg-[#2d3b54]"
                     >
                       {test.status === 'completed' ? 'View Results' : 'Resume'}
                     </Link>
@@ -345,19 +347,19 @@ export function Dashboard({ user }: { user: User }) {
 
 function StatCard({ title, value }: { title: string, value: string }) {
   return (
-    <div className="bg-white dark:bg-[#101726] border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-5 flex flex-col justify-between h-28">
-      <p className="text-3xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+    <div className="bg-[#101726] border border-slate-800 rounded-xl p-5 flex flex-col justify-between h-28">
+      <p className="text-3xl font-bold text-white">{value}</p>
+      <p className="text-sm font-medium text-slate-400">{title}</p>
     </div>
   );
 }
 
 function ChartCard({ title, subtitle, children }: { title: string, subtitle: string, children: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-[#101726] border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-5 flex flex-col h-80">
+    <div className="bg-[#101726] border border-slate-800 rounded-xl p-5 flex flex-col h-80">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
-        <span className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</span>
+        <h3 className="text-base font-bold text-white">{title}</h3>
+        <span className="text-xs text-slate-400">{subtitle}</span>
       </div>
       <div className="flex-1 min-h-0">
         {children}
@@ -365,3 +367,4 @@ function ChartCard({ title, subtitle, children }: { title: string, subtitle: str
     </div>
   );
 }
+INNER_EOF
