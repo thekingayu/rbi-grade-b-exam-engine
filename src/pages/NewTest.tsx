@@ -165,7 +165,14 @@ export function NewTest({ user }: { user: User }) {
         body: JSON.stringify({ extractedText: finalExtractedText, config })
       });
       
-      if (!res.ok) throw new Error("Failed to generate test");
+      if (!res.ok) {
+        let errStr = "Failed to generate test";
+        try {
+          const errData = await res.json();
+          errStr = errData.error || errStr;
+        } catch(e) {}
+        throw new Error(errStr);
+      }
       const data = await res.json();
       
       // Calculate duration
