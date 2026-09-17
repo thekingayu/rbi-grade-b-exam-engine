@@ -233,36 +233,40 @@ export function Dashboard({ user }: { user: User }) {
 
         {/* Static vs Dynamic Split */}
         <ChartCard title="Static vs. dynamic" subtitle="Where marks are actually coming from">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={splitData}
-                cx="50%"
-                cy="50%"
-                innerRadius={65}
-                outerRadius={95}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
-              >
-                {splitData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={index === 0 ? ACCENT_COLOR : '#334155'} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                itemStyle={{ color: '#fff', fontWeight: 'bold' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-8 mt-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            <div className="flex items-center gap-2.5">
-              <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: ACCENT_COLOR }}></div>
-              Static
+          <div className="absolute inset-0 flex flex-col">
+            <div className="flex-1 min-h-0 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={splitData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={95}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {splitData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? ACCENT_COLOR : '#334155'} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}
+                    itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-3.5 h-3.5 rounded-full bg-slate-400 dark:bg-slate-700 shadow-sm"></div>
-              Dynamic
+            <div className="shrink-0 flex justify-center gap-8 mt-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <div className="flex items-center gap-2.5">
+                <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: ACCENT_COLOR }}></div>
+                Static
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-3.5 h-3.5 rounded-full bg-slate-400 dark:bg-slate-700 shadow-sm"></div>
+                Dynamic
+              </div>
             </div>
           </div>
         </ChartCard>
