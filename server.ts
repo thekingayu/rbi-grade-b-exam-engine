@@ -69,7 +69,7 @@ Schema for output:
 
     const genai = getGenAI();
     const response = await genai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -120,7 +120,7 @@ Output JSON schema:
 
     const genai = getGenAI();
     const response = await genai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -175,7 +175,7 @@ Output strict JSON schema:
 
     const genai = getGenAI();
     const response = await genai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -272,7 +272,7 @@ app.post('/api/extract-text', async (req, res) => {
     const prompt = `Please extract all the text from this document accurately. It contains study notes for an exam. Ensure you capture all headings, bullet points, and paragraphs clearly.`;
     
     const responseStream = await genai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents: {
         role: 'user',
         parts: [
