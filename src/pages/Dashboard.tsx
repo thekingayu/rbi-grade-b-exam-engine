@@ -298,7 +298,7 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Test History */}
-      <div className="bg-white/60 dark:bg-[#111827]/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
+      <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
         <div className="flex items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm">
@@ -389,7 +389,7 @@ export function Dashboard({ user }: { user: User }) {
 
 function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
   return (
-    <div className="bg-white/60 dark:bg-[#111827]/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex flex-col justify-between h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-[#111827]/80 transition-all duration-300">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex flex-col justify-between h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
       <div className="absolute top-0 right-0 p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
         {icon}
       </div>
@@ -403,7 +403,7 @@ function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string
 
 function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, title: string, value: string, subValue?: string }) {
   return (
-    <div className="bg-white/60 dark:bg-[#111827]/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex items-center gap-5 hover:bg-white/80 dark:hover:bg-[#111827]/80 transition-colors group">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 flex items-center gap-5 hover:bg-white/80 dark:hover:bg-white/[0.05] transition-colors group">
       <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
         {icon}
       </div>
@@ -419,7 +419,7 @@ function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, 
 
 function ChartCard({ title, subtitle, children }: { title: string, subtitle: string, children: React.ReactNode }) {
   return (
-    <div className="bg-white/60 dark:bg-[#111827]/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-8 flex flex-col h-[400px]">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-8 flex flex-col h-[400px]">
       <div className="mb-8">
         <h3 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
         <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{subtitle}</span>

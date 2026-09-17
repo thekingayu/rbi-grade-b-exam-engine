@@ -1,3 +1,5 @@
+# 1. Update Layout for Fixed Header + Enhanced Dark Mode Blobs
+cat > src/components/Layout.tsx << 'INNER_EOF'
 import { Outlet, Link } from 'react-router-dom';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -69,3 +71,8 @@ export function Layout({ user }: { user: User }) {
     </div>
   );
 }
+INNER_EOF
+
+# 2. Update Dashboard.tsx Dark Mode Opacity for Maximum Glassmorphism Vibrancy
+sed -i 's/dark:bg-\[#111827\]\/60/dark:bg-white\/[0.02]/g' src/pages/Dashboard.tsx
+sed -i 's/dark:hover:bg-\[#111827\]\/80/dark:hover:bg-white\/[0.05]/g' src/pages/Dashboard.tsx
