@@ -1,3 +1,4 @@
+cat > src/components/Layout.tsx << 'INNER_EOF'
 import { Outlet, Link } from 'react-router-dom';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -68,3 +69,4 @@ export function Layout({ user }: { user: User }) {
     </div>
   );
 }
+INNER_EOF

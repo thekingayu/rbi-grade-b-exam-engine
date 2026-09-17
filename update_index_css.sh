@@ -1,3 +1,4 @@
+cat > src/index.css << 'INNER_EOF'
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -24,3 +25,4 @@ body {
 .dark body {
   background-color: #050810;
 }
+INNER_EOF
