@@ -16,14 +16,16 @@ export function Dashboard({ user }: { user: User }) {
       try {
         const q = query(
           collection(db, 'tests'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', user.uid)
         );
         const snapshot = await getDocs(q);
         const fetchedTests = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as TestAttempt[];
+        
+        fetchedTests.sort((a, b) => b.createdAt - a.createdAt);
+        
         setTests(fetchedTests);
       } catch (error) {
         console.error('Error fetching tests:', error);
