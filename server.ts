@@ -3,17 +3,13 @@ import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
 import os from 'os';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json({ limit: '200mb' }));
 
@@ -308,9 +304,10 @@ app.post('/api/extract-text', async (req, res) => {
 // Serve frontend
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction) {
-  app.use(express.static(path.join(__dirname, 'dist')));
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
   // In dev, we need Vite integration
@@ -325,6 +322,6 @@ if (isProduction) {
   createViteServer();
 }
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server listening on port ${PORT}`);
 });
