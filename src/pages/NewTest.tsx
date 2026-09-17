@@ -358,21 +358,21 @@ export function NewTest({ user }: { user: User }) {
               Demo caps counts to keep the sample bank readable — the live build has no such cap since Gemini generates fresh questions each time.
             </p>
 
-            <div className="flex items-center justify-between pt-6">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6">
                <button 
                   onClick={() => setStep(1)}
                   disabled={uploading}
-                  className="px-6 py-2.5 rounded-lg font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  className="px-6 py-3 sm:py-2.5 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
                 >
                   Back
                </button>
                <button 
                   onClick={handleGenerateTest}
                   disabled={isGenerateDisabled}
-                  className="bg-[#9A7D3C] hover:bg-[#856930] text-white px-8 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-[#9A7D3C] hover:bg-[#856930] text-white px-6 sm:px-8 py-3 sm:py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
-                  {uploading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {uploading ? (loadingMessage || 'Processing...') : 'Analyze Notes & Generate Questions'}
+                  {uploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                  <span className="text-center">{uploading ? (loadingMessage || 'Processing...') : 'Analyze Notes & Generate Questions'}</span>
                </button>
             </div>
           </div>

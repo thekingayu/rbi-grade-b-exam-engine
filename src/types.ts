@@ -33,6 +33,7 @@ export interface TestAttempt {
   startedAt?: number;
   submittedAt?: number;
   questions: Question[]; // Storing inline for simplicity
+  answers?: Record<string, string>;
   totalScore?: number;
   sectionScores?: {
     mcqStatic: number;
