@@ -232,29 +232,36 @@ export function NewTest({ user }: { user: User }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
       {/* Top Header with Back Button and Title */}
+      {/* Top Breadcrumb & Step Header */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link 
             to="/" 
-            className="inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-white/70 dark:bg-white/5 backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-white/60 dark:border-white/10 hover:border-[#9A7D3C]/60 dark:hover:border-[#9A7D3C]/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-sm hover:shadow group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm shrink-0"
+            className="inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-[#9A7D3C]/60 dark:hover:border-[#9A7D3C]/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm shrink-0"
           >
-            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 dark:text-slate-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
+            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#9A7D3C] group-hover:-translate-x-1 transition-transform cursor-pointer" />
             <span className="cursor-pointer">Back to Dashboard</span>
           </Link>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-white/70 dark:bg-white/5 border border-white/60 dark:border-white/10 backdrop-blur-xl text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-sm shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl text-xs font-mono font-bold text-slate-700 dark:text-slate-200 shadow-xs shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#9A7D3C] animate-pulse"></span>
-            <span>Step {step} of 2</span>
-            <span className="hidden sm:inline">• {step === 1 ? 'Upload Notes' : 'Exam Settings'}</span>
+            <span>STEP {step} OF 2</span>
+            <span className="hidden sm:inline text-slate-400 dark:text-slate-500">• {step === 1 ? 'UPLOAD NOTES' : 'EXAM SETTINGS'}</span>
           </div>
         </div>
 
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">
-            Configure New Mock Exam
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 border border-[#9A7D3C]/30 dark:border-[#9A7D3C]/40 backdrop-blur-md mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#9A7D3C] dark:text-[#E5C378]" />
+            <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-amber-200 tracking-wider uppercase">
+              AI EXAM SYNTHESIS ENGINE
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white">
+            Configure New <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#F3E5AB] dark:via-amber-400 dark:to-emerald-400 bg-clip-text text-transparent">Mock Exam</span>
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
-            Upload your notes and set your preferences to generate a custom test.
+          <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mt-1">
+            Upload your notes and set your preferences to synthesize a calibrated RBI Grade B assessment.
           </p>
         </div>
       </div>
@@ -262,13 +269,13 @@ export function NewTest({ user }: { user: User }) {
       <div className="grid grid-cols-1 gap-8">
         {step === 1 ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-5 sm:p-8 relative overflow-hidden">
+            <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl shadow-slate-200/50 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)] rounded-3xl p-5 sm:p-8 relative overflow-hidden">
               {/* Glass Top Highlight */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
               
               <div className="mb-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
-                  Step 1 of 2
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#E5C378] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
+                  PHASE 1 • CURRICULUM DIGESTION
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">Upload your notes</h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-xs sm:text-base">
@@ -277,11 +284,11 @@ export function NewTest({ user }: { user: User }) {
               </div>
 
               {uploadError && (
-                <div className="mb-5 p-4 bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 backdrop-blur-xl rounded-2xl flex items-start gap-3 shadow-sm">
+                <div className="mb-5 p-4 bg-red-500/10 dark:bg-red-500/15 border border-red-500/30 backdrop-blur-xl rounded-2xl flex items-start gap-3 shadow-xs">
                   <div className="w-5 h-5 shrink-0 text-red-500 mt-0.5"><X className="w-5 h-5" /></div>
                   <div>
-                    <h4 className="text-sm font-semibold text-red-800 dark:text-red-400">Upload restricted</h4>
-                    <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 mt-0.5">{uploadError}</p>
+                    <h4 className="text-sm font-semibold text-red-700 dark:text-red-300">Upload restricted</h4>
+                    <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-0.5">{uploadError}</p>
                   </div>
                 </div>
               )}
@@ -299,11 +306,11 @@ export function NewTest({ user }: { user: User }) {
                 onClick={() => fileInputRef.current?.click()}
                 className="group relative border-2 border-dashed border-slate-300/80 dark:border-white/15 rounded-2xl p-6 sm:p-14 text-center cursor-pointer hover:border-[#9A7D3C] dark:hover:border-[#9A7D3C]/70 bg-white/40 dark:bg-white/[0.02] hover:bg-white/70 dark:hover:bg-white/[0.05] backdrop-blur-xl transition-all duration-300 shadow-inner"
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] mx-auto mb-4 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#9A7D3C]/20 transition-all duration-300">
-                  <UploadCloud className="w-6 h-6 sm:w-7 sm:h-7" />
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/25 shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all duration-300">
+                  <UploadCloud className="w-7 h-7" />
                 </div>
                 <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
-                  Drop files here, or <span className="text-[#9A7D3C] dark:text-[#d3c299] underline underline-offset-4">click to browse</span>
+                  Drop files here, or <span className="text-[#9A7D3C] dark:text-[#E5C378] underline underline-offset-4">click to browse</span>
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                   Supports PDF, PNG, JPG, JPEG (up to 200MB per file)
@@ -313,7 +320,7 @@ export function NewTest({ user }: { user: User }) {
               {files.length > 0 && (
                 <div className="mt-6 space-y-3 pt-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Selected Files ({files.length})
                     </span>
                     <button 
@@ -328,11 +335,11 @@ export function NewTest({ user }: { user: User }) {
                     {files.map((f, i) => (
                       <div 
                         key={i} 
-                        className="flex items-center justify-between p-3 sm:p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/60 dark:border-white/10 shadow-sm hover:border-[#9A7D3C]/40 transition-colors gap-3"
+                        className="flex items-center justify-between p-3 sm:p-4 bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-[#9A7D3C]/40 transition-colors gap-3"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 border border-[#9A7D3C]/20 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] shrink-0">
-                            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378] shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+                            <FileText className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={f.name}>{f.name}</p>
@@ -341,7 +348,7 @@ export function NewTest({ user }: { user: User }) {
                         </div>
                         <button 
                           onClick={() => removeFile(i)} 
-                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2.5 py-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer shrink-0"
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2.5 py-1.5 rounded-xl hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
                         >
                           Remove
                         </button>
@@ -354,16 +361,16 @@ export function NewTest({ user }: { user: User }) {
                     <span>Gemini multimodal vision will extract diagrams, syllabus concepts, and regulations from your files.</span>
                   </p>
 
-                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-white/40 dark:border-white/10 mt-6">
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-slate-200/60 dark:border-white/10 mt-6">
                     <button 
                       onClick={() => setFiles([])}
-                      className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-2xl font-medium text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 border border-white/60 dark:border-white/10 transition-all cursor-pointer shadow-sm text-sm"
+                      className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-2xl font-medium text-slate-700 dark:text-slate-300 bg-white/70 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer shadow-xs text-sm"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={() => setStep(2)}
-                      className="w-full sm:w-auto bg-gradient-to-r from-[#9A7D3C] to-[#b39148] hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-8 py-3 sm:py-2.5 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#9A7D3C]/25 hover:shadow-xl hover:shadow-[#9A7D3C]/35 cursor-pointer text-sm"
+                      className="w-full sm:w-auto bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-600 hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-8 py-3.5 sm:py-3 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-[#9A7D3C]/25 dark:shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:-translate-y-0.5 cursor-pointer text-sm"
                     >
                       <span>Continue to Settings</span>
                       <ArrowLeft className="w-4 h-4 rotate-180" />
@@ -376,10 +383,10 @@ export function NewTest({ user }: { user: User }) {
         ) : (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             {/* Step 2 Header Card */}
-            <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+            <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl shadow-slate-200/50 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)] rounded-3xl p-6 sm:p-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
-                Step 2 of 2
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#E5C378] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
+                PHASE 2 • QUESTION WEIGHTAGE
               </div>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">Configure this test</h2>
               <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm sm:text-base">
@@ -387,13 +394,18 @@ export function NewTest({ user }: { user: User }) {
               </p>
             </div>
 
-            {/* 4 Liquid Glass Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
+            {/* 4 Liquid Glass Cards Grid with Lighted Icons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Card 1: MCQ Static */}
-              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">MCQs — Static portion</h3>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 shrink-0">
+              <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-cyan-500/20 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(6,182,212,0.12)] rounded-2xl sm:rounded-3xl p-5 sm:p-6 relative overflow-hidden hover:border-cyan-500/40 transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 shadow-[0_0_12px_rgba(6,182,212,0.25)] flex items-center justify-center shrink-0">
+                      <SlidersHorizontal className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">MCQs — Static portion</h3>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25 shrink-0">
                     {config.mcqStatic} Qs
                   </span>
                 </div>
@@ -404,16 +416,21 @@ export function NewTest({ user }: { user: User }) {
                   <input 
                     type="number" min="0" max="30" value={config.mcqStatic}
                     onChange={(e) => setConfig({...config, mcqStatic: Math.max(0, parseInt(e.target.value) || 0)})}
-                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                    className="w-full bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none backdrop-blur-md transition-all"
                   />
                 </div>
               </div>
 
               {/* Card 2: MCQ Dynamic */}
-              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">MCQs — Dynamic / current affairs</h3>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 shrink-0">
+              <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-emerald-500/20 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(16,185,129,0.12)] rounded-2xl sm:rounded-3xl p-5 sm:p-6 relative overflow-hidden hover:border-emerald-500/40 transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shadow-[0_0_12px_rgba(16,185,129,0.25)] flex items-center justify-center shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">MCQs — Dynamic / Current</h3>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 shrink-0">
                     {config.mcqDynamic} Qs
                   </span>
                 </div>
@@ -424,16 +441,21 @@ export function NewTest({ user }: { user: User }) {
                   <input 
                     type="number" min="0" max="20" value={config.mcqDynamic}
                     onChange={(e) => setConfig({...config, mcqDynamic: Math.max(0, parseInt(e.target.value) || 0)})}
-                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                    className="w-full bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none backdrop-blur-md transition-all"
                   />
                 </div>
               </div>
 
               {/* Card 3: Descriptive Static */}
-              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Descriptive — Static portion</h3>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 shrink-0">
+              <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-purple-500/20 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(168,85,247,0.12)] rounded-2xl sm:rounded-3xl p-5 sm:p-6 relative overflow-hidden hover:border-purple-500/40 transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 shadow-[0_0_12px_rgba(168,85,247,0.25)] flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Descriptive — Static</h3>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 shrink-0">
                     {config.descStatic} Qs
                   </span>
                 </div>
@@ -444,16 +466,21 @@ export function NewTest({ user }: { user: User }) {
                   <input 
                     type="number" min="0" max="5" value={config.descStatic}
                     onChange={(e) => setConfig({...config, descStatic: Math.max(0, parseInt(e.target.value) || 0)})}
-                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                    className="w-full bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none backdrop-blur-md transition-all"
                   />
                 </div>
               </div>
 
               {/* Card 4: Descriptive Dynamic */}
-              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Descriptive — Dynamic / current affairs</h3>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 shrink-0">
+              <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-amber-500/20 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(245,158,11,0.12)] rounded-2xl sm:rounded-3xl p-5 sm:p-6 relative overflow-hidden hover:border-amber-500/40 transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/25 shadow-[0_0_12px_rgba(245,158,11,0.25)] flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Descriptive — Dynamic</h3>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-[#E5C378] border border-amber-500/25 shrink-0">
                     {config.descDynamic} Qs
                   </span>
                 </div>
@@ -464,7 +491,7 @@ export function NewTest({ user }: { user: User }) {
                   <input 
                     type="number" min="0" max="5" value={config.descDynamic}
                     onChange={(e) => setConfig({...config, descDynamic: Math.max(0, parseInt(e.target.value) || 0)})}
-                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                    className="w-full bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-slate-900 dark:text-white font-semibold text-base sm:text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
                   />
                 </div>
               </div>
@@ -474,9 +501,9 @@ export function NewTest({ user }: { user: User }) {
             {(() => {
                const estimatedMins = (config.mcqStatic + config.mcqDynamic) * 1 + (config.descStatic + config.descDynamic) * 15;
                return (
-                 <div className="bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/15 border border-[#9A7D3C]/30 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#9A7D3C]/5">
+                 <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#9A7D3C]/10">
                    <div className="flex items-center gap-3.5">
-                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#9A7D3C]/20 border border-[#9A7D3C]/30 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] shrink-0 shadow-sm">
+                     <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/30 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.2)]">
                        <Clock className="w-5 h-5" />
                      </div>
                      <div>
@@ -485,8 +512,8 @@ export function NewTest({ user }: { user: User }) {
                      </div>
                    </div>
                    <div className="text-left sm:text-right">
-                     <span className="text-2xl sm:text-3xl font-bold text-[#9A7D3C] dark:text-[#d3c299] font-serif">{estimatedMins} min</span>
-                     <p className="text-xs text-slate-500 dark:text-slate-400">{totalQuestions} total questions</p>
+                     <span className="text-2xl sm:text-3xl font-bold text-[#9A7D3C] dark:text-[#E5C378] font-serif">{estimatedMins} min</span>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{totalQuestions} total questions</p>
                    </div>
                  </div>
                );
@@ -501,17 +528,17 @@ export function NewTest({ user }: { user: User }) {
                <button 
                   onClick={() => setStep(1)}
                   disabled={uploading}
-                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl font-medium text-slate-700 dark:text-slate-200 bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50 text-sm shadow-sm"
+                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl font-bold text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50 text-sm shadow-xs"
                 >
                   <span className="flex items-center justify-center gap-2">
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 text-[#9A7D3C]" />
                     <span>Back to Upload</span>
                   </span>
                </button>
                <button 
                   onClick={handleGenerateTest}
                   disabled={isGenerateDisabled}
-                  className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[#9A7D3C] to-[#b39148] hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-6 sm:px-9 py-3.5 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-[#9A7D3C]/25 hover:shadow-xl hover:shadow-[#9A7D3C]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
+                  className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-600 hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-6 sm:px-9 py-3.5 rounded-2xl font-bold transition-all flex items-center justify-center gap-2.5 shadow-xl shadow-[#9A7D3C]/25 dark:shadow-[0_0_30px_rgba(245,158,11,0.25)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                 >
                   {uploading ? (
                     <>

@@ -1,7 +1,7 @@
 import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { Moon, Sun, BookOpen } from 'lucide-react';
+import { Moon, Sun, BookOpen, Compass, Plus, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Footer } from './Footer';
@@ -57,31 +57,78 @@ export function Layout({ user }: { user: User }) {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 dark:border-white/10 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl transform-gpu will-change-transform">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-white shadow-lg shadow-slate-200/50 dark:shadow-black/20 group-hover:bg-white/80 dark:group-hover:bg-white/10 transition-all shrink-0">
-                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
+            <Link to="/" className="flex items-center gap-3 group shrink-0 min-w-0">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#9A7D3C] via-amber-500 to-emerald-600 p-[1.5px] shadow-lg shadow-[#9A7D3C]/15 shrink-0 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full rounded-2xl bg-white dark:bg-[#070B18] flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378]">
+                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
               </div>
-              <span className="font-serif text-base sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
-                RBI Grade B <span className="text-[#9A7D3C]">Engine</span>
-              </span>
+              <div>
+                <span className="font-serif text-base sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5 leading-tight">
+                  RBI Grade B <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#E5C378] dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent">Engine</span>
+                </span>
+                <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span>OFFICER CADRE // CYCLE 2026-27</span>
+                </div>
+              </div>
             </Link>
             
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hidden md:inline-block px-3.5 py-1.5 rounded-full bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/5 backdrop-blur-md shadow-sm truncate max-w-[200px]">
-                {user.email}
-              </span>
-              <div className="h-5 w-px bg-slate-300/50 dark:bg-white/10 hidden sm:block"></div>
+            {/* Centered Futuristic Navigation Pill */}
+            <nav className="hidden md:flex items-center gap-1.5 bg-white/70 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
+              <Link 
+                to="/" 
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  location.pathname === '/' 
+                    ? 'bg-amber-500/15 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-amber-300 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+              <Link 
+                to="/new" 
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  location.pathname === '/new' 
+                    ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Exam</span>
+              </Link>
+              <Link 
+                to="/history" 
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  location.pathname === '/history' 
+                    ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Exam Archive</span>
+              </Link>
+            </nav>
+
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300 max-w-[130px] truncate">
+                  {user.email?.split('@')[0]}
+                </span>
+              </div>
               <button 
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 bg-white/50 hover:bg-white/80 border border-white/60 shadow-sm dark:text-slate-400 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:hover:text-white transition-all backdrop-blur-md cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 shadow-xs transition-all backdrop-blur-md cursor-pointer hover:scale-105"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
               <button 
                 onClick={() => signOut(auth)}
-                className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap px-2 sm:px-0 py-1 cursor-pointer"
+                className="text-xs font-bold px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all whitespace-nowrap cursor-pointer"
               >
                 Sign Out
               </button>
