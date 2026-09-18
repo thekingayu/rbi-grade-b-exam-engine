@@ -314,8 +314,8 @@ export function Dashboard({ user }: { user: User }) {
 
       {/* Test History */}
       <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
-        <div className="flex items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
             <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
               <Clock className="w-6 h-6 text-[#9A7D3C]" />
             </div>
@@ -324,6 +324,11 @@ export function Dashboard({ user }: { user: User }) {
               <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Per-attempt section breakdown</span>
             </div>
           </div>
+          {tests.length > 3 && (
+            <Link to="/history" className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors bg-white/50 dark:bg-white/5 px-4 py-2 rounded-xl border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-sm mt-4 sm:mt-0 w-full sm:w-auto justify-center sm:justify-start">
+              View All Past Tests <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
         </div>
         <div className="divide-y divide-slate-200/50 dark:divide-white/10">
           {tests.length === 0 ? (
@@ -335,7 +340,8 @@ export function Dashboard({ user }: { user: User }) {
               <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Start a new exam to see your history here.</p>
             </div>
           ) : (
-            tests.map(test => {
+            <>
+              {tests.slice(0, 3).map(test => {
               const mcqQs = test.questions?.filter(q => q.type === 'MCQ') || [];
               const descQs = test.questions?.filter(q => q.type === 'Descriptive') || [];
               
@@ -404,7 +410,8 @@ export function Dashboard({ user }: { user: User }) {
                   </div>
                 </div>
               );
-            })
+            })}
+            </>
           )}
         </div>
       </div>

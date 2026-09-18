@@ -10,6 +10,7 @@ import { auth } from './firebase';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { TestHistory } from './pages/TestHistory';
 import { NewTest } from './pages/NewTest';
 import { Exam } from './pages/Exam';
 import { Results } from './pages/Results';
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
         <Route path="/" element={user ? <Layout user={user} /> : <Navigate to="/login" />}>
           <Route index element={<Dashboard user={user} />} />
+          <Route path="history" element={<TestHistory user={user} />} />
           <Route path="new" element={<NewTest user={user} />} />
           <Route path="exam/:testId" element={<Exam user={user} />} />
           <Route path="results/:testId" element={<Results user={user} />} />
