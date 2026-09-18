@@ -4,6 +4,7 @@ import { auth } from '../firebase';
 import { Moon, Sun, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Footer } from './Footer';
 
 export function Layout({ user }: { user: User }) {
   const location = useLocation();
@@ -129,6 +130,7 @@ export function Layout({ user }: { user: User }) {
             </motion.div>
           </AnimatePresence>
         </main>
+        <Footer />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function Login() {
@@ -130,6 +130,12 @@ export function Login() {
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
+        </div>
+
+        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+          <span>Made with Love</span>
+          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
+          <span className="font-semibold text-slate-600 dark:text-slate-300">Ayush</span>
         </div>
       </motion.div>
     </div>
