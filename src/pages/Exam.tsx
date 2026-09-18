@@ -90,9 +90,11 @@ export function Exam({ user }: { user: User }) {
     const qId = q.id || currentIndex.toString();
     const nextAnswers = { 
       ...answers, 
-      [qId]: val, 
-      [currentIndex.toString()]: val 
+      [qId]: val
     };
+    if (q.id && q.id !== currentIndex.toString()) {
+      delete nextAnswers[currentIndex.toString()];
+    }
     setAnswers(nextAnswers);
     answersRef.current = nextAnswers;
   };
@@ -221,7 +223,16 @@ export function Exam({ user }: { user: User }) {
 
   const currentQ = test.questions[currentIndex];
   const currentQId = currentQ.id || currentIndex.toString();
-  const attemptedCount = Object.keys(answers).filter(k => answers[k] && answers[k].trim() !== '').length;
+
+  const isQuestionAnswered = (idx: number) => {
+    if (!test || !test.questions[idx]) return false;
+    const q = test.questions[idx];
+    const qId = q.id || idx.toString();
+    const val = answers[qId] || (q.id ? answers[idx.toString()] : undefined);
+    return typeof val === 'string' && val.trim() !== '';
+  };
+
+  const attemptedCount = test.questions.filter((_, i) => isQuestionAnswered(i)).length;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white flex flex-col overflow-hidden">
@@ -412,8 +423,8 @@ export function Exam({ user }: { user: User }) {
             <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-5 gap-2 sm:gap-3">
               {test.questions.map((q, i) => {
                 const qId = q.id || i.toString();
-                const isAnswered = !!answers[qId] && answers[qId].trim() !== '';
-                const isMarked = markedForReview[qId];
+                const isAnswered = isQuestionAnswered(i);
+                const isMarked = !!markedForReview[qId] || (q.id ? !!markedForReview[i.toString()] : false);
                 const isCurrent = i === currentIndex;
                 
                 return (

@@ -421,14 +421,18 @@ export function Dashboard({ user }: { user: User }) {
 
 function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
-      <div className="absolute top-0 right-0 p-3 sm:p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between min-h-[135px] sm:min-h-[165px] relative group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
+      <div className="absolute top-0 right-0 p-3 sm:p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 pointer-events-none">
         {icon}
       </div>
-      <div>
+      <div className="pr-8">
         <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{title}</p>
       </div>
-      <p className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm truncate">{value}</p>
+      <div className="pt-2">
+        <p className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm leading-normal pb-1">
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
@@ -441,7 +445,7 @@ function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, 
       </div>
       <div className="min-w-0 w-full">
         <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1.5 truncate">{title}</p>
-        <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">
+        <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
           {value} {subValue && <span className="text-[#9A7D3C] ml-1">{subValue}</span>}
         </p>
       </div>
