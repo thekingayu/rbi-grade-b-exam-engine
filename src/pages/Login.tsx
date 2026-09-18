@@ -26,6 +26,7 @@ import {
   Compass
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AtmosphericBackground } from '../components/AtmosphericBackground';
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -121,29 +122,8 @@ export function Login() {
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 transition-colors duration-500 overflow-x-hidden select-none font-sans">
       
-      {/* 1. Futuristic Colorful Atmospheric Glow Canvas (Specially Designed for Dark Mode) */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        
-        {/* Vibrant Multi-Color Nebulae in Dark Mode */}
-        <div 
-          className="absolute -top-[12%] -left-[10%] w-[65vw] h-[65vw] max-w-[850px] max-h-[850px] rounded-full bg-gradient-to-tr from-[#9A7D3C]/25 via-amber-500/20 to-emerald-500/15 dark:from-[#9A7D3C]/40 dark:via-amber-500/30 dark:to-emerald-500/25 blur-[120px] sm:blur-[140px] animate-pulse" 
-          style={{ animationDuration: '9s' }} 
-        />
-        
-        <div 
-          className="absolute top-[20%] right-[-10%] w-[55vw] h-[55vw] max-w-[750px] max-h-[750px] rounded-full bg-gradient-to-bl from-emerald-500/20 via-teal-500/15 to-indigo-600/20 dark:from-emerald-400/30 dark:via-cyan-500/25 dark:to-indigo-500/35 blur-[130px] sm:blur-[160px]" 
-        />
-        
-        <div 
-          className="absolute -bottom-[15%] left-[25%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] rounded-full bg-gradient-to-t from-sky-500/15 via-purple-500/15 to-rose-500/10 dark:from-indigo-600/30 dark:via-purple-600/25 dark:to-rose-500/20 blur-[130px] sm:blur-[160px]" 
-        />
-
-        {/* Dynamic Dark Mode Aurora Beam */}
-        <div className="hidden dark:block absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-[#9A7D3C]/15 via-indigo-500/10 to-transparent blur-2xl opacity-60" />
-
-        {/* Cybernetic Micro-Grid Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(rgba(154,125,60,0.15)_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(217,178,89,0.18)_1px,transparent_1px)] [background-size:28px_28px] sm:[background-size:32px_32px] opacity-70 dark:opacity-40" />
-      </div>
+      {/* 1. Futuristic Colorful Atmospheric Glow Canvas */}
+      <AtmosphericBackground />
 
       {/* 2. Top Precision Header Bar */}
       <header className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 flex items-center justify-between">
@@ -352,34 +332,36 @@ export function Login() {
                     </p>
                   </div>
 
-                  {/* Animated Switcher Tabs with Glowing Pill */}
-                  <div className="relative p-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 grid grid-cols-2 text-xs font-semibold">
+                  {/* Animated Switcher Tabs with High-Contrast Indicator */}
+                  <div className="relative p-1 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 grid grid-cols-2 text-xs font-semibold">
                     <button
                       type="button"
+                      id="login-tab-signin"
                       onClick={() => { setIsLogin(true); setError(''); }}
-                      className={`relative z-10 py-2.5 rounded-lg transition-all duration-200 cursor-pointer min-h-[40px] ${
+                      className={`relative z-10 py-2.5 rounded-lg transition-colors duration-200 cursor-pointer min-h-[40px] flex items-center justify-center ${
                         isLogin 
-                          ? 'text-slate-900 dark:text-white font-bold shadow-xs' 
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                          ? 'text-slate-900 dark:text-amber-300 font-bold' 
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'
                       }`}
                     >
                       Sign In
                     </button>
                     <button
                       type="button"
+                      id="login-tab-create"
                       onClick={() => { setIsLogin(false); setError(''); }}
-                      className={`relative z-10 py-2.5 rounded-lg transition-all duration-200 cursor-pointer min-h-[40px] ${
+                      className={`relative z-10 py-2.5 rounded-lg transition-colors duration-200 cursor-pointer min-h-[40px] flex items-center justify-center ${
                         !isLogin 
-                          ? 'text-slate-900 dark:text-white font-bold shadow-xs' 
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                          ? 'text-slate-900 dark:text-amber-300 font-bold' 
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'
                       }`}
                     >
                       Create Account
                     </button>
                     
-                    {/* Sliding Pill Indicator with Subtle Gold Gradient */}
+                    {/* Sliding Pill Indicator with High Contrast in Both Modes */}
                     <motion.div
-                      className="absolute top-1 bottom-1 rounded-lg bg-white dark:bg-gradient-to-r dark:from-white/15 dark:to-white/10 shadow-sm border border-slate-200/50 dark:border-white/10"
+                      className="absolute top-1 bottom-1 rounded-lg bg-white dark:bg-[#151D2F] shadow-sm border border-slate-200/80 dark:border-amber-400/40 dark:shadow-[0_0_12px_rgba(245,158,11,0.25)] pointer-events-none"
                       initial={false}
                       animate={{
                         left: isLogin ? '4px' : '50%',

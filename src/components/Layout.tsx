@@ -5,6 +5,7 @@ import { Moon, Sun, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Footer } from './Footer';
+import { AtmosphericBackground } from './AtmosphericBackground';
 
 export function Layout({ user }: { user: User }) {
   const location = useLocation();
@@ -49,15 +50,10 @@ export function Layout({ user }: { user: User }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white transition-colors duration-500">
       
-      {/* GPU-Isolated Ambient background blobs for Liquid Glass effect (no scroll repaint/jitter) */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 transform-gpu will-change-transform">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 dark:bg-indigo-600/30 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-amber-400/20 dark:bg-fuchsia-600/20 blur-[120px]" />
-        <div className="absolute top-[30%] left-[60%] w-[30%] h-[30%] rounded-full bg-emerald-400/15 dark:bg-cyan-500/20 blur-[100px]" />
-        <div className="absolute bottom-[20%] left-[10%] w-[40%] h-[40%] rounded-full bg-purple-400/10 dark:bg-[#9A7D3C]/30 blur-[120px]" />
-      </div>
+      {/* Shared Futuristic Colorful Atmospheric Glow Canvas */}
+      <AtmosphericBackground />
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 dark:border-white/10 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl transform-gpu will-change-transform">
