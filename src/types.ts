@@ -14,11 +14,14 @@ export interface Question {
   text: string;
   options?: string[] | null;
   correctAnswer?: string | null;
+  explanation?: string | null;
   modelAnswer?: string | null;
   markingScheme?: Record<string, number> | null;
   wordLimit?: number | null;
   maxMarks: number;
   userAnswer?: string | null;
+  score?: number;
+  isCorrect?: boolean;
 }
 
 export interface TestAttempt {

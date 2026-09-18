@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
 import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
+import { checkMCQCorrect } from '../utils/exam';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -85,17 +86,24 @@ export function Exam({ user }: { user: User }) {
 
   const handleAnswerChange = (val: string) => {
     if (!test) return;
-    const qId = test.questions[currentIndex].id || currentIndex.toString();
-    const nextAnswers = { ...answers, [qId]: val };
+    const q = test.questions[currentIndex];
+    const qId = q.id || currentIndex.toString();
+    const nextAnswers = { 
+      ...answers, 
+      [qId]: val, 
+      [currentIndex.toString()]: val 
+    };
     setAnswers(nextAnswers);
     answersRef.current = nextAnswers;
   };
 
   const handleClearResponse = async () => {
     if (!test) return;
-    const qId = test.questions[currentIndex].id || currentIndex.toString();
+    const q = test.questions[currentIndex];
+    const qId = q.id || currentIndex.toString();
     const nextAnswers = { ...answers };
     delete nextAnswers[qId];
+    delete nextAnswers[currentIndex.toString()];
     setAnswers(nextAnswers);
     answersRef.current = nextAnswers;
     if (testId) {
@@ -129,16 +137,24 @@ export function Exam({ user }: { user: User }) {
     if (!test || submitting) return;
     setSubmitting(true);
     
-    // Clean answers to remove any undefined values which Firestore rejects
+    // Combine answers from test.answers, current answers state, and answersRef to ensure 0 lost answers
     const cleanAnswers: Record<string, string> = {};
+    if (test.answers) {
+      Object.entries(test.answers).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && typeof v === 'string') cleanAnswers[k] = v;
+      });
+    }
+    Object.entries(answers).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && typeof v === 'string') cleanAnswers[k] = v;
+    });
     Object.entries(answersRef.current).forEach(([k, v]) => {
-      if (v !== undefined) cleanAnswers[k] = v as string;
+      if (v !== undefined && v !== null && typeof v === 'string') cleanAnswers[k] = v;
     });
     
     let mcqScore = 0;
     const evaluatedQuestions = test.questions.map((q, i) => {
       const qId = q.id || i.toString();
-      const ans = cleanAnswers[qId] || null;
+      const ans = cleanAnswers[qId] || cleanAnswers[i.toString()] || (q.id ? cleanAnswers[q.id] : null) || null;
       
       // Clean up the question object to ensure no undefined values
       const cleanQ = { ...q };
@@ -150,15 +166,28 @@ export function Exam({ user }: { user: User }) {
       });
       
       if (cleanQ.type === 'MCQ') {
+        const maxMarks = (typeof cleanQ.maxMarks === 'number' && cleanQ.maxMarks > 0) ? cleanQ.maxMarks : 1;
         let score = 0;
-        if (ans) {
-          if (ans === cleanQ.correctAnswer) score = cleanQ.maxMarks || 0;
-          else score = -0.25 * (cleanQ.maxMarks || 0);
+        let isCorrect = false;
+        if (ans && ans.trim() !== '') {
+          isCorrect = checkMCQCorrect(ans, cleanQ.correctAnswer, cleanQ.options);
+          score = isCorrect ? maxMarks : -0.25 * maxMarks;
         }
         mcqScore += score;
-        return { ...cleanQ, userAnswer: ans, score };
+        return { 
+          ...cleanQ, 
+          id: cleanQ.id || i.toString(),
+          maxMarks,
+          userAnswer: ans || null, 
+          score,
+          isCorrect
+        };
       }
-      return { ...cleanQ, userAnswer: ans };
+      return { 
+        ...cleanQ, 
+        id: cleanQ.id || i.toString(),
+        userAnswer: ans || null 
+      };
     });
 
     try {
@@ -166,7 +195,7 @@ export function Exam({ user }: { user: User }) {
         status: 'completed',
         submittedAt: Date.now(),
         questions: evaluatedQuestions,
-        totalScore: mcqScore,
+        totalScore: Number(mcqScore.toFixed(2)),
         answers: cleanAnswers,
         userId: user.uid
       });
@@ -261,11 +290,12 @@ export function Exam({ user }: { user: User }) {
               {currentQ.type === 'MCQ' && currentQ.options && (
                 <div className="space-y-3.5">
                   {currentQ.options.map((opt, i) => {
-                    const isSelected = answers[currentQId] === opt;
+                    const isSelected = answers[currentQId] === opt || answers[currentIndex.toString()] === opt;
                     const optionLetter = ['A', 'B', 'C', 'D', 'E'][i] || String.fromCharCode(65 + i);
                     return (
                       <label 
                         key={i}
+                        onClick={() => handleAnswerChange(opt)}
                         className={clsx(
                           "flex items-start gap-4 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all backdrop-blur-md group hover:shadow-md hover:-translate-y-0.5",
                           isSelected 
@@ -279,7 +309,7 @@ export function Exam({ user }: { user: User }) {
                             name={`q-${currentQId}`}
                             value={opt}
                             checked={isSelected}
-                            onChange={(e) => handleAnswerChange(e.target.value)}
+                            onChange={() => handleAnswerChange(opt)}
                             className="w-5 h-5 text-[#9A7D3C] focus:ring-[#9A7D3C] border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-offset-0 cursor-pointer"
                           />
                           <span className={clsx(

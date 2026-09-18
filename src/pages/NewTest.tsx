@@ -184,6 +184,12 @@ export function NewTest({ user }: { user: User }) {
       duration += Math.floor(totalWords / 1.5); // 1.5 words per sec
       duration = Math.ceil(duration / 300) * 300; // Round to nearest 5 min (300s)
 
+      const normalizedQuestions = (data.questions || []).map((q: any, idx: number) => ({
+        ...q,
+        id: q.id || `q_${idx}`,
+        maxMarks: q.type === 'MCQ' ? (typeof q.maxMarks === 'number' && q.maxMarks > 0 ? q.maxMarks : 1) : (q.maxMarks || 15)
+      }));
+
       // Save to Firestore
       const docRef = await addDoc(collection(db, 'tests'), {
         userId: user.uid,
@@ -192,7 +198,7 @@ export function NewTest({ user }: { user: User }) {
         config,
         extractedNotesText: finalExtractedText,
         durationSeconds: duration,
-        questions: data.questions
+        questions: normalizedQuestions
       });
 
       navigate(`/exam/${docRef.id}`);

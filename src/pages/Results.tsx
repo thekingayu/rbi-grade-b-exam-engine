@@ -7,6 +7,7 @@ import { TestAttempt, Question } from '../types';
 import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Loader2 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { clsx } from 'clsx';
+import { checkMCQCorrect } from '../utils/exam';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -24,6 +25,60 @@ export function Results({ user }: { user: User }) {
         if (snap.exists()) {
           const data = snap.data() as TestAttempt;
           
+          // Reconcile and heal MCQ answers and scores if missing or inconsistent
+          let questionsModified = false;
+          const updatedQuestions = (data.questions || []).map((q, i) => {
+            const qId = q.id || i.toString();
+            // Reconcile user answer from q.userAnswer OR data.answers map
+            const rawUserAnswer = q.userAnswer || data.answers?.[qId] || data.answers?.[i.toString()] || null;
+            const cleanUserAnswer = (rawUserAnswer && rawUserAnswer.trim() !== '') ? rawUserAnswer.trim() : null;
+            
+            if (q.type === 'MCQ') {
+              const maxMarks = (typeof q.maxMarks === 'number' && q.maxMarks > 0) ? q.maxMarks : 1;
+              const isCorrect = cleanUserAnswer ? checkMCQCorrect(cleanUserAnswer, q.correctAnswer, q.options) : false;
+              let score = 0;
+              if (cleanUserAnswer) {
+                score = isCorrect ? maxMarks : -0.25 * maxMarks;
+              }
+              
+              if (q.userAnswer !== cleanUserAnswer || q.score !== score || q.maxMarks !== maxMarks || q.isCorrect !== isCorrect || !q.id) {
+                questionsModified = true;
+                return {
+                  ...q,
+                  id: qId,
+                  maxMarks,
+                  userAnswer: cleanUserAnswer,
+                  score,
+                  isCorrect
+                };
+              }
+            } else {
+              if (q.userAnswer !== cleanUserAnswer || !q.id) {
+                questionsModified = true;
+                return {
+                  ...q,
+                  id: qId,
+                  userAnswer: cleanUserAnswer
+                };
+              }
+            }
+            return q;
+          });
+
+          if (questionsModified) {
+            data.questions = updatedQuestions;
+            const totalMcqScore = data.questions
+              .filter(q => q.type === 'MCQ')
+              .reduce((sum, q) => sum + (q.score || 0), 0);
+            const totalDescScore = Object.values(data.evaluations || {}).reduce((sum, ev) => sum + (ev.totalScore || 0), 0);
+            data.totalScore = Number((totalMcqScore + totalDescScore).toFixed(2));
+            try {
+              await updateDoc(docRef, { questions: updatedQuestions, totalScore: data.totalScore });
+            } catch (err) {
+              console.error("Auto-heal update failed", err);
+            }
+          }
+
           // Check if descriptive answers need evaluation
           const descQuestions = data.questions.filter(q => q.type === 'Descriptive');
           const needsEval = descQuestions.some(q => q.userAnswer && (!data.evaluations || !data.evaluations[q.id || '']));
@@ -123,10 +178,29 @@ export function Results({ user }: { user: User }) {
   const mcqQuestions = test.questions.filter(q => q.type === 'MCQ');
   const descQuestions = test.questions.filter(q => q.type === 'Descriptive');
 
-  // Stats for Summary
-  const correctMCQs = mcqQuestions.filter(q => q.score && q.score > 0).length;
-  const incorrectMCQs = mcqQuestions.filter(q => q.score && q.score < 0).length;
-  const unattemptedMCQs = mcqQuestions.filter(q => q.score === 0 || q.score === undefined).length;
+  // Stats for Summary: Strictly determine status based on presence of answer and correctness
+  const isQuestionAttempted = (q: Question) => {
+    if (q.userAnswer && q.userAnswer.trim() !== '') return true;
+    const qId = q.id || test.questions.indexOf(q).toString();
+    const mapAns = test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()];
+    return !!(mapAns && mapAns.trim() !== '');
+  };
+
+  const getQuestionUserAnswer = (q: Question) => {
+    if (q.userAnswer && q.userAnswer.trim() !== '') return q.userAnswer;
+    const qId = q.id || test.questions.indexOf(q).toString();
+    return test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()] || null;
+  };
+
+  const isQuestionCorrect = (q: Question) => {
+    const userAns = getQuestionUserAnswer(q);
+    if (!userAns) return false;
+    return checkMCQCorrect(userAns, q.correctAnswer, q.options);
+  };
+
+  const correctMCQs = mcqQuestions.filter(q => isQuestionAttempted(q) && isQuestionCorrect(q)).length;
+  const incorrectMCQs = mcqQuestions.filter(q => isQuestionAttempted(q) && !isQuestionCorrect(q)).length;
+  const unattemptedMCQs = mcqQuestions.filter(q => !isQuestionAttempted(q)).length;
   
   const pieData = [
     { name: 'Correct', value: correctMCQs, color: '#10b981' }, // emerald-500
@@ -143,13 +217,19 @@ export function Results({ user }: { user: User }) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center gap-4">
-        <Link to="/" className="p-2 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Exam Results</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Review your performance and AI feedback</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-[#9A7D3C]/60 dark:hover:border-[#9A7D3C]/60 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all shadow-sm hover:shadow group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-sm"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
+            <span className="cursor-pointer">Back to Dashboard</span>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Exam Results</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Review your performance and question analysis</p>
+          </div>
         </div>
       </div>
 
@@ -278,14 +358,32 @@ export function Results({ user }: { user: User }) {
           {activeTab === 'mcq' && (
             <div className="space-y-6">
               {mcqQuestions.map((q, i) => {
-                const isCorrect = q.userAnswer === q.correctAnswer;
-                const isUnattempted = !q.userAnswer;
+                const userAns = getQuestionUserAnswer(q);
+                const isAttempted = !!(userAns && userAns.trim() !== '');
+                const isCorrect = isAttempted && checkMCQCorrect(userAns, q.correctAnswer, q.options);
+                const isUnattempted = !isAttempted;
+                const scoreDisplay = isCorrect ? `+${q.maxMarks || 1} Marks` : isUnattempted ? '0 Marks' : '-0.25 Marks';
                 
                 return (
-                  <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-950 p-6">
-                    <div className="mb-4">
-                      <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full">
-                        {q.sourceTag}
+                  <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-950 p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full">
+                          {q.sourceTag}
+                        </span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Question {i + 1} of {mcqQuestions.length}
+                        </span>
+                      </div>
+                      <span className={clsx(
+                        "px-3 py-1 text-xs font-bold rounded-full border",
+                        isCorrect
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                          : isUnattempted
+                            ? "bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                            : "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800"
+                      )}>
+                        {isCorrect ? 'Correct' : isUnattempted ? 'Unattempted' : 'Incorrect'} ({scoreDisplay})
                       </span>
                     </div>
                     
@@ -305,33 +403,78 @@ export function Results({ user }: { user: User }) {
                         <p className="text-xs text-slate-500 mb-1 font-medium">Your answer</p>
                         <p className={
                           isCorrect 
-                            ? 'text-emerald-700 dark:text-emerald-400' 
+                            ? 'text-emerald-700 dark:text-emerald-400 font-semibold' 
                             : isUnattempted 
                               ? 'text-slate-500 dark:text-slate-400 italic'
-                              : 'text-red-700 dark:text-red-400'
+                              : 'text-red-700 dark:text-red-400 font-semibold'
                         }>
-                          {q.userAnswer || 'Not attempted'}
+                          {userAns || 'Not attempted'}
                         </p>
                       </div>
 
                       {/* Correct Answer */}
                       <div className="p-4 rounded-xl border bg-emerald-50 border-emerald-500/30 dark:bg-emerald-900/10 dark:border-emerald-500/30">
                         <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mb-1 font-medium">Correct answer</p>
-                        <p className="text-emerald-700 dark:text-emerald-400">
+                        <p className="text-emerald-700 dark:text-emerald-400 font-semibold">
                           {q.correctAnswer}
                         </p>
                       </div>
                     </div>
 
+                    {q.options && q.options.length > 0 && (
+                      <div className="mb-4 pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Options</p>
+                        <div className="space-y-1.5">
+                          {q.options.map((opt, optIdx) => {
+                            const optLetter = ['A', 'B', 'C', 'D', 'E'][optIdx] || String.fromCharCode(65 + optIdx);
+                            const isUserPick = userAns ? (userAns === opt || userAns.toLowerCase() === opt.toLowerCase()) : false;
+                            const isCorrectPick = q.correctAnswer ? checkMCQCorrect(opt, q.correctAnswer, q.options) : false;
+                            return (
+                              <div 
+                                key={optIdx}
+                                className={clsx(
+                                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm border transition-colors",
+                                  isCorrectPick
+                                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-900 dark:text-emerald-300 font-medium"
+                                    : isUserPick && !isCorrectPick
+                                      ? "bg-red-500/10 border-red-500/40 text-red-900 dark:text-red-300 font-medium"
+                                      : "bg-slate-50/50 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300"
+                                )}
+                              >
+                                <span className={clsx(
+                                  "w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center font-mono shrink-0",
+                                  isCorrectPick
+                                    ? "bg-emerald-600 text-white"
+                                    : isUserPick && !isCorrectPick
+                                      ? "bg-red-600 text-white"
+                                      : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                                )}>
+                                  {optLetter}
+                                </span>
+                                <span className="flex-1">{opt}</span>
+                                {isCorrectPick && (
+                                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold ml-2">✓ Correct Answer</span>
+                                )}
+                                {isUserPick && !isCorrectPick && (
+                                  <span className="text-xs text-red-600 dark:text-red-400 font-bold ml-2">✗ Your Choice</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {(q as any).explanation && (
                       <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Explanation</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                           {(q as any).explanation}
                         </p>
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           )}
