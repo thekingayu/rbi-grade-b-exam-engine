@@ -56,7 +56,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="mt-auto relative z-20 border-t border-slate-200/80 dark:border-white/[0.08] bg-white/70 dark:bg-[#060812]/90 backdrop-blur-3xl text-slate-700 dark:text-slate-300 overflow-hidden select-none transition-colors duration-300">
+    <footer className="mt-auto relative z-20 border-t border-slate-200/80 dark:border-white/[0.08] bg-white/70 dark:bg-[#060812]/90 backdrop-blur-3xl text-slate-700 dark:text-slate-300 overflow-hidden select-none transition-colors duration-300 pb-16 md:pb-0">
       
       {/* Laser-Thin Atmospheric Gradient Hairline */}
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#9A7D3C]/60 to-transparent opacity-80" />

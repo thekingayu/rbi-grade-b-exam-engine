@@ -257,26 +257,26 @@ export function Exam({ user }: { user: User }) {
       <AtmosphericBackground />
 
       {/* Top Bar */}
-      <header className="relative z-20 h-auto lg:h-20 py-4 lg:py-0 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl border-b border-white/60 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm gap-4 sm:gap-0">
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-start">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-white shadow-lg shadow-slate-200/50 dark:shadow-black/20 shrink-0">
+      <header className="relative z-20 h-16 sm:h-20 bg-white/50 dark:bg-[#0A0F1C]/50 backdrop-blur-2xl border-b border-white/60 dark:border-white/10 flex items-center justify-between px-3 sm:px-6 shrink-0 shadow-sm gap-2 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378] shadow-lg shadow-slate-200/50 dark:shadow-black/20 shrink-0">
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+          <span className="font-serif text-base sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
             RBI Grade B <span className="text-[#9A7D3C]">Engine</span>
           </span>
         </div>
         
-        <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="flex items-center gap-2 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-sm px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-mono text-base sm:text-lg font-bold text-slate-900 dark:text-white transition-colors">
-            <Clock className="w-4 h-4 sm:w-5 h-5 text-[#9A7D3C]" />
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-xs px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-mono text-xs sm:text-base font-bold text-slate-900 dark:text-white transition-colors">
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#9A7D3C]" />
             <span className={timeLeft < 300 ? 'text-red-600 dark:text-red-400' : ''}>{formatTime(timeLeft)}</span>
           </div>
           <button 
             onClick={() => setShowConfirm(true)}
-            className="bg-[#9A7D3C] hover:bg-[#806630] text-white px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold transition-all shadow-md shadow-[#9A7D3C]/20 hover:shadow-[#9A7D3C]/40 hover:-translate-y-0.5 whitespace-nowrap text-sm sm:text-base flex-1 sm:flex-none"
+            className="bg-[#9A7D3C] hover:bg-[#806630] text-white px-3.5 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold transition-all shadow-md shadow-[#9A7D3C]/20 hover:shadow-[#9A7D3C]/40 hover:-translate-y-0.5 whitespace-nowrap text-xs sm:text-sm cursor-pointer"
           >
-            Submit Test
+            Submit
           </button>
         </div>
       </header>
@@ -452,7 +452,8 @@ export function Exam({ user }: { user: User }) {
             
             <button 
               type="button" 
-              className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 flex items-center gap-1.5 text-slate-700 dark:text-slate-200"
+              onClick={() => setShowMobilePalette(!showMobilePalette)}
+              className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 flex items-center gap-1.5 text-slate-700 dark:text-slate-200 cursor-pointer active:scale-95"
             >
               {showMobilePalette ? 'Collapse' : 'Expand Grid'}
               {showMobilePalette ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
