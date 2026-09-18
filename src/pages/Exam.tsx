@@ -237,11 +237,13 @@ export function Exam({ user }: { user: User }) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white flex flex-col overflow-hidden">
       
-      {/* Ambient background blobs for Liquid Glass effect */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 dark:bg-indigo-600/30 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-amber-400/20 dark:bg-fuchsia-600/20 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[30%] left-[60%] w-[30%] h-[30%] rounded-full bg-emerald-400/15 dark:bg-cyan-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[20%] left-[10%] w-[40%] h-[40%] rounded-full bg-purple-400/10 dark:bg-[#9A7D3C]/30 blur-[120px] pointer-events-none" />
+      {/* GPU-Isolated Ambient background blobs for Liquid Glass effect */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 transform-gpu will-change-transform">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 dark:bg-indigo-600/30 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-amber-400/20 dark:bg-fuchsia-600/20 blur-[120px]" />
+        <div className="absolute top-[30%] left-[60%] w-[30%] h-[30%] rounded-full bg-emerald-400/15 dark:bg-cyan-500/20 blur-[100px]" />
+        <div className="absolute bottom-[20%] left-[10%] w-[40%] h-[40%] rounded-full bg-purple-400/10 dark:bg-[#9A7D3C]/30 blur-[120px]" />
+      </div>
 
       {/* Top Bar */}
       <header className="relative z-20 h-auto lg:h-20 py-4 lg:py-0 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl border-b border-white/60 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm gap-4 sm:gap-0">
