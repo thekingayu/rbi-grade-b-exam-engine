@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { motion } from 'motion/react';
@@ -20,11 +20,18 @@ export function Exam({ user }: { user: User }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answersRef = useRef(answers);
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+  const [showMobilePalette, setShowMobilePalette] = useState(false);
   
   // Keep ref up to date
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+
+  // Scroll to top when question changes
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentIndex]);
   const [markedForReview, setMarkedForReview] = useState<Record<string, boolean>>({});
   
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -241,6 +248,7 @@ export function Exam({ user }: { user: User }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.995 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      data-lenis-prevent
       className="fixed inset-0 z-50 bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white flex flex-col overflow-hidden"
     >
       
@@ -277,9 +285,14 @@ export function Exam({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="relative z-10 flex flex-col lg:flex-row flex-1 overflow-hidden">
+      <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+        <div 
+          ref={mainScrollRef} 
+          data-lenis-prevent
+          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 overscroll-contain"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           <div className="max-w-4xl mx-auto space-y-8 pb-32">
             
             {/* Badges */}
@@ -419,16 +432,45 @@ export function Exam({ user }: { user: User }) {
         </div>
 
         {/* Sidebar Palette */}
-        <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/60 dark:border-white/10 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl flex flex-col shrink-0 z-20 max-h-64 lg:max-h-none overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-white/60 dark:border-white/10 shrink-0">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Question Palette</h3>
-            <div className="flex flex-wrap lg:grid lg:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-6 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-[#9A7D3C] shadow-sm"></div> Answered</div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-amber-500 shadow-sm"></div> Marked</div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600"></div> Unanswered</div>
+        <div className={clsx(
+          "w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-white/60 dark:border-white/10 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl flex flex-col shrink-0 z-20 transition-all duration-300 min-h-0",
+          showMobilePalette ? "max-h-72 lg:max-h-none" : "max-h-16 lg:max-h-none"
+        )}>
+          <div 
+            onClick={() => setShowMobilePalette(!showMobilePalette)}
+            className="p-3.5 sm:p-5 lg:p-6 border-b border-white/60 dark:border-white/10 shrink-0 flex items-center justify-between cursor-pointer lg:cursor-default select-none"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white">Question Palette</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white/80 dark:bg-white/10 font-bold font-mono text-slate-700 dark:text-slate-300 border border-white/50 dark:border-white/10">
+                  {currentIndex + 1} / {test.questions.length}
+                </span>
+              </div>
+              <div className="hidden lg:flex lg:grid lg:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-6 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-[#9A7D3C] shadow-sm"></div> Answered</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-amber-500 shadow-sm"></div> Marked</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600"></div> Unanswered</div>
+              </div>
             </div>
+            
+            <button 
+              type="button" 
+              className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 flex items-center gap-1.5 text-slate-700 dark:text-slate-200"
+            >
+              {showMobilePalette ? 'Collapse' : 'Expand Grid'}
+              {showMobilePalette ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+
+          <div 
+            data-lenis-prevent 
+            className={clsx(
+              "flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 overscroll-contain",
+              !showMobilePalette && "hidden lg:block"
+            )}
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-5 gap-2 sm:gap-3">
               {test.questions.map((q, i) => {
                 const qId = q.id || i.toString();
@@ -439,10 +481,15 @@ export function Exam({ user }: { user: User }) {
                 return (
                   <button
                     key={i}
-                    onClick={() => setCurrentIndex(i)}
+                    onClick={() => {
+                      setCurrentIndex(i);
+                      if (window.innerWidth < 1024) {
+                        setShowMobilePalette(false);
+                      }
+                    }}
                     className={clsx(
-                      'h-10 w-10 sm:h-12 sm:w-12 lg:h-12 lg:w-12 rounded-xl sm:rounded-2xl font-bold text-sm flex items-center justify-center transition-all shadow-sm backdrop-blur-md',
-                      isCurrent ? 'ring-2 ring-slate-900 ring-offset-2 dark:ring-white dark:ring-offset-[#0A0F1C] scale-110 shadow-md' : 'hover:-translate-y-0.5',
+                      'h-10 w-10 sm:h-12 sm:w-12 lg:h-12 lg:w-12 rounded-xl sm:rounded-2xl font-bold text-sm flex items-center justify-center transition-all shadow-sm backdrop-blur-md cursor-pointer',
+                      isCurrent ? 'ring-2 ring-slate-900 ring-offset-2 dark:ring-white dark:ring-offset-[#0A0F1C] scale-110 shadow-md z-10' : 'hover:-translate-y-0.5',
                       isMarked ? 'bg-amber-500 text-white' : 
                       isAnswered ? 'bg-[#9A7D3C] text-white' : 
                       'bg-white/60 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-white/60 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10'

@@ -13,7 +13,22 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
   const location = useLocation();
 
+  const isExam = location.pathname.startsWith('/exam/');
+
   useEffect(() => {
+    if (isExam) {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+        window.__lenis = undefined;
+      }
+      document.documentElement.classList.remove('lenis', 'lenis-stopped', 'lenis-smooth');
+      document.body.classList.remove('lenis', 'lenis-stopped', 'lenis-smooth');
+      document.documentElement.style.removeProperty('overflow');
+      document.body.style.removeProperty('overflow');
+      return;
+    }
+
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
@@ -45,21 +60,18 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.destroy();
       lenisRef.current = null;
       window.__lenis = undefined;
+      document.documentElement.classList.remove('lenis', 'lenis-stopped', 'lenis-smooth');
+      document.body.classList.remove('lenis', 'lenis-stopped', 'lenis-smooth');
+      document.documentElement.style.removeProperty('overflow');
+      document.body.style.removeProperty('overflow');
     };
-  }, []);
+  }, [isExam]);
 
   // Handle route transitions smoothly
   useEffect(() => {
-    if (!lenisRef.current) return;
-
-    if (location.pathname.startsWith('/exam/')) {
-      // Pause window-level momentum when taking the exam
-      lenisRef.current.stop();
-    } else {
-      lenisRef.current.start();
-      lenisRef.current.scrollTo(0, { immediate: true });
-    }
-  }, [location.pathname]);
+    if (!lenisRef.current || isExam) return;
+    lenisRef.current.scrollTo(0, { immediate: true });
+  }, [location.pathname, isExam]);
 
   return <>{children}</>;
 }
