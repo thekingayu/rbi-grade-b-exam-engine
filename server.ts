@@ -44,7 +44,7 @@ ${extractedText}
 
 Rules:
 1. Difficulty & format strictly matches RBI Grade B Phase I and Phase II. Skew slightly harder.
-2. MCQs: 4 options, single correct answer. Factual, applied, and conceptual mix.
+2. MCQs: EXACTLY 5 options for every MCQ (Option A, Option B, Option C, Option D, Option E) strictly adhering to the standard RBI Grade B / IBPS examination format. Single correct answer. Factual, applied, and conceptual mix.
 3. Dynamic questions MUST connect the topic to recent real-world developments.
 4. Descriptive questions must specify a clear word limit (e.g., 250 words) and have a comprehensive marking scheme breakdown (modelAnswer should be a top candidate response).
 5. Output strict JSON matching the schema exactly.
@@ -56,8 +56,8 @@ Schema for output:
       "type": "MCQ" | "Descriptive",
       "sourceTag": "Static" | "Dynamic",
       "text": "The question text",
-      "options": ["opt1", "opt2", "opt3", "opt4"], // Only if MCQ, else null
-      "correctAnswer": "optX", // Only if MCQ, else null
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"], // EXACTLY 5 options for every MCQ without leading A/B/C labels, else null
+      "correctAnswer": "Option text strictly identical to one of the 5 options", // Only if MCQ, else null
       "explanation": "Explanation for the correct answer", // Only if MCQ, else null
       "modelAnswer": "Detailed ideal answer formatted with appropriate headings, paragraph breaks (using \\n\\n), bullet points, and strictly matching the specified word limit...", // Only if Descriptive, else null
       "markingScheme": { "Content Coverage": 4, "Structure": 3, "Language": 3 }, // Only if Descriptive, else null

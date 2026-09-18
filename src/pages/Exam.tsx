@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export function Exam({ user }: { user: User }) {
@@ -13,6 +13,7 @@ export function Exam({ user }: { user: User }) {
   
   const [test, setTest] = useState<TestAttempt | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -38,7 +39,9 @@ export function Exam({ user }: { user: User }) {
         setTest({ ...data, id: snap.id });
         if (data.answers) {
           setAnswers(data.answers);
+          answersRef.current = data.answers;
         }
+        hasLoadedRef.current = true;
         
         let currentLeft = data.durationSeconds;
         if (data.status === 'in-progress' && data.startedAt) {
@@ -72,18 +75,36 @@ export function Exam({ user }: { user: User }) {
   }, [timeLeft, loading, test]);
 
   useEffect(() => {
-    if (!testId || loading || Object.keys(answers).length === 0) return;
+    if (!testId || loading || !hasLoadedRef.current) return;
     const save = async () => {
       await updateDoc(doc(db, 'tests', testId), { answers, userId: user.uid });
     };
-    const t = setTimeout(save, 2000);
+    const t = setTimeout(save, 1500);
     return () => clearTimeout(t);
   }, [answers, testId, loading]);
 
   const handleAnswerChange = (val: string) => {
     if (!test) return;
     const qId = test.questions[currentIndex].id || currentIndex.toString();
-    setAnswers(prev => ({ ...prev, [qId]: val }));
+    const nextAnswers = { ...answers, [qId]: val };
+    setAnswers(nextAnswers);
+    answersRef.current = nextAnswers;
+  };
+
+  const handleClearResponse = async () => {
+    if (!test) return;
+    const qId = test.questions[currentIndex].id || currentIndex.toString();
+    const nextAnswers = { ...answers };
+    delete nextAnswers[qId];
+    setAnswers(nextAnswers);
+    answersRef.current = nextAnswers;
+    if (testId) {
+      try {
+        await updateDoc(doc(db, 'tests', testId), { answers: nextAnswers, userId: user.uid });
+      } catch (err) {
+        console.error('Failed to sync cleared answer to Firestore:', err);
+      }
+    }
   };
 
   const handleMarkReview = () => {
@@ -238,28 +259,42 @@ export function Exam({ user }: { user: User }) {
               </p>
 
               {currentQ.type === 'MCQ' && currentQ.options && (
-                <div className="space-y-4">
-                  {currentQ.options.map((opt, i) => (
-                    <label 
-                      key={i}
-                      className={clsx(
-                        "flex items-start gap-4 p-5 rounded-2xl border cursor-pointer transition-all backdrop-blur-md group hover:shadow-md hover:-translate-y-0.5",
-                        answers[currentQId] === opt 
-                          ? "bg-white/90 border-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:border-[#9A7D3C]/50 shadow-md" 
-                          : "bg-white/40 border-white/60 hover:bg-white/70 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10"
-                      )}
-                    >
-                      <input 
-                        type="radio" 
-                        name={`q-${currentQId}`}
-                        value={opt}
-                        checked={answers[currentQId] === opt}
-                        onChange={(e) => handleAnswerChange(e.target.value)}
-                        className="mt-1 w-5 h-5 text-[#9A7D3C] focus:ring-[#9A7D3C] border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-offset-0"
-                      />
-                      <span className="text-slate-800 dark:text-slate-200 text-lg leading-snug">{opt}</span>
-                    </label>
-                  ))}
+                <div className="space-y-3.5">
+                  {currentQ.options.map((opt, i) => {
+                    const isSelected = answers[currentQId] === opt;
+                    const optionLetter = ['A', 'B', 'C', 'D', 'E'][i] || String.fromCharCode(65 + i);
+                    return (
+                      <label 
+                        key={i}
+                        className={clsx(
+                          "flex items-start gap-4 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all backdrop-blur-md group hover:shadow-md hover:-translate-y-0.5",
+                          isSelected 
+                            ? "bg-white/95 border-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:border-[#9A7D3C]/60 shadow-md ring-1 ring-[#9A7D3C]/40" 
+                            : "bg-white/40 border-white/60 hover:bg-white/70 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                          <input 
+                            type="radio" 
+                            name={`q-${currentQId}`}
+                            value={opt}
+                            checked={isSelected}
+                            onChange={(e) => handleAnswerChange(e.target.value)}
+                            className="w-5 h-5 text-[#9A7D3C] focus:ring-[#9A7D3C] border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-offset-0 cursor-pointer"
+                          />
+                          <span className={clsx(
+                            "w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center transition-colors font-mono",
+                            isSelected
+                              ? "bg-[#9A7D3C] text-white"
+                              : "bg-slate-200/70 text-slate-700 dark:bg-white/10 dark:text-slate-300 group-hover:bg-[#9A7D3C]/20 group-hover:text-[#9A7D3C]"
+                          )}>
+                            {optionLetter}
+                          </span>
+                        </div>
+                        <span className="text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-snug flex-1">{opt}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
 
@@ -282,33 +317,50 @@ export function Exam({ user }: { user: User }) {
 
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
-              <button 
-                onClick={handleMarkReview}
-                className={clsx(
-                  "flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all backdrop-blur-md border shadow-sm",
-                  markedForReview[currentQId] 
-                    ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30" 
-                    : "bg-white/60 text-slate-700 border-white/60 hover:bg-white/90 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10"
-                )}
-              >
-                <Flag className="w-5 h-5" />
-                {markedForReview[currentQId] ? 'Marked for Review' : 'Mark for Review'}
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button 
+                  onClick={handleMarkReview}
+                  className={clsx(
+                    "flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all backdrop-blur-md border shadow-sm cursor-pointer hover:-translate-y-0.5",
+                    markedForReview[currentQId] 
+                      ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30" 
+                      : "bg-white/60 text-slate-700 border-white/60 hover:bg-white/90 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10"
+                  )}
+                >
+                  <Flag className="w-4 h-4" />
+                  {markedForReview[currentQId] ? 'Marked for Review' : 'Mark for Review'}
+                </button>
+
+                <button 
+                  onClick={handleClearResponse}
+                  disabled={!answers[currentQId] || answers[currentQId].trim() === ''}
+                  className={clsx(
+                    "flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all backdrop-blur-md border shadow-sm",
+                    answers[currentQId] && answers[currentQId].trim() !== ''
+                      ? "bg-white/60 text-slate-700 border-white/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-red-500/20 dark:hover:text-red-300 dark:hover:border-red-500/30 cursor-pointer hover:-translate-y-0.5"
+                      : "opacity-40 cursor-not-allowed bg-white/30 text-slate-400 border-white/40 dark:bg-white/[0.02] dark:text-slate-600 dark:border-white/5"
+                  )}
+                  title="Clear your response for this question"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Clear Response
+                </button>
+              </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
                 <button 
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
-                  className="flex items-center justify-center w-14 h-14 rounded-2xl font-bold text-slate-700 bg-white/60 border border-white/60 hover:bg-white/90 disabled:opacity-50 dark:bg-white/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 backdrop-blur-md shadow-sm transition-all hover:-translate-y-0.5"
+                  className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl font-bold text-slate-700 bg-white/60 border border-white/60 hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-white/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 backdrop-blur-md shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button 
                   onClick={handleNext}
                   disabled={currentIndex === test.questions.length - 1}
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 shadow-xl shadow-slate-900/20 dark:shadow-white/20 transition-all hover:-translate-y-0.5"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 shadow-xl shadow-slate-900/20 dark:shadow-white/20 transition-all hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
                 >
-                  Save & Next <ChevronRight className="w-5 h-5" />
+                  Save & Next <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
