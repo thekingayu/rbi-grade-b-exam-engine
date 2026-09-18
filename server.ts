@@ -302,26 +302,27 @@ app.post('/api/extract-text', async (req, res) => {
 });
 
 // Serve frontend
-const isProduction = process.env.NODE_ENV === 'production';
-if (isProduction) {
-  const distPath = path.join(process.cwd(), 'dist');
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} else {
-  // In dev, we need Vite integration
-  const createViteServer = async () => {
+async function startServer() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    // In dev, we need Vite integration
     const { createServer: createVite } = await import('vite');
     const vite = await createVite({
       server: { middlewareMode: true },
       appType: 'spa'
     });
     app.use(vite.middlewares);
-  };
-  createViteServer();
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
 }
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+startServer();
