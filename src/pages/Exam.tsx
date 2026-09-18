@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -16,6 +16,12 @@ export function Exam({ user }: { user: User }) {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const answersRef = useRef(answers);
+  
+  // Keep ref up to date
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
   const [markedForReview, setMarkedForReview] = useState<Record<string, boolean>>({});
   
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -104,7 +110,7 @@ export function Exam({ user }: { user: User }) {
     
     // Clean answers to remove any undefined values which Firestore rejects
     const cleanAnswers: Record<string, string> = {};
-    Object.entries(answers).forEach(([k, v]) => {
+    Object.entries(answersRef.current).forEach(([k, v]) => {
       if (v !== undefined) cleanAnswers[k] = v as string;
     });
     

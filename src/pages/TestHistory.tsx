@@ -54,12 +54,12 @@ export function TestHistory({ user }: { user: User }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-4">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 text-base font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 px-5 py-2.5 rounded-xl border border-white/60 dark:border-white/10 shadow-sm hover:shadow cursor-pointer backdrop-blur-sm"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
       </div>
 
