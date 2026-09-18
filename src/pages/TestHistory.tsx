@@ -64,26 +64,26 @@ export function TestHistory({ user }: { user: User }) {
       </div>
 
       {/* Test History */}
-      <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
-        <div className="flex items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
-              <Clock className="w-6 h-6 text-[#9A7D3C]" />
+      <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
+        <div className="flex items-center justify-between p-4 sm:p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#9A7D3C]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">All past tests</h3>
-              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Complete historical breakdown</span>
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">All past tests</h3>
+              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Complete historical breakdown</span>
             </div>
           </div>
         </div>
         <div className="divide-y divide-slate-200/50 dark:divide-white/10">
           {tests.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-20 h-20 rounded-full bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <FileText className="w-10 h-10 text-slate-400" />
+            <div className="p-8 sm:p-16 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm">
+                <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-slate-400" />
               </div>
-              <p className="text-2xl font-serif font-bold text-slate-900 dark:text-white">No tests taken yet</p>
-              <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Start a new exam to see your history here.</p>
+              <p className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">No tests taken yet</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium text-xs sm:text-base">Start a new exam to see your history here.</p>
             </div>
           ) : (
             tests.map(test => {
@@ -109,45 +109,45 @@ export function TestHistory({ user }: { user: User }) {
               const timePct = Math.min(100, Math.max(0, Math.round((timeUsedSecs / allotted) * 100)));
 
               return (
-                <div key={test.id} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group border-b border-slate-200/50 dark:border-white/5 last:border-0">
+                <div key={test.id} className="p-4 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group border-b border-slate-200/50 dark:border-white/5 last:border-0">
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-900 dark:text-white mb-3 text-lg">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-2 sm:mb-3 text-base sm:text-lg">
                       {test.status === 'in-progress' ? 'Test in progress' : `Mock Exam • ${format(test.createdAt, 'MMMM d, yyyy')}`}
                     </h4>
                     {test.status === 'completed' && (
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-4 py-1.5 rounded-full shadow-sm">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-sm">
                           MCQ: <span className="text-slate-900 dark:text-white font-bold ml-1">{tMcqAcc}%</span>
                         </div>
-                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-4 py-1.5 rounded-full shadow-sm">
+                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-sm">
                           Desc: <span className="text-slate-900 dark:text-white font-bold ml-1">{tDescAcc}%</span>
                         </div>
-                        <div className={`px-4 py-1.5 rounded-full backdrop-blur-md border shadow-sm ${timePct >= 95 ? 'bg-red-50/80 dark:bg-red-500/20 border-red-200 dark:border-red-500/30' : 'bg-white/60 dark:bg-white/10 border-white/50 dark:border-white/5'}`}>
+                        <div className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md border shadow-sm ${timePct >= 95 ? 'bg-red-50/80 dark:bg-red-500/20 border-red-200 dark:border-red-500/30' : 'bg-white/60 dark:bg-white/10 border-white/50 dark:border-white/5'}`}>
                           Time used: <span className={`font-bold ml-1 ${timePct >= 95 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>{timePct}%</span>
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 w-full md:w-auto">
+                  <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-8 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/50 dark:border-white/5">
                     {test.status === 'completed' && (
-                      <div className="text-left sm:text-right">
-                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1 uppercase tracking-wider">Total Score</span>
-                        <span className="text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
+                      <div className="text-left md:text-right">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-0.5 uppercase tracking-wider">Total Score</span>
+                        <span className="text-2xl sm:text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
                       </div>
                     )}
-                    <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 md:flex-initial justify-end">
                       {test.status !== 'completed' && (
                         <button
                           onClick={() => handleTerminate(test.id)}
-                          className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
+                          className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 whitespace-nowrap"
                         >
                           Terminate
                         </button>
                       )}
                       <Link 
                         to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                        className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
+                        className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 hover:-translate-y-0.5 whitespace-nowrap"
                       >
                         {test.status === 'completed' ? 'View Results' : 'Resume'}
                       </Link>

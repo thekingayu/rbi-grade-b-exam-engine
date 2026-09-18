@@ -181,19 +181,19 @@ export function Dashboard({ user }: { user: User }) {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
       
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6">
         <div>
-          <h1 className="text-4xl font-serif font-bold text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
+          <h1 className="text-2xl sm:text-4xl font-serif font-bold text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
             Welcome back, {user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Student'}
           </h1>
-          <p className="text-slate-600 dark:text-slate-300 mt-2 font-medium">Here's your RBI Grade B preparation overview.</p>
+          <p className="text-slate-600 dark:text-slate-300 mt-1 sm:mt-2 text-sm sm:text-base font-medium">Here's your RBI Grade B preparation overview.</p>
         </div>
         <Link 
           to="/new" 
-          className="inline-flex items-center justify-center gap-2 bg-white/60 hover:bg-white/90 dark:bg-white/10 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-white/60 dark:border-white/10 px-8 py-4 rounded-3xl font-bold transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/20 hover:-translate-y-1 backdrop-blur-xl"
+          className="inline-flex items-center justify-center gap-2 bg-white/60 hover:bg-white/90 dark:bg-white/10 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-white/60 dark:border-white/10 px-6 sm:px-8 py-3 sm:py-4 rounded-2xl sm:rounded-3xl font-bold transition-all shadow-xl shadow-slate-200/50 dark:shadow-black/20 hover:-translate-y-1 backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base"
         >
-          <div className="w-8 h-8 rounded-full bg-[#9A7D3C] text-white flex items-center justify-center shadow-md">
-            <Plus className="w-5 h-5" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#9A7D3C] text-white flex items-center justify-center shadow-md shrink-0">
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <span>Start New Exam</span>
         </Link>
@@ -313,31 +313,31 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Test History */}
-      <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02]">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-            <div className="w-12 h-12 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
-              <Clock className="w-6 h-6 text-[#9A7D3C]" />
+      <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-8 border-b border-slate-200/50 dark:border-white/10 bg-white/20 dark:bg-white/[0.02] gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#9A7D3C]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Test history</h3>
-              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Per-attempt section breakdown</span>
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">Test history</h3>
+              <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Per-attempt section breakdown</span>
             </div>
           </div>
           {tests.length > 3 && (
-            <Link to="/history" className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors bg-white/50 dark:bg-white/5 px-4 py-2 rounded-xl border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-sm mt-4 sm:mt-0 w-full sm:w-auto justify-center sm:justify-start">
+            <Link to="/history" className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors bg-white/50 dark:bg-white/5 px-4 py-2 rounded-xl border border-white/60 dark:border-white/10 shadow-sm backdrop-blur-sm w-full sm:w-auto justify-center">
               View All Past Tests <ArrowRight className="w-4 h-4" />
             </Link>
           )}
         </div>
         <div className="divide-y divide-slate-200/50 dark:divide-white/10">
           {tests.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-20 h-20 rounded-full bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <FileText className="w-10 h-10 text-slate-400" />
+            <div className="p-8 sm:p-16 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/60 dark:bg-white/10 border border-white/60 dark:border-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm">
+                <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-slate-400" />
               </div>
-              <p className="text-2xl font-serif font-bold text-slate-900 dark:text-white">No tests taken yet</p>
-              <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Start a new exam to see your history here.</p>
+              <p className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">No tests taken yet</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium text-xs sm:text-base">Start a new exam to see your history here.</p>
             </div>
           ) : (
             <>
@@ -364,45 +364,45 @@ export function Dashboard({ user }: { user: User }) {
               const timePct = Math.min(100, Math.max(0, Math.round((timeUsedSecs / allotted) * 100)));
 
               return (
-                <div key={test.id} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group border-b border-slate-200/50 dark:border-white/5 last:border-0">
+                <div key={test.id} className="p-4 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 hover:bg-white/40 dark:hover:bg-white/[0.04] transition-all group border-b border-slate-200/50 dark:border-white/5 last:border-0">
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-900 dark:text-white mb-3 text-lg">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-2 sm:mb-3 text-base sm:text-lg">
                       {test.status === 'in-progress' ? 'Test in progress' : `Mock Exam • ${format(test.createdAt, 'MMMM d, yyyy')}`}
                     </h4>
                     {test.status === 'completed' && (
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-4 py-1.5 rounded-full shadow-sm">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-sm">
                           MCQ: <span className="text-slate-900 dark:text-white font-bold ml-1">{tMcqAcc}%</span>
                         </div>
-                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-4 py-1.5 rounded-full shadow-sm">
+                        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-sm">
                           Desc: <span className="text-slate-900 dark:text-white font-bold ml-1">{tDescAcc}%</span>
                         </div>
-                        <div className={`px-4 py-1.5 rounded-full backdrop-blur-md border shadow-sm ${timePct >= 95 ? 'bg-red-50/80 dark:bg-red-500/20 border-red-200 dark:border-red-500/30' : 'bg-white/60 dark:bg-white/10 border-white/50 dark:border-white/5'}`}>
+                        <div className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md border shadow-sm ${timePct >= 95 ? 'bg-red-50/80 dark:bg-red-500/20 border-red-200 dark:border-red-500/30' : 'bg-white/60 dark:bg-white/10 border-white/50 dark:border-white/5'}`}>
                           Time used: <span className={`font-bold ml-1 ${timePct >= 95 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>{timePct}%</span>
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 w-full md:w-auto">
+                  <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-8 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/50 dark:border-white/5">
                     {test.status === 'completed' && (
-                      <div className="text-left sm:text-right">
-                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 block mb-1 uppercase tracking-wider">Total Score</span>
-                        <span className="text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
+                      <div className="text-left md:text-right">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-0.5 uppercase tracking-wider">Total Score</span>
+                        <span className="text-2xl sm:text-4xl font-serif font-bold text-slate-900 dark:text-white">{tOverall}%</span>
                       </div>
                     )}
-                    <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 md:flex-initial justify-end">
                       {test.status !== 'completed' && (
                         <button
                           onClick={() => handleTerminate(test.id)}
-                          className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
+                          className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-red-50 dark:bg-red-500/10 backdrop-blur-md border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 shadow-md hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 whitespace-nowrap"
                         >
                           Terminate
                         </button>
                       )}
                       <Link 
                         to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                        className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 group-hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
+                        className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-900 dark:text-white shadow-md hover:bg-white/90 dark:hover:bg-white/20 hover:-translate-y-0.5 whitespace-nowrap"
                       >
                         {test.status === 'completed' ? 'View Results' : 'Resume'}
                       </Link>
@@ -421,27 +421,27 @@ export function Dashboard({ user }: { user: User }) {
 
 function StatCard({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
-      <div className="absolute top-0 right-0 p-4 sm:p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:bg-white/80 dark:hover:bg-white/[0.05] transition-all duration-300">
+      <div className="absolute top-0 right-0 p-3 sm:p-5 opacity-40 dark:opacity-20 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
         {icon}
       </div>
       <div>
-        <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{title}</p>
+        <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{title}</p>
       </div>
-      <p className="text-3xl sm:text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm">{value}</p>
+      <p className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold text-slate-900 dark:text-white drop-shadow-sm truncate">{value}</p>
     </div>
   );
 }
 
 function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, title: string, value: string, subValue?: string }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 hover:bg-white/80 dark:hover:bg-white/[0.05] transition-colors group">
-      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 hover:bg-white/80 dark:hover:bg-white/[0.05] transition-colors group">
+      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
         {icon}
       </div>
       <div className="min-w-0 w-full">
-        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 sm:mb-1.5">{title}</p>
-        <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
+        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1.5 truncate">{title}</p>
+        <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">
           {value} {subValue && <span className="text-[#9A7D3C] ml-1">{subValue}</span>}
         </p>
       </div>
@@ -451,10 +451,10 @@ function InsightCard({ icon, title, value, subValue }: { icon: React.ReactNode, 
 
 function ChartCard({ title, subtitle, children }: { title: string, subtitle: string, children: React.ReactNode }) {
   return (
-    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-8 flex flex-col h-[400px]">
-      <div className="mb-8">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
-        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{subtitle}</span>
+    <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col h-[320px] sm:h-[400px]">
+      <div className="mb-3 sm:mb-6">
+        <h3 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">{title}</h3>
+        <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">{subtitle}</span>
       </div>
       <div className="flex-1 min-h-0 relative">
         {children}

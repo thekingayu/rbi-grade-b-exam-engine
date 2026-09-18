@@ -31,38 +31,38 @@ export function Layout({ user }: { user: User }) {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 dark:border-white/10 bg-white/40 dark:bg-[#0A0F1C]/40 backdrop-blur-2xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-white shadow-lg shadow-slate-200/50 dark:shadow-black/20 group-hover:bg-white/80 dark:group-hover:bg-white/10 transition-all">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2">
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/50 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-white shadow-lg shadow-slate-200/50 dark:shadow-black/20 group-hover:bg-white/80 dark:group-hover:bg-white/10 transition-all shrink-0">
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="font-serif text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+              <span className="font-serif text-base sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
                 RBI Grade B <span className="text-[#9A7D3C]">Engine</span>
               </span>
             </Link>
             
-            <div className="flex items-center gap-3 sm:gap-5">
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 hidden md:inline-block px-4 py-1.5 rounded-full bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/5 backdrop-blur-md shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hidden md:inline-block px-3.5 py-1.5 rounded-full bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/5 backdrop-blur-md shadow-sm truncate max-w-[200px]">
                 {user.email}
               </span>
-              <div className="h-6 w-px bg-slate-300/50 dark:bg-white/10 hidden sm:block"></div>
+              <div className="h-5 w-px bg-slate-300/50 dark:bg-white/10 hidden sm:block"></div>
               <button 
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 bg-white/50 hover:bg-white/80 border border-white/60 shadow-sm dark:text-slate-400 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:hover:text-white transition-all backdrop-blur-md"
+                className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 bg-white/50 hover:bg-white/80 border border-white/60 shadow-sm dark:text-slate-400 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:hover:text-white transition-all backdrop-blur-md cursor-pointer"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
               <button 
                 onClick={() => signOut(auth)}
-                className="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap px-2 sm:px-0 py-1 cursor-pointer"
               >
                 Sign Out
               </button>
             </div>
           </div>
         </header>
-        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-10 w-full">
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-10 w-full">
           <Outlet />
         </main>
       </div>
