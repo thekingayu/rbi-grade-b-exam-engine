@@ -1,10 +1,14 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Link, useLocation, useOutlet } from 'react-router-dom';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Moon, Sun, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout({ user }: { user: User }) {
+  const location = useLocation();
+  const currentOutlet = useOutlet();
+
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark' ||
             (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -98,8 +102,32 @@ export function Layout({ user }: { user: User }) {
             />
           </div>
         </header>
-        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-10 w-full">
-          <Outlet />
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-10 w-full relative">
+          <AnimatePresence 
+            mode="wait" 
+            initial={false}
+            onExitComplete={() => {
+              if (window.__lenis) {
+                window.__lenis.scrollTo(0, { immediate: true });
+              } else {
+                window.scrollTo(0, 0);
+              }
+            }}
+          >
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+              transition={{ 
+                duration: 0.24, 
+                ease: [0.22, 1, 0.36, 1] 
+              }}
+              className="w-full flex-1"
+            >
+              {currentOutlet}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

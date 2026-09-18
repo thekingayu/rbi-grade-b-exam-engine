@@ -38,11 +38,11 @@ export default function App() {
       <SmoothScroll>
         <Routes>
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+          <Route path="/exam/:testId" element={user ? <Exam user={user} /> : <Navigate to="/login" />} />
           <Route path="/" element={user ? <Layout user={user} /> : <Navigate to="/login" />}>
             <Route index element={<Dashboard user={user} />} />
             <Route path="history" element={<TestHistory user={user} />} />
             <Route path="new" element={<NewTest user={user} />} />
-            <Route path="exam/:testId" element={<Exam user={user} />} />
             <Route path="results/:testId" element={<Results user={user} />} />
           </Route>
         </Routes>

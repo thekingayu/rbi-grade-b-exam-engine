@@ -7,6 +7,7 @@ import { TestAttempt, Question } from '../types';
 import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
+import { motion } from 'motion/react';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -235,7 +236,13 @@ export function Exam({ user }: { user: User }) {
   const attemptedCount = test.questions.filter((_, i) => isQuestionAnswered(i)).length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white flex flex-col overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.995 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.995 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed inset-0 z-50 bg-slate-50/80 dark:bg-[#05050A] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white flex flex-col overflow-hidden"
+    >
       
       {/* GPU-Isolated Ambient background blobs for Liquid Glass effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 transform-gpu will-change-transform">
@@ -477,6 +484,6 @@ export function Exam({ user }: { user: User }) {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

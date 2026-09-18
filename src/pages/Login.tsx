@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
 import { BookOpen } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -43,7 +44,12 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-950 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md bg-white dark:bg-slate-950 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8"
+      >
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-teal-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-4">
             <BookOpen className="w-7 h-7 text-teal-700 dark:text-emerald-400" />
@@ -125,7 +131,7 @@ export function Login() {
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

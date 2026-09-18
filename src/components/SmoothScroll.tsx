@@ -3,6 +3,12 @@ import { useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
+declare global {
+  interface Window {
+    __lenis?: Lenis;
+  }
+}
+
 export function SmoothScroll({ children }: { children: ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
   const location = useLocation();
@@ -25,6 +31,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     });
 
     lenisRef.current = lenis;
+    window.__lenis = lenis;
 
     let rafId: number;
     function raf(time: number) {
@@ -37,6 +44,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
+      window.__lenis = undefined;
     };
   }, []);
 
