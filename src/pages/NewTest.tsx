@@ -3,8 +3,11 @@ import { User } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
 import { db, storage } from '../firebase';
-import { useNavigate } from 'react-router-dom';
-import { UploadCloud, File, X, Settings2, Loader2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  UploadCloud, File, X, Settings2, Loader2, ChevronDown, ChevronUp, 
+  FileText, ArrowLeft, Clock, Sparkles, SlidersHorizontal, CheckCircle2 
+} from 'lucide-react';
 
 export function NewTest({ user }: { user: User }) {
   const navigate = useNavigate();
@@ -215,30 +218,52 @@ export function NewTest({ user }: { user: User }) {
   const isGenerateDisabled = uploading || totalQuestions === 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Configure New Mock Exam</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Upload your notes and set your preferences to generate a custom test.</p>
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      {/* Top Header with Back Button and Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/60 dark:border-white/10 hover:border-[#9A7D3C]/60 dark:hover:border-[#9A7D3C]/60 hover:bg-white/80 dark:hover:bg-white/10 transition-all shadow-sm hover:shadow group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-sm shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
+            <span className="cursor-pointer">Back to Dashboard</span>
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">Configure New Mock Exam</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Upload your notes and set your preferences to generate a custom test.</p>
+          </div>
+        </div>
+        
+        <div className="self-start sm:self-center flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 backdrop-blur-xl text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-[#9A7D3C] animate-pulse"></span>
+          Step {step} of 2 • {step === 1 ? 'Upload Notes' : 'Exam Settings'}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
         {step === 1 ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Step 1 of 3</p>
-              <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Upload your notes</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
-                PDF or image files. Extracted content is what the exam will be generated from — review it before generating.
-              </p>
-            </div>
-            
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+            <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+              {/* Glass Top Highlight */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
+              
+              <div className="mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
+                  Step 1 of 2
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">Upload your notes</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm sm:text-base">
+                  PDF or image files. Extracted content is what the exam will be generated from — review it before generating.
+                </p>
+              </div>
+
               {uploadError && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start gap-3">
+                <div className="mb-5 p-4 bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 backdrop-blur-xl rounded-2xl flex items-start gap-3 shadow-sm">
                   <div className="w-5 h-5 shrink-0 text-red-500 mt-0.5"><X className="w-5 h-5" /></div>
                   <div>
                     <h4 className="text-sm font-semibold text-red-800 dark:text-red-400">Upload restricted</h4>
-                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">{uploadError}</p>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-0.5">{uploadError}</p>
                   </div>
                 </div>
               )}
@@ -251,46 +276,79 @@ export function NewTest({ user }: { user: User }) {
                 accept=".pdf,image/png,image/jpeg,image/jpg" 
                 className="hidden" 
               />
+              
               <div 
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-12 text-center cursor-pointer hover:border-teal-500 dark:hover:border-emerald-500 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all"
+                className="group relative border-2 border-dashed border-slate-300/80 dark:border-white/15 rounded-2xl p-8 sm:p-14 text-center cursor-pointer hover:border-[#9A7D3C] dark:hover:border-[#9A7D3C]/70 bg-white/40 dark:bg-white/[0.02] hover:bg-white/70 dark:hover:bg-white/[0.05] backdrop-blur-xl transition-all duration-300 shadow-inner"
               >
-                <UploadCloud className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Drop files here, or click to choose PDF / JPG / PNG</p>
+                <div className="w-14 h-14 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] mx-auto mb-4 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#9A7D3C]/20 transition-all duration-300">
+                  <UploadCloud className="w-7 h-7" />
+                </div>
+                <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                  Drop files here, or <span className="text-[#9A7D3C] dark:text-[#d3c299] underline underline-offset-4">click to browse</span>
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  Supports PDF, PNG, JPG, JPEG (up to 200MB per file)
+                </p>
               </div>
 
               {files.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {files.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <File className="w-5 h-5 text-slate-400 shrink-0" />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                          {f.name} <span className="text-slate-400 ml-1">({Math.round(f.size / 1024)} KB)</span>
-                        </span>
-                      </div>
-                      <button onClick={() => removeFile(i)} className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-2 py-1 transition-colors">
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  
-                  <p className="text-xs text-slate-400 mt-4 mb-4">
-                    The real build reads it with Gemini's multimodal input.
-                  </p>
-
-                  <div className="flex items-center justify-between pt-4">
+                <div className="mt-6 space-y-3 pt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Selected Files ({files.length})
+                    </span>
                     <button 
                       onClick={() => setFiles([])}
-                      className="px-6 py-2.5 rounded-lg font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                      className="text-xs text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                    {files.map((f, i) => (
+                      <div 
+                        key={i} 
+                        className="flex items-center justify-between p-3.5 sm:p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/60 dark:border-white/10 shadow-sm hover:border-[#9A7D3C]/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-3.5 overflow-hidden min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 border border-[#9A7D3C]/20 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] shrink-0">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{f.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{Math.round(f.size / 1024)} KB</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => removeFile(i)} 
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-3 py-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer shrink-0 ml-3"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <p className="text-xs text-slate-400 dark:text-slate-500 pt-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#9A7D3C]" />
+                    <span>Gemini multimodal vision will extract diagrams, syllabus concepts, and regulations from your files.</span>
+                  </p>
+
+                  <div className="flex items-center justify-between pt-6 border-t border-white/40 dark:border-white/10 mt-6">
+                    <button 
+                      onClick={() => setFiles([])}
+                      className="px-5 py-2.5 rounded-2xl font-medium text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 border border-white/60 dark:border-white/10 transition-all cursor-pointer shadow-sm text-sm"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={() => setStep(2)}
-                      className="bg-[#9A7D3C] hover:bg-[#856930] text-white px-8 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                      className="bg-gradient-to-r from-[#9A7D3C] to-[#b39148] hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-8 py-2.5 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#9A7D3C]/25 hover:shadow-xl hover:shadow-[#9A7D3C]/35 cursor-pointer text-sm"
                     >
-                      Continue
+                      <span>Continue to Settings</span>
+                      <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
                 </div>
@@ -299,86 +357,155 @@ export function NewTest({ user }: { user: User }) {
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Step 2 of 3</p>
-              <h2 className="text-3xl font-serif font-bold text-slate-900 dark:text-white">Configure this test</h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
+            {/* Step 2 Header Card */}
+            <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30 backdrop-blur-md mb-2">
+                Step 2 of 2
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white">Configure this test</h2>
+              <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm sm:text-base">
                 Set how many questions to draw from each portion of your notes.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white">MCQs — Static portion</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">Core theory, definitions, acts and static content from your notes.</p>
-                <input 
-                  type="number" min="0" max="30" value={config.mcqStatic}
-                  onChange={(e) => setConfig({...config, mcqStatic: parseInt(e.target.value) || 0})}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#9A7D3C] outline-none"
-                />
+            {/* 4 Liquid Glass Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {/* Card 1: MCQ Static */}
+              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-3xl p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">MCQs — Static portion</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30">
+                    {config.mcqStatic} Qs
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 min-h-[36px] leading-relaxed">
+                  Core theory, definitions, acts and static content from your notes. 5 options per question.
+                </p>
+                <div className="relative">
+                  <input 
+                    type="number" min="0" max="30" value={config.mcqStatic}
+                    onChange={(e) => setConfig({...config, mcqStatic: Math.max(0, parseInt(e.target.value) || 0)})}
+                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-2xl p-3.5 text-slate-900 dark:text-white font-semibold text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white">MCQs — Dynamic / current affairs</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">Topics in your notes tied to recent developments — cross-checked against what's actually happened recently.</p>
-                <input 
-                  type="number" min="0" max="20" value={config.mcqDynamic}
-                  onChange={(e) => setConfig({...config, mcqDynamic: parseInt(e.target.value) || 0})}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#9A7D3C] outline-none"
-                />
+              {/* Card 2: MCQ Dynamic */}
+              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-3xl p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">MCQs — Dynamic / current affairs</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30">
+                    {config.mcqDynamic} Qs
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 min-h-[36px] leading-relaxed">
+                  Topics in your notes tied to recent developments and circulars, validated with Gemini search grounding.
+                </p>
+                <div className="relative">
+                  <input 
+                    type="number" min="0" max="20" value={config.mcqDynamic}
+                    onChange={(e) => setConfig({...config, mcqDynamic: Math.max(0, parseInt(e.target.value) || 0)})}
+                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-2xl p-3.5 text-slate-900 dark:text-white font-semibold text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Descriptive — Static portion</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">Long-form answers on core static concepts, with a strict word limit.</p>
-                <input 
-                  type="number" min="0" max="5" value={config.descStatic}
-                  onChange={(e) => setConfig({...config, descStatic: parseInt(e.target.value) || 0})}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#9A7D3C] outline-none"
-                />
+              {/* Card 3: Descriptive Static */}
+              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-3xl p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Descriptive — Static portion</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30">
+                    {config.descStatic} Qs
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 min-h-[36px] leading-relaxed">
+                  Long-form answers on core static concepts with strict word limit and comprehensive rubric evaluation.
+                </p>
+                <div className="relative">
+                  <input 
+                    type="number" min="0" max="5" value={config.descStatic}
+                    onChange={(e) => setConfig({...config, descStatic: Math.max(0, parseInt(e.target.value) || 0)})}
+                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-2xl p-3.5 text-slate-900 dark:text-white font-semibold text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Descriptive — Dynamic / current affairs</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">Essay/opinion-style prompts tied to current developments from your notes' topics.</p>
-                <input 
-                  type="number" min="0" max="5" value={config.descDynamic}
-                  onChange={(e) => setConfig({...config, descDynamic: parseInt(e.target.value) || 0})}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-[#9A7D3C] outline-none"
-                />
+              {/* Card 4: Descriptive Dynamic */}
+              <div className="bg-white/60 dark:bg-white/[0.02] backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-black/40 rounded-3xl p-6 relative overflow-hidden hover:bg-white/80 dark:hover:bg-white/[0.04] transition-all group">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Descriptive — Dynamic / current affairs</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 text-[#9A7D3C] dark:bg-[#9A7D3C]/20 dark:text-[#d3c299] border border-[#9A7D3C]/30">
+                    {config.descDynamic} Qs
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 min-h-[36px] leading-relaxed">
+                  Essay/opinion-style prompts tied to current developments from your notes' topics.
+                </p>
+                <div className="relative">
+                  <input 
+                    type="number" min="0" max="5" value={config.descDynamic}
+                    onChange={(e) => setConfig({...config, descDynamic: Math.max(0, parseInt(e.target.value) || 0)})}
+                    className="w-full bg-white/70 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-2xl p-3.5 text-slate-900 dark:text-white font-semibold text-lg focus:ring-2 focus:ring-[#9A7D3C] focus:border-transparent outline-none backdrop-blur-md transition-all"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Estimated Duration Banner */}
+            {/* Estimated Duration Banner - Liquid Glass */}
             {(() => {
                const estimatedMins = (config.mcqStatic + config.mcqDynamic) * 1 + (config.descStatic + config.descDynamic) * 15;
                return (
-                 <div className="bg-[#f0e8d1] dark:bg-[#383120] rounded-xl p-4 flex items-center justify-between mt-6">
-                   <span className="text-[#655328] dark:text-[#d3c299] font-medium">Estimated duration at RBI Grade B pacing</span>
-                   <span className="text-[#655328] dark:text-[#d3c299] font-bold">{estimatedMins} min</span>
+                 <div className="bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/15 border border-[#9A7D3C]/30 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-[#9A7D3C]/5">
+                   <div className="flex items-center gap-3.5">
+                     <div className="w-11 h-11 rounded-2xl bg-[#9A7D3C]/20 border border-[#9A7D3C]/30 flex items-center justify-center text-[#9A7D3C] dark:text-[#d3c299] shrink-0 shadow-sm">
+                       <Clock className="w-5 h-5" />
+                     </div>
+                     <div>
+                       <p className="text-sm font-bold text-slate-900 dark:text-white">Estimated Exam Duration</p>
+                       <p className="text-xs text-slate-500 dark:text-slate-400">At RBI Grade B standard pacing (1 min/MCQ, 15 min/Descriptive)</p>
+                     </div>
+                   </div>
+                   <div className="text-left sm:text-right">
+                     <span className="text-2xl sm:text-3xl font-bold text-[#9A7D3C] dark:text-[#d3c299] font-serif">{estimatedMins} min</span>
+                     <p className="text-xs text-slate-500 dark:text-slate-400">{totalQuestions} total questions</p>
+                   </div>
                  </div>
                );
             })()}
 
-            <p className="text-xs text-slate-400 mt-3 text-center">
-              Demo caps counts to keep the sample bank readable — the live build has no such cap since Gemini generates fresh questions each time.
+            <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+              Each test is synthesized fresh by Gemini using your notes as the authoritative curriculum.
             </p>
 
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6">
+            {/* Step 2 Action Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4">
                <button 
                   onClick={() => setStep(1)}
                   disabled={uploading}
-                  className="px-6 py-3 sm:py-2.5 rounded-xl font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  className="px-6 py-3 sm:py-3.5 rounded-2xl font-medium text-slate-700 dark:text-slate-200 bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50 text-sm shadow-sm"
                 >
-                  Back
+                  <span className="flex items-center justify-center gap-2">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Upload</span>
+                  </span>
                </button>
                <button 
                   onClick={handleGenerateTest}
                   disabled={isGenerateDisabled}
-                  className="bg-[#9A7D3C] hover:bg-[#856930] text-white px-6 sm:px-8 py-3 sm:py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                  className="bg-gradient-to-r from-[#9A7D3C] to-[#b39148] hover:from-[#886d33] hover:to-[#9A7D3C] text-white px-7 sm:px-9 py-3.5 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-[#9A7D3C]/25 hover:shadow-xl hover:shadow-[#9A7D3C]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                 >
-                  {uploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
-                  <span className="text-center">{uploading ? (loadingMessage || 'Processing...') : 'Analyze Notes & Generate Questions'}</span>
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+                      <span className="text-center">{loadingMessage || 'Generating Exam...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 shrink-0" />
+                      <span>Analyze Notes & Generate Questions</span>
+                    </>
+                  )}
                </button>
             </div>
           </div>
