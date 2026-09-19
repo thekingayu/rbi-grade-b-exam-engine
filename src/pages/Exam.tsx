@@ -9,6 +9,7 @@ import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { motion } from 'motion/react';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
+import { evaluateAndPersistTest } from '../services/evaluation';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -23,6 +24,7 @@ export function Exam({ user }: { user: User }) {
   const answersRef = useRef(answers);
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const [showMobilePalette, setShowMobilePalette] = useState(false);
+  const [evalProgress, setEvalProgress] = useState<{ message: string; percent: number } | null>(null);
   
   // Keep ref up to date
   useEffect(() => {
@@ -147,6 +149,8 @@ export function Exam({ user }: { user: User }) {
   const handleSubmit = async () => {
     if (!test || submitting) return;
     setSubmitting(true);
+    setShowConfirm(false);
+    setEvalProgress({ message: 'Scoring multiple-choice questions...', percent: 15 });
     
     // Combine answers from test.answers, current answers state, and answersRef to ensure 0 lost answers
     const cleanAnswers: Record<string, string> = {};
@@ -162,58 +166,50 @@ export function Exam({ user }: { user: User }) {
       if (v !== undefined && v !== null && typeof v === 'string') cleanAnswers[k] = v;
     });
     
-    let mcqScore = 0;
-    const evaluatedQuestions = test.questions.map((q, i) => {
+    const initialQuestions = test.questions.map((q, i) => {
       const qId = q.id || i.toString();
       const ans = cleanAnswers[qId] || cleanAnswers[i.toString()] || (q.id ? cleanAnswers[q.id] : null) || null;
-      
-      // Clean up the question object to ensure no undefined values
-      const cleanQ = { ...q };
-      Object.keys(cleanQ).forEach(key => {
-        const k = key as keyof typeof cleanQ;
-        if (cleanQ[k] === undefined) {
-          delete cleanQ[k];
-        }
-      });
-      
-      if (cleanQ.type === 'MCQ') {
-        const maxMarks = (typeof cleanQ.maxMarks === 'number' && cleanQ.maxMarks > 0) ? cleanQ.maxMarks : 1;
-        let score = 0;
-        let isCorrect = false;
-        if (ans && ans.trim() !== '') {
-          isCorrect = checkMCQCorrect(ans, cleanQ.correctAnswer, cleanQ.options);
-          score = isCorrect ? maxMarks : -0.25 * maxMarks;
-        }
-        mcqScore += score;
-        return { 
-          ...cleanQ, 
-          id: cleanQ.id || i.toString(),
-          maxMarks,
-          userAnswer: ans || null, 
-          score,
-          isCorrect
-        };
-      }
       return { 
-        ...cleanQ, 
-        id: cleanQ.id || i.toString(),
+        ...q, 
+        id: qId,
         userAnswer: ans || null 
       };
     });
 
+    const pendingAttempt: TestAttempt = {
+      ...test,
+      status: 'completed',
+      submittedAt: Date.now(),
+      answers: cleanAnswers,
+      questions: initialQuestions,
+      userId: user.uid
+    };
+
     try {
-      await updateDoc(doc(db, 'tests', test.id), {
-        status: 'completed',
-        submittedAt: Date.now(),
-        questions: evaluatedQuestions,
-        totalScore: Number(mcqScore.toFixed(2)),
-        answers: cleanAnswers,
-        userId: user.uid
-      });
+      await evaluateAndPersistTest(
+        test.id,
+        pendingAttempt,
+        user.uid,
+        (msg, pct) => {
+          setEvalProgress({ message: msg, percent: pct || 50 });
+        }
+      );
       navigate(`/results/${test.id}`);
     } catch (e) {
-      console.error(e);
-      alert("Error submitting. Please try again.");
+      console.error("Submission evaluation error:", e);
+      // Fallback update to guarantee test status is saved as completed
+      try {
+        await updateDoc(doc(db, 'tests', test.id), {
+          status: 'completed',
+          submittedAt: Date.now(),
+          answers: cleanAnswers,
+          userId: user.uid
+        });
+      } catch (innerErr) {
+        console.error("Fallback update failed:", innerErr);
+      }
+      navigate(`/results/${test.id}`);
+    } finally {
       setSubmitting(false);
     }
   };
@@ -513,18 +509,45 @@ export function Exam({ user }: { user: User }) {
               <button 
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="w-full py-4 font-bold bg-[#9A7D3C] text-white rounded-2xl hover:bg-[#806630] flex items-center justify-center gap-2 shadow-lg shadow-[#9A7D3C]/20 transition-all hover:-translate-y-0.5"
+                className="w-full py-4 font-bold bg-[#9A7D3C] text-white rounded-2xl hover:bg-[#806630] flex items-center justify-center gap-2 shadow-lg shadow-[#9A7D3C]/20 transition-all hover:-translate-y-0.5 cursor-pointer"
               >
                 {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
                 Confirm Submit
               </button>
               <button 
                 onClick={() => setShowConfirm(false)}
-                className="w-full py-4 font-bold text-slate-600 dark:text-slate-400 bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10 rounded-2xl backdrop-blur-md transition-colors"
+                disabled={submitting}
+                className="w-full py-4 font-bold text-slate-600 dark:text-slate-400 bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 hover:bg-white/90 dark:hover:bg-white/10 rounded-2xl backdrop-blur-md transition-colors cursor-pointer"
               >
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evaluation & Persistence Progress Overlay */}
+      {evalProgress && (
+        <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white/90 dark:bg-[#0A0F1C]/90 backdrop-blur-2xl rounded-3xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-white/10 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-[#9A7D3C] dark:text-[#E5C378]">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Grading & Storing Results</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 min-h-[44px] flex items-center justify-center px-2">
+                {evalProgress.message}
+              </p>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5">
+              <div 
+                className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${evalProgress.percent}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Grading your answers with RBI Grade B rubrics and saving complete results into the database...
+            </p>
           </div>
         </div>
       )}

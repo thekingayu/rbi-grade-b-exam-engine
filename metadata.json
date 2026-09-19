@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "RBI Grade B Engine",
+  "description": "AI-powered RBI Grade B preparation engine with dynamic mock exams and analysis.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

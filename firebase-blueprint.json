@@ -28,7 +28,11 @@
         },
         "totalScore": { "type": "number" },
         "sectionScores": { "type": "object" },
-        "feedback": { "type": "object" }
+        "feedback": { "type": "object" },
+        "evaluations": { "type": "object" },
+        "overallFeedback": { "type": "object" },
+        "isEvaluated": { "type": "boolean" },
+        "evaluatedAt": { "type": "number" }
       },
       "required": ["userId", "createdAt"]
     },

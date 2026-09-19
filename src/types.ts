@@ -35,6 +35,8 @@ export interface TestAttempt {
   durationSeconds: number;
   startedAt?: number;
   submittedAt?: number;
+  evaluatedAt?: number;
+  isEvaluated?: boolean;
   questions: Question[]; // Storing inline for simplicity
   answers?: Record<string, string>;
   totalScore?: number;

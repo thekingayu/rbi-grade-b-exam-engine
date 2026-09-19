@@ -24,7 +24,7 @@ service cloud.firestore {
     match /tests/{testId} {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
 
       match /questions/{questionId} {

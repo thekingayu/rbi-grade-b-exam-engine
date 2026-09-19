@@ -8,178 +8,118 @@ import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Loader2, Sparkles, Award,
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
+import { evaluateAndPersistTest } from '../services/evaluation';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
   const [test, setTest] = useState<TestAttempt | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
+  const [evalProgress, setEvalProgress] = useState({ message: 'Loading results...', percent: 10 });
   const [activeTab, setActiveTab] = useState<'summary' | 'mcq' | 'descriptive' | 'feedback'>('summary');
 
   useEffect(() => {
-    const fetchAndEvaluate = async () => {
+    let isCancelled = false;
+
+    const loadOrEvaluate = async () => {
       if (!testId) return;
       try {
+        setLoading(true);
         const docRef = doc(db, 'tests', testId);
         const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          const data = snap.data() as TestAttempt;
-          
-          // Reconcile and heal MCQ answers and scores if missing or inconsistent
-          let questionsModified = false;
-          const updatedQuestions = (data.questions || []).map((q, i) => {
-            const qId = q.id || i.toString();
-            // Reconcile user answer from q.userAnswer OR data.answers map
-            const rawUserAnswer = q.userAnswer || data.answers?.[qId] || data.answers?.[i.toString()] || null;
-            const cleanUserAnswer = (rawUserAnswer && rawUserAnswer.trim() !== '') ? rawUserAnswer.trim() : null;
-            
-            if (q.type === 'MCQ') {
-              const maxMarks = (typeof q.maxMarks === 'number' && q.maxMarks > 0) ? q.maxMarks : 1;
-              const isCorrect = cleanUserAnswer ? checkMCQCorrect(cleanUserAnswer, q.correctAnswer, q.options) : false;
-              let score = 0;
-              if (cleanUserAnswer) {
-                score = isCorrect ? maxMarks : -0.25 * maxMarks;
-              }
-              
-              if (q.userAnswer !== cleanUserAnswer || q.score !== score || q.maxMarks !== maxMarks || q.isCorrect !== isCorrect || !q.id) {
-                questionsModified = true;
-                return {
-                  ...q,
-                  id: qId,
-                  maxMarks,
-                  userAnswer: cleanUserAnswer,
-                  score,
-                  isCorrect
-                };
-              }
-            } else {
-              if (q.userAnswer !== cleanUserAnswer || !q.id) {
-                questionsModified = true;
-                return {
-                  ...q,
-                  id: qId,
-                  userAnswer: cleanUserAnswer
-                };
-              }
-            }
-            return q;
-          });
 
-          if (questionsModified) {
-            data.questions = updatedQuestions;
-            const totalMcqScore = data.questions
-              .filter(q => q.type === 'MCQ')
-              .reduce((sum, q) => sum + (q.score || 0), 0);
-            const totalDescScore = Object.values(data.evaluations || {}).reduce((sum, ev) => sum + (ev.totalScore || 0), 0);
-            data.totalScore = Number((totalMcqScore + totalDescScore).toFixed(2));
-            try {
-              await updateDoc(docRef, { questions: updatedQuestions, totalScore: data.totalScore });
-            } catch (err) {
-              console.error("Auto-heal update failed", err);
-            }
+        if (!snap.exists()) {
+          if (!isCancelled) {
+            setTest(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const data = { ...snap.data(), id: snap.id } as TestAttempt;
+
+        // Check if the test is already evaluated
+        const hasEvals = !!data.evaluations && Object.keys(data.evaluations).length > 0;
+        const hasFeedback = !!data.overallFeedback && Array.isArray(data.overallFeedback.strengths) && data.overallFeedback.strengths.length > 0;
+        const isCompletedAndEvaluated = data.isEvaluated === true || (hasEvals && hasFeedback);
+
+        if (isCompletedAndEvaluated) {
+          // This test's evaluation is already stored in the database!
+          // If legacy document was missing isEvaluated flag, backfill it silently
+          if (!data.isEvaluated) {
+            updateDoc(docRef, { isEvaluated: true, userId: user.uid }).catch(() => {});
           }
 
-          // Check if descriptive answers need evaluation
-          const descQuestions = data.questions.filter(q => q.type === 'Descriptive');
-          const needsEval = descQuestions.some(q => q.userAnswer && (!data.evaluations || !data.evaluations[q.id || '']));
-          
-          if (needsEval && !evaluating) {
-            setEvaluating(true);
-            const evals = data.evaluations || {};
-            let newTotalScore = data.totalScore || 0;
-            
-            for (let i = 0; i < data.questions.length; i++) {
-              const q = data.questions[i];
-              const qId = q.id || i.toString();
-              
-              if (q.type === 'Descriptive' && q.userAnswer && !evals[qId]) {
-                try {
-                  const res = await fetch('/api/evaluate-descriptive', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: q, userAnswer: q.userAnswer })
-                  });
-                  if (res.ok) {
-                    const evalData = await res.json();
-                    evals[qId] = evalData;
-                    newTotalScore += evalData.totalScore || 0;
-                  }
-                } catch (e) {
-                  console.error("Eval error", e);
-                }
-              }
-            }
-            
-            let overallFeedback = data.overallFeedback;
-            if (!overallFeedback) {
-              try {
-                const res = await fetch('/api/generate-overall-feedback', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ test: { ...data, evaluations: evals } })
-                });
-                if (res.ok) {
-                  overallFeedback = await res.json();
-                }
-              } catch (e) {
-                console.error("Overall feedback error", e);
-              }
-            }
-
-            await updateDoc(docRef, { evaluations: evals, totalScore: newTotalScore, overallFeedback });
-            data.evaluations = evals;
-            data.totalScore = newTotalScore;
-            data.overallFeedback = overallFeedback;
-            setEvaluating(false);
-          } else if (!data.overallFeedback && !evaluating) {
-            setEvaluating(true);
-            try {
-              const res = await fetch('/api/generate-overall-feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ test: data })
-              });
-              if (res.ok) {
-                const overallFeedback = await res.json();
-                await updateDoc(docRef, { overallFeedback });
-                data.overallFeedback = overallFeedback;
-              }
-            } catch (e) {
-              console.error("Overall feedback error", e);
-            }
+          if (!isCancelled) {
+            setTest(data);
+            setLoading(false);
             setEvaluating(false);
           }
-          
-          setTest({ ...data, id: snap.id });
+          return;
+        }
+
+        // Test has not been evaluated yet (e.g., accessed immediately or evaluation was pending)
+        if (!isCancelled) {
+          setEvaluating(true);
+          setEvalProgress({ message: 'Grading descriptive answers with RBI Grade B rubrics...', percent: 25 });
+        }
+
+        const evaluatedData = await evaluateAndPersistTest(
+          testId,
+          data,
+          user.uid,
+          (message, percent) => {
+            if (!isCancelled) {
+              setEvalProgress({ message, percent: percent || 50 });
+            }
+          }
+        );
+
+        if (!isCancelled) {
+          setTest(evaluatedData);
+          setEvaluating(false);
+          setLoading(false);
         }
       } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+        console.error("Error loading/evaluating test:", err);
+        if (!isCancelled) {
+          setEvaluating(false);
+          setLoading(false);
+        }
       }
     };
-    
-    fetchAndEvaluate();
-  }, [testId]);
+
+    loadOrEvaluate();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [testId, user.uid]);
 
   if (loading || evaluating) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-5">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 px-4">
         <div className="relative">
           <div className="w-16 h-16 rounded-3xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378] shadow-[0_0_30px_rgba(245,158,11,0.25)]">
             <Loader2 className="w-8 h-8 animate-spin" />
           </div>
           <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 opacity-20 blur-lg animate-pulse" />
         </div>
-        <div className="text-center space-y-1.5">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            {evaluating ? 'AI Evaluation in Progress' : 'Synthesizing Results...'}
+        <div className="text-center space-y-2 max-w-md">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+            {evaluating ? 'Grading & Storing Results' : 'Loading Results...'}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-            {evaluating 
-              ? 'Gemini is rigorously grading your descriptive answers against RBI Grade B rubrics...' 
-              : 'Compiling your score breakdown and performance analytics...'}
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {evalProgress.message}
           </p>
+          {evaluating && (
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-4">
+              <div 
+                className="bg-[#9A7D3C] h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${evalProgress.percent}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );

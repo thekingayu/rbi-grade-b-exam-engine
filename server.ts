@@ -85,6 +85,21 @@ Schema for output:
   }
 });
 
+function safeJsonParse(text: string): any {
+  if (!text) return {};
+  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+    }
+    return {};
+  }
+}
+
 app.post('/api/evaluate-descriptive', async (req, res) => {
   try {
     const { question, userAnswer } = req.body;
@@ -128,8 +143,27 @@ Output JSON schema:
     });
 
     if (!response.text) throw new Error("No response from Gemini");
-    const jsonStr = response.text.replace(/^```json\n?/, '').replace(/```$/, '');
-    res.json(JSON.parse(jsonStr));
+    const raw = safeJsonParse(response.text);
+    const maxMarks = typeof question.maxMarks === 'number' && question.maxMarks > 0 ? question.maxMarks : 15;
+    const totalScore = typeof raw.totalScore === 'number' && !isNaN(raw.totalScore)
+      ? Math.max(0, Math.min(maxMarks, Number(raw.totalScore.toFixed(2))))
+      : 0;
+    const scoreBreakdown = raw.scoreBreakdown && typeof raw.scoreBreakdown === 'object' && Object.keys(raw.scoreBreakdown).length > 0
+      ? raw.scoreBreakdown
+      : { "Content Evaluation": totalScore };
+    const feedbackPoints = Array.isArray(raw.feedbackPoints) && raw.feedbackPoints.length > 0
+      ? raw.feedbackPoints.map((p: any) => String(p))
+      : ["Answer evaluated against model answer."];
+    const suggestions = Array.isArray(raw.suggestions) && raw.suggestions.length > 0
+      ? raw.suggestions.map((s: any) => String(s))
+      : ["Practice structuring introductions and point-wise conclusions."];
+
+    res.json({
+      totalScore,
+      scoreBreakdown,
+      feedbackPoints,
+      suggestions
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: String(error) });
@@ -183,8 +217,22 @@ Output strict JSON schema:
     });
 
     if (!response.text) throw new Error("No response from Gemini");
-    const jsonStr = response.text.replace(/^```json\n?/, '').replace(/```$/, '');
-    res.json(JSON.parse(jsonStr));
+    const raw = safeJsonParse(response.text);
+    const strengths = Array.isArray(raw.strengths) && raw.strengths.length > 0
+      ? raw.strengths.map((s: any) => String(s))
+      : ["Completed timed exam attempt across question sections."];
+    const weaknesses = Array.isArray(raw.weaknesses) && raw.weaknesses.length > 0
+      ? raw.weaknesses.map((w: any) => String(w))
+      : ["Review questions where marks were lost and practice speed."];
+    const nextSteps = Array.isArray(raw.nextSteps) && raw.nextSteps.length > 0
+      ? raw.nextSteps.map((n: any) => String(n))
+      : ["Revise topic notes thoroughly and practice more mock exams."];
+
+    res.json({
+      strengths,
+      weaknesses,
+      nextSteps
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: String(error) });
