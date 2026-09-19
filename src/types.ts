@@ -51,6 +51,12 @@ export interface TestAttempt {
     scoreBreakdown: Record<string, number>;
     feedbackPoints: string[];
     suggestions: string[];
+    evaluationSummary?: string;
+    keyStrengths?: string[];
+    criticalGaps?: string[];
+    topperInsights?: string[];
+    isFailed?: boolean;
+    needsReeval?: boolean;
   }>;
   overallFeedback?: {
     strengths: string[];

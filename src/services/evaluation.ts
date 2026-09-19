@@ -9,9 +9,54 @@ export interface EvaluationProgressCallback {
 }
 
 /**
+ * Checks if a question has a genuine, completed evaluation (not a placeholder or error)
+ */
+export function isDescriptiveEvaluationValid(evalEntry: any): boolean {
+  if (!evalEntry || typeof evalEntry.totalScore !== 'number') return false;
+  if (evalEntry.isFailed || evalEntry.needsReeval) return false;
+  if (evalEntry.scoreBreakdown && (evalEntry.scoreBreakdown['Submission Logged'] !== undefined || evalEntry.scoreBreakdown['Evaluation Pending'] !== undefined)) {
+    return false;
+  }
+  if (Array.isArray(evalEntry.feedbackPoints) && evalEntry.feedbackPoints.some((p: string) => 
+    p.includes('recorded for manual review') || p.includes('Evaluation failed') || p.includes('temporary service timeout')
+  )) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Helper to call evaluate-descriptive with retries
+ */
+async function callEvaluateDescriptiveWithRetry(question: Question, userAnswer: string, maxAttempts = 3): Promise<any> {
+  let lastErr: any = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch('/api/evaluate-descriptive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, userAnswer })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+      throw new Error(`Server returned status ${res.status}`);
+    } catch (err: any) {
+      lastErr = err;
+      console.warn(`Descriptive evaluation attempt ${attempt} failed:`, err?.message || err);
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+    }
+  }
+  throw lastErr || new Error('Evaluation failed after retries');
+}
+
+/**
  * Evaluates all question responses for a test attempt and permanently stores the complete
- * results in Firestore, marking `isEvaluated: true`. Once this completes, opening past tests
- * will never re-trigger evaluations.
+ * results in Firestore, marking `isEvaluated: true`.
  */
 export async function evaluateAndPersistTest(
   testId: string,
@@ -74,6 +119,7 @@ export async function evaluateAndPersistTest(
   let totalDescScore = 0;
   let descStaticScore = 0;
   let descDynamicScore = 0;
+  let allDescriptiveSucceeded = true;
 
   let descProgressCount = 0;
   for (let i = 0; i < evaluatedQuestions.length; i++) {
@@ -83,10 +129,10 @@ export async function evaluateAndPersistTest(
     const qId = q.id || i.toString();
     descProgressCount++;
     const progressPct = 20 + Math.round((descProgressCount / Math.max(1, descQuestions.length)) * 50);
-    onProgress?.(`Evaluating descriptive answer ${descProgressCount} of ${descQuestions.length}...`, progressPct);
+    onProgress?.(`Evaluating descriptive answer ${descProgressCount} of ${descQuestions.length} (RBI Grade B Standard)...`, progressPct);
 
-    // If already evaluated previously and has valid score, preserve it
-    if (evals[qId] && typeof evals[qId].totalScore === 'number') {
+    // If already evaluated with valid genuine evaluation, preserve it
+    if (isDescriptiveEvaluationValid(evals[qId])) {
       const score = Number(evals[qId].totalScore.toFixed(2));
       q.score = score;
       totalDescScore += score;
@@ -98,36 +144,33 @@ export async function evaluateAndPersistTest(
     // If user provided an answer, evaluate with AI
     if (q.userAnswer && q.userAnswer.trim() !== '') {
       try {
-        const res = await fetch('/api/evaluate-descriptive', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q, userAnswer: q.userAnswer })
-        });
-
-        if (res.ok) {
-          const evalData = await res.json();
-          const score = typeof evalData.totalScore === 'number' ? Number(evalData.totalScore.toFixed(2)) : 0;
-          evals[qId] = {
-            totalScore: score,
-            scoreBreakdown: evalData.scoreBreakdown || { "Content Coverage": score },
-            feedbackPoints: Array.isArray(evalData.feedbackPoints) ? evalData.feedbackPoints : ["Answer evaluated."],
-            suggestions: Array.isArray(evalData.suggestions) ? evalData.suggestions : ["Structure response with headings."]
-          };
-          q.score = score;
-          totalDescScore += score;
-          if (q.sourceTag === 'Static') descStaticScore += score;
-          else descDynamicScore += score;
-        } else {
-          throw new Error(`Server returned ${res.status}`);
-        }
+        const evalData = await callEvaluateDescriptiveWithRetry(q, q.userAnswer, 3);
+        const score = typeof evalData.totalScore === 'number' ? Number(evalData.totalScore.toFixed(2)) : 0;
+        
+        evals[qId] = {
+          totalScore: score,
+          evaluationSummary: evalData.evaluationSummary,
+          scoreBreakdown: evalData.scoreBreakdown || { "Content Coverage": score },
+          keyStrengths: evalData.keyStrengths || [],
+          criticalGaps: evalData.criticalGaps || [],
+          topperInsights: evalData.topperInsights || [],
+          feedbackPoints: Array.isArray(evalData.feedbackPoints) ? evalData.feedbackPoints : ["Answer evaluated against model answer."],
+          suggestions: Array.isArray(evalData.suggestions) ? evalData.suggestions : ["Structure response with headings and citations."]
+        };
+        q.score = score;
+        totalDescScore += score;
+        if (q.sourceTag === 'Static') descStaticScore += score;
+        else descDynamicScore += score;
       } catch (e) {
-        console.error(`Evaluation failed for question ${qId}`, e);
-        // Resilient fallback evaluation
+        console.error(`Evaluation failed for descriptive question ${qId}`, e);
+        allDescriptiveSucceeded = false;
         evals[qId] = {
           totalScore: 0,
-          scoreBreakdown: { "Submission Logged": 0 },
-          feedbackPoints: ["Response was recorded for manual review."],
-          suggestions: ["Ensure standard structure and complete coverage of prompt topics."]
+          needsReeval: true,
+          isFailed: true,
+          scoreBreakdown: { "Evaluation Pending": 0 },
+          feedbackPoints: ["Evaluation encountered a temporary service timeout. Click 'Re-Grade Answer' to evaluate."],
+          suggestions: ["Ensure continuous network connection and click to re-evaluate."]
         };
         q.score = 0;
       }
@@ -144,7 +187,7 @@ export async function evaluateAndPersistTest(
   }
 
   // 3. Overall feedback generation
-  onProgress?.('Generating overall performance analysis & actionable steps...', 85);
+  onProgress?.('Synthesizing overall performance analysis & actionable steps...', 85);
   let overallFeedback = testData.overallFeedback;
   if (!overallFeedback || !Array.isArray(overallFeedback.strengths) || overallFeedback.strengths.length === 0) {
     try {
@@ -192,7 +235,7 @@ export async function evaluateAndPersistTest(
   const persistencePayload = sanitizeForFirestore({
     userId,
     status: 'completed' as const,
-    isEvaluated: true,
+    isEvaluated: allDescriptiveSucceeded, // Only mark fully evaluated if all completed
     evaluatedAt: Date.now(),
     submittedAt: testData.submittedAt || Date.now(),
     questions: evaluatedQuestions,
@@ -211,6 +254,98 @@ export async function evaluateAndPersistTest(
     ...testData,
     ...persistencePayload,
     status: 'completed',
+    id: testId
+  };
+}
+
+/**
+ * Re-evaluates a single descriptive question and updates the test record in Firestore
+ */
+export async function evaluateSingleDescriptiveQuestion(
+  testId: string,
+  testData: TestAttempt,
+  questionId: string,
+  userId: string
+): Promise<TestAttempt> {
+  const qIndex = (testData.questions || []).findIndex((q, idx) => (q.id || idx.toString()) === questionId);
+  if (qIndex === -1) throw new Error('Question not found in test attempt');
+
+  const question = testData.questions[qIndex];
+  const userAns = question.userAnswer || testData.answers?.[questionId] || testData.answers?.[qIndex.toString()] || '';
+
+  if (!userAns || userAns.trim() === '') {
+    throw new Error('No answer submitted for this question');
+  }
+
+  const evalData = await callEvaluateDescriptiveWithRetry(question, userAns, 3);
+  const score = typeof evalData.totalScore === 'number' ? Number(evalData.totalScore.toFixed(2)) : 0;
+
+  const updatedEvals = {
+    ...(testData.evaluations || {}),
+    [questionId]: {
+      totalScore: score,
+      evaluationSummary: evalData.evaluationSummary,
+      scoreBreakdown: evalData.scoreBreakdown || { "Content Coverage": score },
+      keyStrengths: evalData.keyStrengths || [],
+      criticalGaps: evalData.criticalGaps || [],
+      topperInsights: evalData.topperInsights || [],
+      feedbackPoints: Array.isArray(evalData.feedbackPoints) ? evalData.feedbackPoints : ["Answer evaluated against model answer."],
+      suggestions: Array.isArray(evalData.suggestions) ? evalData.suggestions : ["Structure response with headings and citations."]
+    }
+  };
+
+  const updatedQuestions = testData.questions.map((q, idx) => {
+    if ((q.id || idx.toString()) === questionId) {
+      return { ...q, score };
+    }
+    return q;
+  });
+
+  // Recalculate totals
+  let totalMcq = 0;
+  let totalDesc = 0;
+  let mcqStatic = 0;
+  let mcqDynamic = 0;
+  let descStatic = 0;
+  let descDynamic = 0;
+
+  for (let i = 0; i < updatedQuestions.length; i++) {
+    const q = updatedQuestions[i];
+    const qScore = typeof q.score === 'number' ? q.score : 0;
+    if (q.type === 'MCQ') {
+      totalMcq += qScore;
+      if (q.sourceTag === 'Static') mcqStatic += qScore;
+      else mcqDynamic += qScore;
+    } else {
+      totalDesc += qScore;
+      if (q.sourceTag === 'Static') descStatic += qScore;
+      else descDynamic += qScore;
+    }
+  }
+
+  const newTotalScore = Number((totalMcq + totalDesc).toFixed(2));
+  const newSectionScores = {
+    mcqStatic: Number(mcqStatic.toFixed(2)),
+    mcqDynamic: Number(mcqDynamic.toFixed(2)),
+    descStatic: Number(descStatic.toFixed(2)),
+    descDynamic: Number(descDynamic.toFixed(2))
+  };
+
+  const docRef = doc(db, 'tests', testId);
+  const payload = sanitizeForFirestore({
+    userId,
+    isEvaluated: true,
+    questions: updatedQuestions,
+    evaluations: updatedEvals,
+    totalScore: newTotalScore,
+    sectionScores: newSectionScores
+  });
+
+  await updateDoc(docRef, payload);
+
+  return {
+    ...testData,
+    ...payload,
     id: testId
   };
 }

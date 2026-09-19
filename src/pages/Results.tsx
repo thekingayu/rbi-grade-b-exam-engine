@@ -8,7 +8,7 @@ import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Loader2, Sparkles, Award,
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
-import { evaluateAndPersistTest } from '../services/evaluation';
+import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -17,6 +17,8 @@ export function Results({ user }: { user: User }) {
   const [evaluating, setEvaluating] = useState(false);
   const [evalProgress, setEvalProgress] = useState({ message: 'Loading results...', percent: 10 });
   const [activeTab, setActiveTab] = useState<'summary' | 'mcq' | 'descriptive' | 'feedback'>('summary');
+  const [reEvaluatingQId, setReEvaluatingQId] = useState<string | null>(null);
+  const [reEvaluatingAll, setReEvaluatingAll] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -38,14 +40,22 @@ export function Results({ user }: { user: User }) {
 
         const data = { ...snap.data(), id: snap.id } as TestAttempt;
 
-        // Check if the test is already evaluated
+        // Check if any descriptive answer is missing genuine evaluation
+        const pendingDescQuestions = (data.questions || []).filter((q, idx) => {
+          if (q.type !== 'Descriptive') return false;
+          const ans = q.userAnswer || data.answers?.[q.id || idx.toString()] || data.answers?.[idx.toString()];
+          if (!ans || ans.trim() === '') return false; // unattempted
+          const qId = q.id || idx.toString();
+          const ev = data.evaluations?.[qId];
+          return !isDescriptiveEvaluationValid(ev);
+        });
+
         const hasEvals = !!data.evaluations && Object.keys(data.evaluations).length > 0;
         const hasFeedback = !!data.overallFeedback && Array.isArray(data.overallFeedback.strengths) && data.overallFeedback.strengths.length > 0;
-        const isCompletedAndEvaluated = data.isEvaluated === true || (hasEvals && hasFeedback);
+        const isCompletedAndEvaluated = (data.isEvaluated === true && pendingDescQuestions.length === 0) || (hasEvals && hasFeedback && pendingDescQuestions.length === 0);
 
         if (isCompletedAndEvaluated) {
-          // This test's evaluation is already stored in the database!
-          // If legacy document was missing isEvaluated flag, backfill it silently
+          // This test's evaluation is already stored in the database and complete!
           if (!data.isEvaluated) {
             updateDoc(docRef, { isEvaluated: true, userId: user.uid }).catch(() => {});
           }
@@ -58,7 +68,7 @@ export function Results({ user }: { user: User }) {
           return;
         }
 
-        // Test has not been evaluated yet (e.g., accessed immediately or evaluation was pending)
+        // Test has not been evaluated or has pending descriptive questions
         if (!isCancelled) {
           setEvaluating(true);
           setEvalProgress({ message: 'Grading descriptive answers with RBI Grade B rubrics...', percent: 25 });
@@ -95,6 +105,49 @@ export function Results({ user }: { user: User }) {
       isCancelled = true;
     };
   }, [testId, user.uid]);
+
+  const handleReEvaluateQuestion = async (qId: string) => {
+    if (!test || !testId || reEvaluatingQId) return;
+    try {
+      setReEvaluatingQId(qId);
+      const updated = await evaluateSingleDescriptiveQuestion(testId, test, qId, user.uid);
+      setTest(updated);
+    } catch (err) {
+      console.error("Failed to re-evaluate question:", err);
+    } finally {
+      setReEvaluatingQId(null);
+    }
+  };
+
+  const handleReEvaluateAllDescriptive = async () => {
+    if (!test || !testId || reEvaluatingAll) return;
+    try {
+      setReEvaluatingAll(true);
+      setEvaluating(true);
+      setEvalProgress({ message: 'Re-evaluating all descriptive answers against RBI Grade B standards...', percent: 20 });
+      
+      // Clear descriptive evaluations to force full recalculation
+      const clearedTest = {
+        ...test,
+        evaluations: Object.fromEntries(
+          Object.entries(test.evaluations || {}).filter(([k]) => {
+            const q = test.questions.find((quest, i) => (quest.id || i.toString()) === k);
+            return q && q.type !== 'Descriptive';
+          })
+        )
+      };
+
+      const updated = await evaluateAndPersistTest(testId, clearedTest, user.uid, (message, percent) => {
+        setEvalProgress({ message, percent: percent || 50 });
+      });
+      setTest(updated);
+    } catch (err) {
+      console.error("Failed to re-evaluate all descriptive answers:", err);
+    } finally {
+      setReEvaluatingAll(false);
+      setEvaluating(false);
+    }
+  };
 
   if (loading || evaluating) {
     return (
@@ -524,70 +577,253 @@ export function Results({ user }: { user: User }) {
           {/* Descriptive Tab Evaluation */}
           {activeTab === 'descriptive' && (
             <div className="space-y-8">
+              {/* Header Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-100/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10">
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Award className="w-4 h-4 text-[#9A7D3C] dark:text-[#E5C378]" />
+                    RBI Grade B Phase II Descriptive Evaluation
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Evaluated against central banking rigor, statutory grounding, regulatory circulars, and multi-dimensional analysis.
+                  </p>
+                </div>
+                <button
+                  onClick={handleReEvaluateAllDescriptive}
+                  disabled={reEvaluatingAll || !!reEvaluatingQId}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 text-white font-bold text-xs shadow-sm hover:opacity-95 disabled:opacity-50 transition-all shrink-0 cursor-pointer"
+                >
+                  {reEvaluatingAll ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Re-evaluating All Answers...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>⚡ Re-Grade All (RBI Standard)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               {descQuestions.map((q, i) => {
                 const qId = q.id || (test.questions.indexOf(q)).toString();
                 const evalData = test.evaluations?.[qId];
+                const userAns = q.userAnswer || test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()];
+                const hasUserAns = !!(userAns && userAns.trim() !== '');
+                const isValidEval = isDescriptiveEvaluationValid(evalData);
+                const isCurrentlyReevaluating = reEvaluatingQId === qId;
                 
                 return (
                   <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(0,0,0,0.5)]">
-                    <div className="mb-4">
-                      <span className="px-3 py-1 bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 text-xs font-mono font-bold rounded-full">
-                        {q.sourceTag} DESCRIPTIVE
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 text-xs font-mono font-bold rounded-full">
+                          {q.sourceTag} DESCRIPTIVE
+                        </span>
+                        {q.wordLimit && (
+                          <span className="px-2.5 py-0.5 bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-mono rounded-full">
+                            Word Limit: {q.wordLimit}
+                          </span>
+                        )}
+                      </div>
+
+                      {hasUserAns && (
+                        <button
+                          onClick={() => handleReEvaluateQuestion(qId)}
+                          disabled={isCurrentlyReevaluating || reEvaluatingAll}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/30 text-xs font-bold font-mono transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          {isCurrentlyReevaluating ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Evaluating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>{isValidEval ? 'Re-Grade Answer' : '⚡ Grade Answer Now'}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                     
                     <p className="text-slate-900 dark:text-white font-medium mb-6 text-sm sm:text-base leading-relaxed">
                       {q.text}
                     </p>
+
+                    {/* Pending Evaluation Warning Banner if answer exists but evaluation was interrupted */}
+                    {hasUserAns && !isValidEval && (
+                      <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300">
+                              Answer Awaiting RBI Grade B Evaluation
+                            </p>
+                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                              This answer was recorded but not fully scored. Click to calculate the score and feedback immediately.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleReEvaluateQuestion(qId)}
+                          disabled={isCurrentlyReevaluating}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer disabled:opacity-50"
+                        >
+                          {isCurrentlyReevaluating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                          Grade This Answer Now
+                        </button>
+                      </div>
+                    )}
                     
                     <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
                       {/* Your Answer Column */}
                       <div className="space-y-3">
-                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Your Submitted Answer</h4>
-                        <div className="p-4 bg-white/60 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm h-80 overflow-y-auto leading-relaxed shadow-inner">
-                          {q.userAnswer || <span className="italic text-slate-400">No answer provided.</span>}
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            Your Submitted Answer
+                          </h4>
+                          {userAns && (
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                              {userAns.trim().split(/\s+/).filter(Boolean).length} words
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4 bg-white/60 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed shadow-inner">
+                          {userAns || <span className="italic text-slate-400">No answer provided.</span>}
                         </div>
                       </div>
                       
                       {/* AI Evaluation Column */}
-                      <div className="space-y-6">
+                      <div className="space-y-5">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
-                          <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">AI Grading Rubric</h4>
-                          <span className="font-mono font-bold text-lg text-[#9A7D3C] dark:text-[#E5C378]">
+                          <div>
+                            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                              RBI Grade B Evaluator Report
+                            </h4>
+                            <span className="text-[11px] text-slate-400">
+                              Official Phase II Examination Standard
+                            </span>
+                          </div>
+                          <span className="font-mono font-bold text-xl text-[#9A7D3C] dark:text-[#E5C378]">
                             {evalData?.totalScore || 0} <span className="text-sm text-slate-400 font-normal">/ {q.maxMarks} Marks</span>
                           </span>
                         </div>
                         
                         {evalData && (
-                          <div className="space-y-4">
-                            {Object.entries(evalData.scoreBreakdown || {}).map(([criterion, score], idx) => {
-                              const maxForCrit = q.markingScheme?.[criterion] || 5;
-                              return (
-                                <div key={idx}>
-                                  <div className="flex justify-between items-center text-xs sm:text-sm mb-1.5">
-                                    <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-white">{score as number}/{maxForCrit}</span>
-                                  </div>
-                                  <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full shadow-[0_0_8px_rgba(245,158,11,0.4)]" style={{ width: `${maxForCrit > 0 ? ((score as number) / maxForCrit) * 100 : 0}%` }}></div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                          <div className="space-y-5 h-96 overflow-y-auto pr-1">
+                            {/* Executive Summary */}
+                            {evalData.evaluationSummary && (
+                              <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                                <span className="font-bold text-amber-700 dark:text-[#E5C378] block mb-1">
+                                  Examiner Assessment:
+                                </span>
+                                {evalData.evaluationSummary}
+                              </div>
+                            )}
 
-                            <div className="pt-4 border-t border-slate-200/60 dark:border-white/10 mt-6">
-                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-amber-500" /> Areas for Improvement
+                            {/* Rubric Breakdown */}
+                            <div className="space-y-3">
+                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Dimensional Rubric Breakdown
                               </h5>
-                              <ul className="space-y-2">
-                                {evalData.feedbackPoints?.map((pt: string, idx: number) => (
-                                  <li key={idx} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                                    <span className="text-amber-500 shrink-0">•</span>
-                                    <span>{pt}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                              {Object.entries(evalData.scoreBreakdown || {}).map(([criterion, score], idx) => {
+                                const maxForCrit = q.markingScheme?.[criterion] || Number((q.maxMarks / Math.max(1, Object.keys(evalData.scoreBreakdown || {}).length)).toFixed(1));
+                                const numScore = typeof score === 'number' ? score : Number(score) || 0;
+                                const pct = maxForCrit > 0 ? Math.min(100, Math.round((numScore / maxForCrit) * 100)) : 0;
+                                return (
+                                  <div key={idx}>
+                                    <div className="flex justify-between items-center text-xs mb-1">
+                                      <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
+                                      <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+                                      <div 
+                                        className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full transition-all duration-500" 
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
+
+                            {/* Key Conceptual Strengths */}
+                            {Array.isArray(evalData.keyStrengths) && evalData.keyStrengths.length > 0 && (
+                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
+                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Key Conceptual Strengths
+                                </h5>
+                                <ul className="space-y-1.5">
+                                  {evalData.keyStrengths.map((st: string, idx: number) => (
+                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      <span className="text-emerald-500 shrink-0">✓</span>
+                                      <span>{st}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Critical Gaps & Omissions */}
+                            {Array.isArray(evalData.criticalGaps) && evalData.criticalGaps.length > 0 && (
+                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
+                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-1.5">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Critical Regulatory & Conceptual Omissions
+                                </h5>
+                                <ul className="space-y-1.5">
+                                  {evalData.criticalGaps.map((gap: string, idx: number) => (
+                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      <span className="text-rose-500 shrink-0">✕</span>
+                                      <span>{gap}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* RBI Topper Insights */}
+                            {Array.isArray(evalData.topperInsights) && evalData.topperInsights.length > 0 && (
+                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
+                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                                  <Target className="w-3.5 h-3.5 text-[#9A7D3C]" /> RBI Grade B Topper Points
+                                </h5>
+                                <ul className="space-y-1.5">
+                                  {evalData.topperInsights.map((pt: string, idx: number) => (
+                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      <span className="text-[#9A7D3C] shrink-0">★</span>
+                                      <span>{pt}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Feedback & Suggestions */}
+                            {Array.isArray(evalData.feedbackPoints) && evalData.feedbackPoints.length > 0 && (
+                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
+                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" /> Actionable Writing Feedback
+                                </h5>
+                                <ul className="space-y-1.5">
+                                  {evalData.feedbackPoints.map((pt: string, idx: number) => (
+                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      <span className="text-amber-500 shrink-0">•</span>
+                                      <span>{pt}</span>
+                                    </li>
+                                  ))}
+                                  {evalData.suggestions?.map((sug: string, idx: number) => (
+                                    <li key={`sug-${idx}`} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      <span className="text-blue-500 shrink-0">→</span>
+                                      <span>{sug}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -597,7 +833,7 @@ export function Results({ user }: { user: User }) {
                     {q.modelAnswer && (
                       <div className="mt-8 pt-6 border-t border-slate-200/60 dark:border-white/10">
                         <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer (RBI Grade B Phase II Benchmark)
                         </h4>
                         <div className="p-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/25 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed shadow-xs">
                           {q.modelAnswer}
@@ -605,7 +841,7 @@ export function Results({ user }: { user: User }) {
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           )}
