@@ -239,25 +239,34 @@ app.post('/api/evaluate-descriptive', async (req, res) => {
     const maxMarks = typeof question.maxMarks === 'number' && question.maxMarks > 0 ? question.maxMarks : 15;
     const wordLimit = question.wordLimit || (maxMarks === 10 ? 400 : 600);
 
+    // Determine target dimension keys and max values from question.markingScheme if present
+    const defaultScheme = maxMarks === 10 
+      ? { "Content Coverage": 4, "Structure": 3, "Language": 3 }
+      : { "Content Coverage": 6, "Analytical Depth": 4, "Structure": 3, "Language": 2 };
+    
+    const effectiveScheme = (question.markingScheme && typeof question.markingScheme === 'object' && Object.keys(question.markingScheme).length > 0)
+      ? question.markingScheme
+      : defaultScheme;
+
     const prompt = `You are the Chief Examiner and Senior Evaluator for the Reserve Bank of India (RBI) Grade B (Phase II) Examination for Economic & Social Issues (ESI) and Finance & Management (FM).
-Evaluate the candidate's descriptive answer with the highest standards of central banking rigor, analytical depth, and institutional accuracy.
+Evaluate the candidate's descriptive answer with the highest standards of central banking rigor, analytical depth, statutory grounding, and institutional accuracy.
 
-EVALUATION BENCHMARK & SCORING PHILOSOPHY:
-1. RBI Grade B standards are rigorous and academic.
-   - An answer that is merely a brief definition or superficial list without deep economic/regulatory implications must receive low marks (e.g. 15-35% of max marks).
-   - An average answer with correct definitions and basic points but missing institutional depth, RBI circulars/committees, or systemic risk analysis receives 40-55% marks.
-   - A strong answer demonstrating multi-dimensional analysis, institutional context (RBI circulars, committees, empirical data), balanced trade-offs, and structured presentation receives 60-75% marks.
-   - Outstanding answers with deep central banking insight receive 75-85% marks. Marks above 85% are reserved for publication-grade mastery.
+EXAMINATION BENCHMARK & RIGOR (RBI GRADE B & BEYOND):
+1. Scoring Philosophy:
+   - RBI Grade B is an elite, highly selective examination. Do not give inflated marks.
+   - An answer that merely regurgitates high-school definitions or vague generic points without statutory references (e.g., RBI Act 1934, Banking Regulation Act 1949, FEMA, IBC, Basel III) or concrete monetary mechanics must score low (20-40% of max marks).
+   - An average answer that lists basic textbook points but lacks real-world banking context, transmission channels, or recent RBI circulars/committees receives 45-55% marks.
+   - A strong answer demonstrating multi-dimensional analysis (statutory authority, balance sheet impact, transmission channels, trade-offs, and systemic implications) receives 60-75% marks.
+   - 75%+ marks are strictly reserved for answers that match or exceed topper quality with precise regulatory grounding, empirical awareness, and a structured policy way forward.
 
-2. Four-Pillar RBI Grade B Rubric (Total max marks = ${maxMarks}):
-   - Dimension 1: "Conceptual Grounding & Definition" (Weight approx 20-25%)
-   - Dimension 2: "Analytical Depth & Impact on Banking System" (Weight approx 30-35%)
-   - Dimension 3: "Regulatory, Policy & Real-world Grounding" (Weight approx 25%)
-   - Dimension 4: "Structure, Critical Balance & Policy Way Forward" (Weight approx 15-20%)
+2. Dimensions & Marking Scheme:
+   You MUST evaluate the answer against these exact criteria and maximum marks:
+   ${JSON.stringify(effectiveScheme, null, 2)}
+   Ensure each criterion's score in "scoreBreakdown" is realistic and does NOT exceed its allocated maximum marks. The sum of these dimension scores must equal "totalScore".
 
 3. Word Count & Completeness Discipline:
    - Target word limit is ${wordLimit} words.
-   - If the candidate's answer is severely truncated or leaves out major parts of the prompt (such as omitting financial inclusion or banking disintermediation), penalize proportionally.
+   - Evaluate whether all sub-parts and core analytical demands of the question are addressed. Penalize omitted dimensions or severe brevity.
 
 Question:
 "${question.text}"
@@ -269,44 +278,34 @@ ${userAnswer}
 
 Benchmark Model Answer for Reference:
 """
-${question.modelAnswer || "Ideal response covering definitions, monetary policy transmission, banking disintermediation, financial inclusion mechanisms, and regulatory roadmap."}
+${question.modelAnswer || "Comprehensive model answer with definitions, statutory sections, transmission channels, banking impacts, and forward-looking policy outlook."}
 """
-
-Marking Scheme Reference:
-${JSON.stringify(question.markingScheme || {})}
-
-Max Marks: ${maxMarks}
-Target Word Limit: ${wordLimit}
 
 Output valid JSON matching this exact schema:
 {
-  "totalScore": 8.5, // Realistic number out of ${maxMarks}
-  "evaluationSummary": "Comprehensive 2-3 sentence executive review assessing the candidate's performance against RBI Grade B Phase II standards.",
-  "scoreBreakdown": {
-    "Conceptual Grounding & Definition": 2.5,
-    "Analytical Depth & Impact": 3.0,
-    "Regulatory & Policy Grounding": 1.5,
-    "Structure & Policy Way Forward": 1.5
-  },
+  "totalScore": 7.5, // Number out of ${maxMarks} (sum of criteria scores)
+  "evaluationSummary": "Concise 2-3 sentence executive summary assessing the answer against RBI Grade B Phase II standards.",
+  "scoreBreakdown": ${JSON.stringify(Object.fromEntries(Object.entries(effectiveScheme).map(([k, v]) => [k, Number(((v as number) * 0.7).toFixed(1))])))} ,
   "keyStrengths": [
-    "Specific strength demonstrated in the response",
-    "Another accurate concept or definition cited"
+    "Identified key concepts and definitions accurately",
+    "Grounded discussion in appropriate central banking context"
   ],
   "criticalGaps": [
-    "Specific concept, committee, circular, or analytical dimension omitted",
-    "Unaddressed trade-off or systemic risk"
+    "Specific statutory section, circular, or transmission channel omitted",
+    "Unaddressed systemic risk or policy trade-off"
   ],
   "topperInsights": [
-    "High-scoring central banking concept, circular, or committee to cite",
-    "Empirical data point or international comparison (e.g. BIS, Project Nexus)"
+    "High-yield RBI committee report or policy document to cite (e.g. FSR, Annual Report, Currency & Finance Report)",
+    "Empirical banking metric or international regulatory benchmark (e.g. BIS/Basel III)"
   ],
   "feedbackPoints": [
-    "Concrete observation on content depth",
-    "Observation on structural flow and coverage"
+    "Content coverage assessment: Detail on statutory grounding (e.g. Sections of BR Act 1949 / RBI Act 1934), policy context, and completeness.",
+    "Structure assessment: Observations on logical flow, headings, comparative tables vs. analytical paragraphs, and word limit discipline.",
+    "Language & terminology assessment: Precision in using technical central banking terms (e.g. NDTL, monetary transmission, LAF corridor, asset-liability matching)."
   ],
   "suggestions": [
-    "Actionable step to elevate the answer to RBI Grade B topper level",
-    "Presentation or thematic heading recommendation"
+    "Actionable recommendation to elevate the answer to RBI Grade B topper level (e.g. incorporating specific transmission channels or committee recommendations).",
+    "Structural or presentation enhancement for high-scoring impact in Phase II."
   ]
 }`;
 
@@ -317,13 +316,20 @@ Output valid JSON matching this exact schema:
       ? Math.max(0, Math.min(maxMarks, Number(raw.totalScore.toFixed(2))))
       : 0;
 
-    const scoreBreakdown = raw.scoreBreakdown && typeof raw.scoreBreakdown === 'object' && Object.keys(raw.scoreBreakdown).length > 0
-      ? raw.scoreBreakdown
-      : {
-          "Conceptual Grounding": Number((totalScore * 0.3).toFixed(1)),
-          "Analytical Depth": Number((totalScore * 0.4).toFixed(1)),
-          "Regulatory Context": Number((totalScore * 0.3).toFixed(1))
-        };
+    const scoreBreakdown: Record<string, number> = {};
+    if (raw.scoreBreakdown && typeof raw.scoreBreakdown === 'object') {
+      for (const [key, maxVal] of Object.entries(effectiveScheme)) {
+        const val = raw.scoreBreakdown[key];
+        const numVal = typeof val === 'number' && !isNaN(val) ? val : Number(val);
+        const maxNum = typeof maxVal === 'number' ? maxVal : Number(maxVal) || 1;
+        scoreBreakdown[key] = !isNaN(numVal) ? Math.max(0, Math.min(maxNum, Number(numVal.toFixed(1)))) : Number((maxNum * 0.5).toFixed(1));
+      }
+    } else {
+      for (const [key, maxVal] of Object.entries(effectiveScheme)) {
+        const maxNum = typeof maxVal === 'number' ? maxVal : Number(maxVal) || 1;
+        scoreBreakdown[key] = Number((maxNum * (totalScore / maxMarks)).toFixed(1));
+      }
+    }
 
     const evaluationSummary = raw.evaluationSummary || 
       `The answer was evaluated against RBI Grade B Phase II standards, scoring ${totalScore} out of ${maxMarks} marks.`;
@@ -342,11 +348,18 @@ Output valid JSON matching this exact schema:
 
     const feedbackPoints = Array.isArray(raw.feedbackPoints) && raw.feedbackPoints.length > 0
       ? raw.feedbackPoints.map((p: any) => String(p))
-      : ["Ensure balanced multi-dimensional coverage across all clauses of the question."];
+      : [
+          "Content coverage addresses core definitions but requires deeper statutory and regulatory grounding.",
+          "Structure is logically sound; balance descriptive analysis with concise tabular comparisons to optimize word count.",
+          "Language is professional; deepen the usage of precise central banking terminology."
+        ];
 
     const suggestions = Array.isArray(raw.suggestions) && raw.suggestions.length > 0
       ? raw.suggestions.map((s: any) => String(s))
-      : ["Structure answers with clear thematic headings and include an actionable forward-looking conclusion."];
+      : [
+          "Incorporate a deeper analysis of monetary policy transmission channels (interest rate and credit channels) affecting bank balance sheets.",
+          "Ground arguments with citations from recent RBI circulars or Financial Stability Reports (FSR) for topper-tier marks."
+        ];
 
     res.json({
       totalScore,

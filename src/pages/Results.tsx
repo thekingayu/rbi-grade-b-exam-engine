@@ -577,42 +577,11 @@ export function Results({ user }: { user: User }) {
           {/* Descriptive Tab Evaluation */}
           {activeTab === 'descriptive' && (
             <div className="space-y-8">
-              {/* Header Action Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-100/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10">
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Award className="w-4 h-4 text-[#9A7D3C] dark:text-[#E5C378]" />
-                    RBI Grade B Phase II Descriptive Evaluation
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Evaluated against central banking rigor, statutory grounding, regulatory circulars, and multi-dimensional analysis.
-                  </p>
-                </div>
-                <button
-                  onClick={handleReEvaluateAllDescriptive}
-                  disabled={reEvaluatingAll || !!reEvaluatingQId}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 text-white font-bold text-xs shadow-sm hover:opacity-95 disabled:opacity-50 transition-all shrink-0 cursor-pointer"
-                >
-                  {reEvaluatingAll ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Re-evaluating All Answers...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>⚡ Re-Grade All (RBI Standard)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
               {descQuestions.map((q, i) => {
                 const qId = q.id || (test.questions.indexOf(q)).toString();
                 const evalData = test.evaluations?.[qId];
                 const userAns = q.userAnswer || test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()];
                 const hasUserAns = !!(userAns && userAns.trim() !== '');
-                const isValidEval = isDescriptiveEvaluationValid(evalData);
                 const isCurrentlyReevaluating = reEvaluatingQId === qId;
                 
                 return (
@@ -643,7 +612,7 @@ export function Results({ user }: { user: User }) {
                           ) : (
                             <>
                               <Sparkles className="w-3.5 h-3.5" />
-                              <span>{isValidEval ? 'Re-Grade Answer' : '⚡ Grade Answer Now'}</span>
+                              <span>Re-Grade Answer</span>
                             </>
                           )}
                         </button>
@@ -653,38 +622,13 @@ export function Results({ user }: { user: User }) {
                     <p className="text-slate-900 dark:text-white font-medium mb-6 text-sm sm:text-base leading-relaxed">
                       {q.text}
                     </p>
-
-                    {/* Pending Evaluation Warning Banner if answer exists but evaluation was interrupted */}
-                    {hasUserAns && !isValidEval && (
-                      <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-start gap-2.5">
-                          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300">
-                              Answer Awaiting RBI Grade B Evaluation
-                            </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                              This answer was recorded but not fully scored. Click to calculate the score and feedback immediately.
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleReEvaluateQuestion(qId)}
-                          disabled={isCurrentlyReevaluating}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-xs shrink-0 cursor-pointer disabled:opacity-50"
-                        >
-                          {isCurrentlyReevaluating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                          Grade This Answer Now
-                        </button>
-                      </div>
-                    )}
                     
                     <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
                       {/* Your Answer Column */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Your Submitted Answer
+                            YOUR SUBMITTED ANSWER
                           </h4>
                           {userAns && (
                             <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
@@ -702,7 +646,7 @@ export function Results({ user }: { user: User }) {
                         <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
                           <div>
                             <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                              RBI Grade B Evaluator Report
+                              RBI GRADE B EVALUATOR REPORT
                             </h4>
                             <span className="text-[11px] text-slate-400">
                               Official Phase II Examination Standard
@@ -714,116 +658,55 @@ export function Results({ user }: { user: User }) {
                         </div>
                         
                         {evalData && (
-                          <div className="space-y-5 h-96 overflow-y-auto pr-1">
-                            {/* Executive Summary */}
-                            {evalData.evaluationSummary && (
-                              <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
-                                <span className="font-bold text-amber-700 dark:text-[#E5C378] block mb-1">
-                                  Examiner Assessment:
-                                </span>
-                                {evalData.evaluationSummary}
-                              </div>
-                            )}
-
-                            {/* Rubric Breakdown */}
-                            <div className="space-y-3">
-                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Dimensional Rubric Breakdown
+                          <div className="space-y-5">
+                            {/* Dimensional Rubric Breakdown */}
+                            <div>
+                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                                DIMENSIONAL RUBRIC BREAKDOWN
                               </h5>
-                              {Object.entries(evalData.scoreBreakdown || {}).map(([criterion, score], idx) => {
-                                const maxForCrit = q.markingScheme?.[criterion] || Number((q.maxMarks / Math.max(1, Object.keys(evalData.scoreBreakdown || {}).length)).toFixed(1));
-                                const numScore = typeof score === 'number' ? score : Number(score) || 0;
-                                const pct = maxForCrit > 0 ? Math.min(100, Math.round((numScore / maxForCrit) * 100)) : 0;
-                                return (
-                                  <div key={idx}>
-                                    <div className="flex justify-between items-center text-xs mb-1">
-                                      <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
-                                      <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
+                              <div className="space-y-3">
+                                {Object.entries(evalData.scoreBreakdown || {}).map(([criterion, score], idx) => {
+                                  const maxForCrit = q.markingScheme?.[criterion] || Number((q.maxMarks / Math.max(1, Object.keys(evalData.scoreBreakdown || {}).length)).toFixed(1));
+                                  const numScore = typeof score === 'number' ? score : Number(score) || 0;
+                                  const pct = maxForCrit > 0 ? Math.min(100, Math.round((numScore / maxForCrit) * 100)) : 0;
+                                  return (
+                                    <div key={idx}>
+                                      <div className="flex justify-between items-center text-xs mb-1">
+                                        <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
+                                        <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
+                                      </div>
+                                      <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+                                        <div 
+                                          className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full transition-all duration-500" 
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
                                     </div>
-                                    <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                                      <div 
-                                        className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full transition-all duration-500" 
-                                        style={{ width: `${pct}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
                             </div>
 
-                            {/* Key Conceptual Strengths */}
-                            {Array.isArray(evalData.keyStrengths) && evalData.keyStrengths.length > 0 && (
-                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
-                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
-                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Key Conceptual Strengths
-                                </h5>
-                                <ul className="space-y-1.5">
-                                  {evalData.keyStrengths.map((st: string, idx: number) => (
-                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                      <span className="text-emerald-500 shrink-0">✓</span>
-                                      <span>{st}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Critical Gaps & Omissions */}
-                            {Array.isArray(evalData.criticalGaps) && evalData.criticalGaps.length > 0 && (
-                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
-                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2 flex items-center gap-1.5">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Critical Regulatory & Conceptual Omissions
-                                </h5>
-                                <ul className="space-y-1.5">
-                                  {evalData.criticalGaps.map((gap: string, idx: number) => (
-                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                      <span className="text-rose-500 shrink-0">✕</span>
-                                      <span>{gap}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* RBI Topper Insights */}
-                            {Array.isArray(evalData.topperInsights) && evalData.topperInsights.length > 0 && (
-                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
-                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5">
-                                  <Target className="w-3.5 h-3.5 text-[#9A7D3C]" /> RBI Grade B Topper Points
-                                </h5>
-                                <ul className="space-y-1.5">
-                                  {evalData.topperInsights.map((pt: string, idx: number) => (
-                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                      <span className="text-[#9A7D3C] shrink-0">★</span>
-                                      <span>{pt}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Feedback & Suggestions */}
-                            {Array.isArray(evalData.feedbackPoints) && evalData.feedbackPoints.length > 0 && (
-                              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
-                                <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" /> Actionable Writing Feedback
-                                </h5>
-                                <ul className="space-y-1.5">
-                                  {evalData.feedbackPoints.map((pt: string, idx: number) => (
-                                    <li key={idx} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                      <span className="text-amber-500 shrink-0">•</span>
-                                      <span>{pt}</span>
-                                    </li>
-                                  ))}
-                                  {evalData.suggestions?.map((sug: string, idx: number) => (
-                                    <li key={`sug-${idx}`} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                      <span className="text-blue-500 shrink-0">→</span>
-                                      <span>{sug}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                            {/* Actionable Writing Feedback */}
+                            <div className="pt-4 border-t border-slate-200/60 dark:border-white/10">
+                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 mb-3 flex items-center gap-2">
+                                <Lightbulb className="w-4 h-4 text-amber-500" /> ACTIONABLE WRITING FEEDBACK
+                              </h5>
+                              <ul className="space-y-2.5">
+                                {evalData.feedbackPoints?.map((pt: string, idx: number) => (
+                                  <li key={idx} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <span className="text-amber-500 shrink-0 mt-0.5">•</span>
+                                    <span>{pt}</span>
+                                  </li>
+                                ))}
+                                {evalData.suggestions?.map((sug: string, idx: number) => (
+                                  <li key={`sug-${idx}`} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <span className="text-blue-500 shrink-0 font-bold">→</span>
+                                    <span>{sug}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -833,7 +716,7 @@ export function Results({ user }: { user: User }) {
                     {q.modelAnswer && (
                       <div className="mt-8 pt-6 border-t border-slate-200/60 dark:border-white/10">
                         <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer (RBI Grade B Phase II Benchmark)
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer
                         </h4>
                         <div className="p-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/25 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed shadow-xs">
                           {q.modelAnswer}
