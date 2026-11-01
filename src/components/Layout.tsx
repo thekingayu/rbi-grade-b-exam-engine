@@ -50,7 +50,7 @@ export function Layout({ user }: { user: User }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9A7D3C] selection:text-white transition-colors duration-500">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 font-sans selection:bg-teal-600 selection:text-white transition-colors duration-500">
       
       {/* Shared Futuristic Colorful Atmospheric Glow Canvas */}
       <AtmosphericBackground />
@@ -61,18 +61,17 @@ export function Layout({ user }: { user: User }) {
             
             {/* Logo / Brand Name */}
             <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink flex-1 md:flex-initial">
-              <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#9A7D3C] via-amber-500 to-emerald-600 p-[1.5px] shadow-lg shadow-[#9A7D3C]/15 shrink-0 group-hover:scale-105 transition-transform">
-                <div className="w-full h-full rounded-xl sm:rounded-2xl bg-white dark:bg-[#070B18] flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378]">
+              <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-500 via-cyan-500 to-indigo-600 p-[1.5px] shadow-lg shadow-teal-500/25 shrink-0 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full rounded-xl sm:rounded-2xl bg-white dark:bg-[#070B18] flex items-center justify-center text-teal-600 dark:text-teal-400">
                   <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               </div>
               <div className="min-w-0">
                 <span className="font-serif text-sm sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1 leading-tight truncate">
-                  RBI Grade B <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#E5C378] dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent">Engine</span>
+                  RBI Grade B <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">Engine</span>
                 </span>
-                <div className="hidden sm:flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400 truncate">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
-                  <span>OFFICER CADRE // CYCLE 2026-27</span>
+                <div className="hidden sm:flex items-center text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400 truncate">
+                  <span>OFFICER CADRE · CYCLE 2026-27</span>
                 </div>
               </div>
             </Link>
@@ -81,9 +80,9 @@ export function Layout({ user }: { user: User }) {
             <nav className="hidden md:flex items-center gap-1.5 bg-white/70 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
               <Link 
                 to="/" 
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`sketch-tactile-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   location.pathname === '/' 
-                    ? 'bg-amber-500/15 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-amber-300 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]' 
+                    ? 'bg-teal-500/15 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 shadow-[0_0_12px_rgba(13,148,136,0.25)]' 
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -92,9 +91,9 @@ export function Layout({ user }: { user: User }) {
               </Link>
               <Link 
                 to="/new" 
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`sketch-tactile-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   location.pathname === '/new' 
-                    ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]' 
+                    ? 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.25)]' 
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -103,9 +102,9 @@ export function Layout({ user }: { user: User }) {
               </Link>
               <Link 
                 to="/history" 
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`sketch-tactile-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   location.pathname === '/history' 
-                    ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)]' 
+                    ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.25)]' 
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -117,7 +116,6 @@ export function Layout({ user }: { user: User }) {
             {/* Right Action Controls (Fully Responsive & Always Visible) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0" />
                 <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300 max-w-[120px] truncate">
                   {user.email?.split('@')[0]}
                 </span>
@@ -125,16 +123,16 @@ export function Layout({ user }: { user: User }) {
               
               <button 
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 shadow-xs transition-all backdrop-blur-md cursor-pointer hover:scale-105 active:scale-95"
+                className="sketch-tactile-btn w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-400 bg-teal-500/10 dark:bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/25 shadow-xs transition-all backdrop-blur-md cursor-pointer"
                 aria-label="Toggle dark mode"
                 title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
 
               <button 
                 onClick={() => signOut(auth)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 shadow-xs transition-all whitespace-nowrap cursor-pointer active:scale-95 shrink-0"
+                className="sketch-tactile-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 shadow-xs transition-all whitespace-nowrap cursor-pointer shrink-0"
                 title="Sign Out of Account"
                 aria-label="Sign Out"
               >
@@ -144,10 +142,10 @@ export function Layout({ user }: { user: User }) {
             </div>
           </div>
 
-          {/* Micro-precision liquid gold scroll progress bar */}
+          {/* Micro-precision liquid teal-to-indigo scroll progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent overflow-hidden pointer-events-none">
             <div 
-              className="h-full bg-gradient-to-r from-[#9A7D3C] via-amber-400 to-[#9A7D3C] shadow-[0_0_8px_rgba(154,125,60,0.6)]"
+              className="h-full bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 shadow-[0_0_8px_rgba(13,148,136,0.6)]"
               style={{ 
                 width: `${scrollProgress}%`,
                 transition: 'width 60ms cubic-bezier(0, 0, 0.2, 1)'
@@ -162,11 +160,11 @@ export function Layout({ user }: { user: User }) {
             to="/" 
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all ${
               location.pathname === '/' 
-                ? 'text-[#9A7D3C] dark:text-[#E5C378]' 
+                ? 'text-teal-600 dark:text-teal-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <div className={`p-1.5 rounded-xl transition-colors ${location.pathname === '/' ? 'bg-amber-500/15 border border-amber-500/30' : ''}`}>
+            <div className={`p-1.5 rounded-xl transition-colors ${location.pathname === '/' ? 'bg-teal-500/15 border border-teal-500/30' : ''}`}>
               <Compass className="w-4 h-4" />
             </div>
             <span>Dashboard</span>
@@ -176,11 +174,11 @@ export function Layout({ user }: { user: User }) {
             to="/new" 
             className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all ${
               location.pathname === '/new' 
-                ? 'text-emerald-600 dark:text-emerald-400' 
+                ? 'text-cyan-600 dark:text-cyan-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <div className={`p-1.5 rounded-xl transition-colors ${location.pathname === '/new' ? 'bg-emerald-500/20 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#9A7D3C] to-emerald-600 text-white shadow-xs'}`}>
+            <div className={`p-1.5 rounded-xl transition-colors ${location.pathname === '/new' ? 'bg-cyan-500/20 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.3)]' : 'bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white shadow-xs'}`}>
               <Plus className="w-4 h-4" />
             </div>
             <span>New Exam</span>
