@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { User } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
@@ -24,12 +25,32 @@ const getShortFileName = (name: string, max = 16) => {
 export function NewTest({ user }: { user: User }) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const [files, setFiles] = useState<File[]>([]);
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState('');
+  
+  const handleCancelAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setUploading(false);
+    setLoadingMessage('');
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && uploading) {
+        handleCancelAnalysis();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [uploading]);
   
   const [config, setConfig] = useState({
     mcqStatic: 10,
@@ -68,6 +89,8 @@ export function NewTest({ user }: { user: User }) {
   const handleGenerateTest = async () => {
     if (files.length === 0) return;
     
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
     setUploading(true);
     setLoadingMessage("Analyzing your notes...");
     
@@ -85,6 +108,7 @@ export function NewTest({ user }: { user: User }) {
         const totalChunks = Math.ceil(file.size / chunkSize);
 
         for (let i = 0; i < totalChunks; i++) {
+          if (abortController.signal.aborted) return;
           setLoadingMessage(`Uploading ${shortName} (${i + 1}/${totalChunks})...`);
           const start = i * chunkSize;
           const end = Math.min(start + chunkSize, file.size);
@@ -99,7 +123,8 @@ export function NewTest({ user }: { user: User }) {
 
           const chunkRes = await fetch('/api/upload-chunk', {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: abortController.signal
           });
 
           if (!chunkRes.ok) {
@@ -108,6 +133,7 @@ export function NewTest({ user }: { user: User }) {
           }
         }
         
+        if (abortController.signal.aborted) return;
         setLoadingMessage(`Extracting text from ${shortName}...`);
         
         // 2. Call extraction which reads the assembled temp file
@@ -119,7 +145,8 @@ export function NewTest({ user }: { user: User }) {
           body: JSON.stringify({ 
             uploadId, 
             mimeType: file.type || 'application/pdf'
-          })
+          }),
+          signal: abortController.signal
         });
         
         if (!res.ok) {
@@ -134,6 +161,7 @@ export function NewTest({ user }: { user: User }) {
         let buffer = '';
         
         while (true) {
+          if (abortController.signal.aborted) return;
           const { value, done } = await reader.read();
           if (done) break;
           
@@ -170,6 +198,7 @@ export function NewTest({ user }: { user: User }) {
         combinedText += extracted + '\n\n';
       }
       
+      if (abortController.signal.aborted) return;
       const finalExtractedText = combinedText.trim();
       
       // Step 2: Generate questions
@@ -178,7 +207,8 @@ export function NewTest({ user }: { user: User }) {
       const res = await fetch('/api/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extractedText: finalExtractedText, config })
+        body: JSON.stringify({ extractedText: finalExtractedText, config }),
+        signal: abortController.signal
       });
       
       if (!res.ok) {
@@ -219,11 +249,16 @@ export function NewTest({ user }: { user: User }) {
 
       navigate(`/exam/${docRef.id}`);
     } catch (err: any) {
+      if (err.name === 'AbortError' || abortController.signal.aborted) {
+        console.log("Analysis cancelled by user");
+        return;
+      }
       console.error(err);
       alert(`Error: ${err.message || "Failed to generate test. Please try again."}`);
     } finally {
       setUploading(false);
       setLoadingMessage('');
+      abortControllerRef.current = null;
     }
   };
 
@@ -561,30 +596,84 @@ export function NewTest({ user }: { user: User }) {
         )}
       </div>
 
-      {/* Upload & Analysis Loading Overlay */}
-      {uploading && (
-        <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white/90 dark:bg-[#0A0F1C]/90 backdrop-blur-2xl rounded-3xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-white/10 text-center space-y-6">
-            <div className="relative w-20 h-20 mx-auto">
-              <div className="w-20 h-20 rounded-3xl bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-[0_0_30px_rgba(13,148,136,0.25)]">
-                <Loader2 className="w-10 h-10 animate-spin text-teal-600 dark:text-teal-400" />
+      {/* Immersive Upload & Analysis Loading Modal with Portal & Close Button */}
+      {uploading && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/40 dark:bg-black/75 backdrop-blur-xl animate-in fade-in duration-300">
+          
+          {/* Ambient Cosmic Glow Nebula */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+            <div className="w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-teal-500/20 via-cyan-400/20 to-indigo-500/20 blur-3xl animate-pulse" />
+          </div>
+
+          {/* Frosted Glass Modal Container */}
+          <div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="analysis-modal-title"
+            className="relative bg-white/95 dark:bg-[#070B18]/95 backdrop-blur-3xl rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-white/80 dark:border-white/10 text-center space-y-6 overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            {/* Top Close (X) Cross Button */}
+            <button
+              type="button"
+              onClick={handleCancelAnalysis}
+              className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100/70 hover:bg-slate-200/90 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs border border-slate-200/60 dark:border-white/10 group focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+              title="Close and cancel analysis (Esc)"
+              aria-label="Close and cancel analysis"
+            >
+              <X className="w-4 h-4 group-hover:scale-110 transition-transform text-slate-500 dark:text-slate-400" />
+            </button>
+
+            {/* Glowing Luminous Ring with Central Loader */}
+            <div className="relative w-20 h-20 mx-auto flex items-center justify-center mt-2">
+              <div className="absolute inset-0 rounded-full bg-teal-500/20 dark:bg-teal-500/30 animate-ping opacity-60 pointer-events-none" />
+              <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-teal-500/30 via-cyan-400/20 to-indigo-500/30 blur-md animate-pulse pointer-events-none" />
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500/15 via-cyan-500/10 to-indigo-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-[0_0_25px_rgba(13,148,136,0.25)]">
+                <Loader2 className="w-8 h-8 animate-spin text-teal-600 dark:text-teal-400" />
               </div>
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 opacity-25 blur-lg animate-pulse pointer-events-none" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white mb-2">Analyzing Curriculum Notes</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 min-h-[44px] flex items-center justify-center px-2">
+
+            {/* Badge & Title */}
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 text-[11px] font-mono font-bold text-teal-700 dark:text-teal-300">
+                <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 animate-pulse" />
+                <span>AI CURRICULUM SYNTHESIS ENGINE</span>
+              </div>
+              <h3 id="analysis-modal-title" className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-white">
+                Analyzing Curriculum Notes
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 min-h-[44px] flex items-center justify-center px-4 font-medium leading-relaxed">
                 {loadingMessage || "Synthesizing calibrated RBI Grade B question papers..."}
               </p>
             </div>
-            <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 h-full rounded-full animate-pulse w-3/4" />
+
+            {/* Modern Animated Progress Track */}
+            <div className="space-y-2">
+              <div className="w-full bg-slate-100 dark:bg-white/10 h-2.5 rounded-full overflow-hidden relative shadow-inner">
+                <div className="h-full bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 rounded-full animate-pulse w-4/5 shadow-[0_0_12px_rgba(13,148,136,0.6)]" />
+              </div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 px-1">
+                <span>Phase I & II Calibration</span>
+                <span className="text-teal-600 dark:text-teal-400 font-bold">Processing</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Multimodal parsing of regulatory frameworks, statutes, circulars, and core syllabus topics...
-            </p>
+
+            {/* Helpful Footer Action */}
+            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400 dark:text-slate-500 text-[11px]">
+                Press <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-mono text-[10px]">Esc</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-mono text-[10px]">✕</kbd> to dismiss
+              </span>
+              <button
+                type="button"
+                onClick={handleCancelAnalysis}
+                className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors cursor-pointer"
+              >
+                Cancel Analysis
+              </button>
+            </div>
+
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
