@@ -9,7 +9,6 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
-import { Spinner, Progress, Divider } from 'sketchbook-ui';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -154,25 +153,23 @@ export function Results({ user }: { user: User }) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 px-4">
         <div className="relative">
-          <div className="w-20 h-20 rounded-3xl bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-[0_0_30px_rgba(13,148,136,0.25)]">
-            <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378] shadow-[0_0_30px_rgba(245,158,11,0.25)]">
+            <Loader2 className="w-8 h-8 animate-spin" />
           </div>
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 opacity-25 blur-lg animate-pulse pointer-events-none" />
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 opacity-20 blur-lg animate-pulse" />
         </div>
-        <div className="text-center space-y-3 max-w-md w-full">
-          <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
-            {evaluating ? 'Grading & Storing Descriptive Rubrics' : 'Loading Results...'}
+        <div className="text-center space-y-2 max-w-md">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+            {evaluating ? 'Grading & Storing Results' : 'Loading Results...'}
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {evalProgress.message}
           </p>
           {evaluating && (
-            <div className="w-full mt-4">
-              <Progress 
-                value={evalProgress.percent} 
-                variant="scribble" 
-                animated={true} 
-                colors={{ stroke: '#0D9488', fill: '#0D9488' }}
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-4">
+              <div 
+                className="bg-[#9A7D3C] h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${evalProgress.percent}%` }}
               />
             </div>
           )}
@@ -189,7 +186,7 @@ export function Results({ user }: { user: User }) {
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-6">The requested test record could not be loaded.</p>
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white font-bold text-sm shadow-md shadow-teal-600/20 hover:opacity-95 transition-opacity"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 text-white font-bold text-sm shadow-md"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
@@ -244,21 +241,21 @@ export function Results({ user }: { user: User }) {
         <div className="space-y-3">
           <Link 
             to="/" 
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm"
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-[#9A7D3C]/60 dark:hover:border-[#9A7D3C]/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
+            <ArrowLeft className="w-3.5 h-3.5 text-[#9A7D3C] group-hover:-translate-x-1 transition-transform cursor-pointer" />
             <span className="cursor-pointer">Back to Dashboard</span>
           </Link>
           
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40 backdrop-blur-md mb-2">
-              <Award className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-teal-200 tracking-wider uppercase">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 border border-[#9A7D3C]/30 dark:border-[#9A7D3C]/40 backdrop-blur-md mb-2">
+              <Award className="w-3.5 h-3.5 text-[#9A7D3C] dark:text-[#E5C378]" />
+              <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-amber-200 tracking-wider uppercase">
                 EXAM EVALUATION & PERFORMANCE REPORT
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white">
-              Exam <span className="bg-gradient-to-r from-teal-600 via-cyan-500 to-indigo-600 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">Results</span>
+              Exam <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#F3E5AB] dark:via-amber-400 dark:to-emerald-400 bg-clip-text text-transparent">Results</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mt-1">
               Review your comprehensive performance analytics, answer keys, and AI rubrics.
@@ -281,7 +278,7 @@ export function Results({ user }: { user: User }) {
                 className={clsx(
                   'flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer',
                   isActive 
-                    ? 'bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white shadow-lg shadow-teal-600/25 dark:shadow-[0_0_20px_rgba(13,148,136,0.3)]' 
+                    ? 'bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-600 text-white shadow-lg shadow-[#9A7D3C]/25 dark:shadow-[0_0_20px_rgba(245,158,11,0.25)]' 
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5'
                 )}
               >
@@ -326,14 +323,14 @@ export function Results({ user }: { user: User }) {
 
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {/* Card 1: Overall Score - Radiant Teal Lighted */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-teal-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(13,148,136,0.15)] flex flex-col justify-between">
+                    {/* Card 1: Overall Score - Gold Lighted */}
+                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-amber-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(245,158,11,0.15)] flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-3">
                           <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Total Score
                           </span>
-                          <div className="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25 shadow-[0_0_10px_rgba(13,148,136,0.2)] flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/25 shadow-[0_0_10px_rgba(245,158,11,0.2)] flex items-center justify-center shrink-0">
                             <Award className="w-4 h-4" />
                           </div>
                         </div>
@@ -348,7 +345,7 @@ export function Results({ user }: { user: User }) {
                       </div>
                       <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Aggregate Accuracy</span>
-                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25">
+                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-[#E5C378] border border-amber-500/25">
                           {overallPercentage}%
                         </span>
                       </div>
@@ -403,7 +400,7 @@ export function Results({ user }: { user: User }) {
                             <span className="font-mono font-bold text-slate-900 dark:text-white">{mcqStaticScore}/{mcqStaticMax}</span>
                           </div>
                           <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-teal-500 to-cyan-500 h-full rounded-full shadow-[0_0_8px_rgba(20,184,166,0.5)]" style={{ width: `${mcqStaticMax > 0 ? (mcqStaticScore / mcqStaticMax) * 100 : 0}%` }} />
+                            <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full shadow-[0_0_8px_rgba(6,182,212,0.5)]" style={{ width: `${mcqStaticMax > 0 ? (mcqStaticScore / mcqStaticMax) * 100 : 0}%` }} />
                           </div>
                         </div>
                         <div>
@@ -469,7 +466,7 @@ export function Results({ user }: { user: User }) {
                   <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-5 sm:p-6 shadow-lg shadow-slate-200/30 dark:shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)]">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25 text-xs font-mono font-bold rounded-full">
+                        <span className="px-3 py-1 bg-amber-500/10 text-amber-700 dark:text-[#E5C378] border border-amber-500/25 text-xs font-mono font-bold rounded-full">
                           {q.sourceTag}
                         </span>
                         <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">
@@ -563,7 +560,7 @@ export function Results({ user }: { user: User }) {
 
                     {(q as any).explanation && (
                       <div className="border-t border-slate-200/60 dark:border-white/10 pt-4 mt-4">
-                        <p className="text-[11px] font-mono font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <p className="text-[11px] font-mono font-bold text-amber-700 dark:text-[#E5C378] uppercase tracking-wider mb-1 flex items-center gap-1.5">
                           <Lightbulb className="w-3.5 h-3.5" /> Explanation & Rationale
                         </p>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -605,12 +602,12 @@ export function Results({ user }: { user: User }) {
                         <button
                           onClick={() => handleReEvaluateQuestion(qId)}
                           disabled={isCurrentlyReevaluating || reEvaluatingAll}
-                          className="sketch-tactile-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 text-xs font-bold font-mono transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/30 text-xs font-bold font-mono transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           {isCurrentlyReevaluating ? (
                             <>
-                              <Spinner variant="spiral" size="sm" colors={{ stroke: '#0D9488' }} />
-                              <span>Re-Grading...</span>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Evaluating...</span>
                             </>
                           ) : (
                             <>
@@ -639,7 +636,7 @@ export function Results({ user }: { user: User }) {
                             </span>
                           )}
                         </div>
-                        <div className="p-4 bg-white/60 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed shadow-inner sketch-notebook-pad">
+                        <div className="p-4 bg-white/60 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed shadow-inner">
                           {userAns || <span className="italic text-slate-400">No answer provided.</span>}
                         </div>
                       </div>
@@ -655,7 +652,7 @@ export function Results({ user }: { user: User }) {
                               Official Phase II Examination Standard
                             </span>
                           </div>
-                          <span className="font-mono font-bold text-xl text-teal-600 dark:text-teal-400">
+                          <span className="font-mono font-bold text-xl text-[#9A7D3C] dark:text-[#E5C378]">
                             {evalData?.totalScore || 0} <span className="text-sm text-slate-400 font-normal">/ {q.maxMarks} Marks</span>
                           </span>
                         </div>
@@ -678,17 +675,12 @@ export function Results({ user }: { user: User }) {
                                         <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
                                         <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
                                       </div>
-                                      <Progress 
-                                        value={pct}
-                                        variant="hatching"
-                                        animated={true}
-                                        size="sm"
-                                        colors={{
-                                          stroke: '#0D9488',
-                                          fill: '#0D9488',
-                                          bg: 'rgba(13, 148, 136, 0.1)'
-                                        }}
-                                      />
+                                      <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
+                                        <div 
+                                          className="bg-gradient-to-r from-[#9A7D3C] to-amber-500 h-full rounded-full transition-all duration-500" 
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -709,7 +701,7 @@ export function Results({ user }: { user: User }) {
                                 ))}
                                 {evalData.suggestions?.map((sug: string, idx: number) => (
                                   <li key={`sug-${idx}`} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                    <span className="text-teal-500 shrink-0 font-bold">→</span>
+                                    <span className="text-blue-500 shrink-0 font-bold">→</span>
                                     <span>{sug}</span>
                                   </li>
                                 ))}
@@ -722,12 +714,11 @@ export function Results({ user }: { user: User }) {
                     
                     {/* Model Answer Section */}
                     {q.modelAnswer && (
-                      <div className="mt-8 pt-4">
-                        <Divider variant="scribble" color="rgba(16, 185, 129, 0.25)" className="mb-4" />
+                      <div className="mt-8 pt-6 border-t border-slate-200/60 dark:border-white/10">
                         <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer
                         </h4>
-                        <div className="p-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/25 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed shadow-xs sketch-notebook-pad">
+                        <div className="p-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/25 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed shadow-xs">
                           {q.modelAnswer}
                         </div>
                       </div>
@@ -775,12 +766,12 @@ export function Results({ user }: { user: User }) {
 
                 <div className="mt-10 pt-8 border-t border-slate-200/60 dark:border-white/10">
                   <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-5 flex items-center gap-2">
-                    <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Actionable Recommended Steps
+                    <Target className="w-4 h-4 text-[#9A7D3C]" /> Actionable Recommended Steps
                   </h4>
                   <div className="grid gap-3.5">
                     {test.overallFeedback.nextSteps.map((pt, idx) => (
-                      <div key={idx} className="flex items-start gap-4 p-4 bg-white/60 dark:bg-white/[0.02] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-teal-500/40 transition-colors">
-                        <div className="w-8 h-8 shrink-0 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs">
+                      <div key={idx} className="flex items-start gap-4 p-4 bg-white/60 dark:bg-white/[0.02] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-[#9A7D3C]/40 transition-colors">
+                        <div className="w-8 h-8 shrink-0 rounded-xl bg-gradient-to-r from-[#9A7D3C] to-amber-500 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs">
                           {idx + 1}
                         </div>
                         <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
