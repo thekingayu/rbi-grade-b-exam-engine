@@ -14,8 +14,9 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { Spinner, Divider } from 'sketchbook-ui';
 
-const ACCENT_COLOR = '#9A7D3C';
+const ACCENT_COLOR = '#0D9488';
 const WARNING_COLOR = '#ef4444';
 const CHART_TEXT = '#64748b';
 
@@ -59,7 +60,12 @@ export function Dashboard({ user }: { user: User }) {
   };
 
   if (loading) {
-    return <div className="flex justify-center py-32 text-slate-500 dark:text-slate-400 font-medium">Loading your dashboard...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-slate-500 dark:text-slate-400 gap-3">
+        <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
+        <span className="text-xs font-mono tracking-wider uppercase text-slate-400">Loading Cadre Analytics...</span>
+      </div>
+    );
   }
 
   const completedTests = tests.filter(t => t.status === 'completed');
@@ -184,15 +190,15 @@ export function Dashboard({ user }: { user: User }) {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 border border-[#9A7D3C]/30 dark:border-[#9A7D3C]/40 backdrop-blur-md mb-2.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#9A7D3C] dark:text-[#E5C378]" />
-            <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-amber-200 tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40 backdrop-blur-md mb-2.5">
+            <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-teal-200 tracking-wider uppercase">
               OFFICER CADRE PERFORMANCE SUITE
             </span>
-            <span className="px-1.5 py-0.2 rounded-full bg-[#9A7D3C] text-white text-[9px] font-bold">2026</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-teal-600 text-white text-[9px] font-bold">2026</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
-            Welcome back, <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#F3E5AB] dark:via-amber-400 dark:to-emerald-400 bg-clip-text text-transparent">{user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Officer'}</span>
+            Welcome back, <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">{user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Officer'}</span>
           </h1>
           <p className="text-slate-600 dark:text-slate-300 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
             Calibrated to exact Reserve Bank of India standards. Live preparation analytics & scoring metrics.
@@ -200,7 +206,7 @@ export function Dashboard({ user }: { user: User }) {
         </div>
         <Link 
           to="/new" 
-          className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-600 hover:from-[#886d33] hover:to-[#9A7D3C] text-white border border-amber-400/30 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl font-bold transition-all shadow-xl shadow-[#9A7D3C]/25 dark:shadow-[0_0_30px_rgba(245,158,11,0.25)] hover:-translate-y-0.5 active:translate-y-0 backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
+          className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
         >
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shadow-xs shrink-0">
             <Plus className="w-4 h-4 text-white" />
@@ -388,13 +394,16 @@ export function Dashboard({ user }: { user: User }) {
         />
       </div>
 
+      {/* Divider */}
+      <Divider variant="scribble" color="rgba(13, 148, 136, 0.25)" className="my-2" />
+
       {/* Test History */}
       <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)]">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent pointer-events-none" />
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-7 border-b border-slate-200/60 dark:border-white/10 bg-white/30 dark:bg-white/[0.02] gap-4">
           <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/25 shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/25 shadow-[0_0_15px_rgba(13,148,136,0.2)] flex items-center justify-center shrink-0">
               <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
@@ -403,7 +412,7 @@ export function Dashboard({ user }: { user: User }) {
             </div>
           </div>
           {tests.length > 3 && (
-            <Link to="/history" className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors bg-white/70 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs backdrop-blur-sm w-full sm:w-auto justify-center hover:border-[#9A7D3C]/40">
+            <Link to="/history" className="sketch-tactile-btn flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors bg-white/70 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs backdrop-blur-sm w-full sm:w-auto justify-center hover:border-teal-500/40">
               View All Past Tests <ArrowRight className="w-4 h-4" />
             </Link>
           )}
@@ -411,8 +420,8 @@ export function Dashboard({ user }: { user: User }) {
         <div className="divide-y divide-slate-200/60 dark:divide-white/10">
           {tests.length === 0 ? (
             <div className="p-8 sm:p-16 text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/20 flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-                <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-[#9A7D3C] dark:text-[#E5C378]" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-[0_0_20px_rgba(13,148,136,0.15)]">
+                <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600 dark:text-teal-400" />
               </div>
               <p className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">No tests taken yet</p>
               <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium text-xs sm:text-base">Start a new exam to see your history here.</p>
@@ -450,10 +459,10 @@ export function Dashboard({ user }: { user: User }) {
                     {test.status === 'completed' && (
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
                         <div className="bg-white/80 dark:bg-white/[0.04] backdrop-blur-md border border-slate-200/80 dark:border-white/10 px-3 py-1 rounded-full shadow-xs">
-                          MCQ: <span className="text-[#9A7D3C] dark:text-[#E5C378] font-bold ml-1">{tMcqAcc}%</span>
+                          MCQ: <span className="text-teal-600 dark:text-teal-400 font-bold ml-1">{tMcqAcc}%</span>
                         </div>
                         <div className="bg-white/80 dark:bg-white/[0.04] backdrop-blur-md border border-slate-200/80 dark:border-white/10 px-3 py-1 rounded-full shadow-xs">
-                          Desc: <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">{tDescAcc}%</span>
+                          Desc: <span className="text-indigo-600 dark:text-indigo-400 font-bold ml-1">{tDescAcc}%</span>
                         </div>
                         <div className={`px-3 py-1 rounded-full backdrop-blur-md border shadow-xs ${timePct >= 95 ? 'bg-red-50/80 dark:bg-red-500/20 border-red-200 dark:border-red-500/30' : 'bg-white/80 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10'}`}>
                           Time: <span className={`font-bold ml-1 ${timePct >= 95 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>{timePct}%</span>
@@ -480,7 +489,7 @@ export function Dashboard({ user }: { user: User }) {
                       )}
                       <Link 
                         to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                        className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-gradient-to-r from-[#9A7D3C] to-amber-600 hover:from-[#886d33] hover:to-[#9A7D3C] text-white shadow-md shadow-[#9A7D3C]/20 hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap cursor-pointer"
+                        className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center transition-all bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-700 hover:via-cyan-700 hover:to-indigo-700 text-white shadow-md shadow-teal-600/20 hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap cursor-pointer"
                       >
                         {test.status === 'completed' ? 'View Results' : 'Resume'}
                       </Link>
@@ -522,9 +531,9 @@ function StatCard({
       badge: 'bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/25',
     },
     gold: {
-      cardBorder: 'border-slate-200/80 dark:border-amber-500/20 hover:border-amber-500/50 dark:hover:border-amber-400/50 shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(245,158,11,0.15)]',
-      iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 text-[#9A7D3C] dark:text-[#E5C378] border border-amber-500/25 shadow-[0_0_12px_rgba(245,158,11,0.25)]',
-      badge: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500/25',
+      cardBorder: 'border-slate-200/80 dark:border-teal-500/20 hover:border-teal-500/50 dark:hover:border-teal-400/50 shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(13,148,136,0.15)]',
+      iconBox: 'bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/25 shadow-[0_0_12px_rgba(13,148,136,0.25)]',
+      badge: 'bg-teal-500/10 dark:bg-teal-500/20 text-teal-800 dark:text-teal-200 border-teal-500/25',
     },
     purple: {
       cardBorder: 'border-slate-200/80 dark:border-purple-500/20 hover:border-purple-500/50 dark:hover:border-purple-400/50 shadow-slate-200/40 dark:shadow-[0_0_25px_-5px_rgba(168,85,247,0.15)]',
@@ -536,7 +545,7 @@ function StatCard({
   const style = themeStyles[theme];
 
   return (
-    <div className={`relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border ${style.cardBorder} rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-h-[145px] sm:min-h-[165px] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group overflow-hidden`}>
+    <div className={`relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border ${style.cardBorder} rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-h-[145px] sm:min-h-[165px] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group overflow-hidden sketch-card-hover`}>
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent pointer-events-none" />
       
       <div className="flex items-center justify-between gap-2">
@@ -583,7 +592,7 @@ function InsightCard({
   };
 
   return (
-    <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4 transition-all duration-300 hover:-translate-y-0.5 shadow-md shadow-slate-200/30 dark:shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)] group overflow-hidden">
+    <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4 transition-all duration-300 hover:-translate-y-0.5 shadow-md shadow-slate-200/30 dark:shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)] group overflow-hidden sketch-card-hover">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent pointer-events-none" />
       <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${themeStyles[theme]}`}>
         {icon}
@@ -593,7 +602,7 @@ function InsightCard({
           {title}
         </p>
         <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
-          {value} {subValue && <span className="text-[#9A7D3C] dark:text-[#E5C378] ml-1 font-mono font-semibold">{subValue}</span>}
+          {value} {subValue && <span className="text-teal-600 dark:text-teal-400 ml-1 font-mono font-semibold">{subValue}</span>}
         </p>
       </div>
     </div>
@@ -609,24 +618,24 @@ function ChartCard({
 }: { 
   title: string; 
   subtitle: string; 
-  icon?: React.ReactNode;
+  icon?: React.ReactNode; 
   badge?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)] rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col h-[330px] sm:h-[400px] overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#9A7D3C]/40 to-transparent pointer-events-none" />
+    <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)] rounded-2xl sm:rounded-3xl p-4 sm:p-7 flex flex-col h-[330px] sm:h-[400px] overflow-hidden sketch-card-hover">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent pointer-events-none" />
       
       <div className="flex items-start justify-between gap-3 mb-3 sm:mb-6">
         <div>
           <h3 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-2">
-            {icon && <span className="text-[#9A7D3C] dark:text-[#E5C378]">{icon}</span>}
+            {icon && <span className="text-teal-600 dark:text-teal-400">{icon}</span>}
             <span>{title}</span>
           </h3>
           <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">{subtitle}</span>
         </div>
         {badge && (
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#9A7D3C]/10 dark:bg-[#9A7D3C]/20 text-[#9A7D3C] dark:text-[#E5C378] border border-[#9A7D3C]/20 shrink-0">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/20 shrink-0">
             {badge}
           </span>
         )}

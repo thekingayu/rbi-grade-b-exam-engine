@@ -6,10 +6,43 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
+import cors from 'cors';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+// Authorized origins including the Vercel production domain
+const ALLOWED_ORIGINS = [
+  'https://rbi-grade-b-exam-engine.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://ais-dev-jzllizn5s3fhhw7kfwihpr-560411628824.asia-southeast1.run.app',
+  'https://ais-pre-jzllizn5s3fhhw7kfwihpr-560411628824.asia-southeast1.run.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server or same-origin requests (origin undefined)
+    if (!origin) return callback(null, true);
+    if (
+      ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.run.app')
+    ) {
+      return callback(null, true);
+    }
+    // Allow any origin in dev or permissive fallback for API usage
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
+
+// Ensure OPTIONS preflight requests are handled cleanly
+app.options('*', cors());
 
 app.use(express.json({ limit: '200mb' }));
 

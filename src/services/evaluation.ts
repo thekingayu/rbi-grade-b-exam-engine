@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { TestAttempt, Question } from '../types';
 import { checkMCQCorrect } from '../utils/exam';
 import { sanitizeForFirestore } from '../utils/firestore';
+import { getApiUrl } from '../utils/api';
 
 export interface EvaluationProgressCallback {
   (step: string, percent?: number): void;
@@ -32,7 +33,7 @@ async function callEvaluateDescriptiveWithRetry(question: Question, userAnswer: 
   let lastErr: any = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const res = await fetch('/api/evaluate-descriptive', {
+      const res = await fetch(getApiUrl('/api/evaluate-descriptive'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, userAnswer })
@@ -191,7 +192,7 @@ export async function evaluateAndPersistTest(
   let overallFeedback = testData.overallFeedback;
   if (!overallFeedback || !Array.isArray(overallFeedback.strengths) || overallFeedback.strengths.length === 0) {
     try {
-      const res = await fetch('/api/generate-overall-feedback', {
+      const res = await fetch(getApiUrl('/api/generate-overall-feedback'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
