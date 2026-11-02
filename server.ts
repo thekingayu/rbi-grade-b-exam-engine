@@ -110,42 +110,43 @@ function safeJsonParse(text: string): any {
 app.post('/api/generate-questions', async (req, res) => {
   try {
     const { extractedText, config } = req.body;
+    const subjectName = config?.subject || 'General Banking & Economic Awareness';
+    const targetTopic = config?.targetTopic ? `Specific Topic Focus: ${config.targetTopic}` : '';
+    const examMode = config?.mode || 'Sectional';
     
     const prompt = `You are an elite Senior Paper Setter and Chief Examiner on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
-Your task is to draft an exceptionally rigorous, high-standard mock examination paper based on the provided study notes.
+Your task is to draft an exceptionally rigorous, high-standard mock examination paper specifically for:
+SUBJECT: "${subjectName}"
+${targetTopic}
+EXAM MODE: "${examMode}"
 
 DIFFICULTY LEVEL & BENCHMARK:
-- Match and exceed the difficulty of actual RBI Grade B (Phase I General Awareness and Phase II ESI & Finance/Management) papers.
-- Avoid trivial recall questions. Focus on:
-  * Multi-variable statutory rules (RBI Act 1934, Banking Regulation Act 1949, FEMA 1999, PSS Act 2007, IBC 2016).
-  * Prudential norms: Scale Based Regulation for NBFCs, Basel III Capital Frameworks (CRAR, CET-1, Capital Conservation Buffer, Countercyclical Buffer, LCR, NSFR), PCA framework triggers, NPA recognition norms (SMA-0, SMA-1, SMA-2, Wilful Defaulters), EBLR mechanism, Standing Deposit Facility (SDF).
-  * Priority Sector Lending (PSL) sub-targets (40% ANBC/CEOBE, Small & Marginal Farmers, Micro Enterprises, Weaker Sections), Financial Inclusion Index (FI-Index - Access, Usage, Quality).
-  * Contemporary macroeconomic and central banking developments: Digital Rupee (e₹-R and e₹-W), interoperability with UPI, Project Nexus, green finance frameworks, Sovereign Green Bonds, Inflation Targeting / MPC statutory requirements (Section 45ZB).
+- Match the exact syllabi and difficulty of actual RBI Grade B examination papers for this vertical.
+- If the subject is Quantitative Aptitude, craft high-precision data interpretation caselets, commercial mathematics, and polynomial comparisons.
+- If the subject is Reasoning Aptitude, craft intricate seating arrangement logic, multi-variable scheduling puzzles, and critical syllogisms.
+- If the subject is English Language / Writing, craft editorial reading comprehension, precis writing, or high-caliber macroeconomic essay prompts.
+- If the subject is General Awareness, ESI, or FM, benchmark against statutory rules (RBI Act, BR Act, FEMA, Basel III, PSL norms, monetary transmission, Union Budget, corporate governance).
 
 QUESTION SPECIFICATIONS:
-1. STATIC MCQs (Count: ${config.mcqStatic}):
-   - At least 60-70% must be statement-based questions ("Consider the following statements... Which of the statements given above is/are correct?").
-   - EXACTLY 5 distinct options: Option 1, Option 2, Option 3, Option 4, Option 5 (adhering strictly to standard IBPS / RBI 5-option format: e.g. "Only 1 and 2", "Only 2 and 3", etc.).
-   - Craft close, realistic distractors with nuanced technical details.
-   - Provide a comprehensive, in-depth explanation breaking down why the correct option is true and why each other option/statement is false or deceptive.
+1. STATIC MCQs (Count: ${config.mcqStatic || 0}):
+   - Exact IBPS / RBI 5-option format (Option 1 to Option 5).
+   - High conceptual rigor with comprehensive explanation.
+   - Include "topic" property matching the syllabus chapter.
 
-2. DYNAMIC / CURRENT AFFAIRS MCQs (Count: ${config.mcqDynamic}):
-   - Connect the study notes to recent RBI circulars, regulatory guidelines, MPC policy rates, Union Budget, Economic Survey, or global central bank shifts.
-   - Also EXACTLY 5 options (Option 1 to Option 5).
-   - High analytical rigor with complete explanatory walkthrough.
+2. DYNAMIC / CURRENT AFFAIRS MCQs (Count: ${config.mcqDynamic || 0}):
+   - Grounded in contemporary circulars, policy rates, or central bank developments.
+   - Exactly 5 options (Option 1 to Option 5).
+   - Include "topic" property.
 
-3. STATIC DESCRIPTIVE QUESTIONS (Count: ${config.descStatic}):
-   - Formulated as an authentic Phase II 10-mark (400 words) or 15-mark (600 words) question.
-   - Demands critical analysis ("Critically examine", "Evaluate the efficacy", "Substantiate with structural challenges").
-   - Detailed 4-pillar marking scheme totaling the maxMarks.
-   - Comprehensive topper-caliber model answer (with structured sections: Introduction, Analytical Pillars, Structural Bottlenecks, Policy Roadmap / Recommendations, and Synthesis).
+3. STATIC DESCRIPTIVE QUESTIONS (Count: ${config.descStatic || 0}):
+   - Authentic Phase II 10-mark (400 words) or 15-mark (600 words) analytical questions.
+   - Comprehensive 4-pillar marking scheme and topper-caliber model answer.
 
-4. DYNAMIC DESCRIPTIVE QUESTIONS (Count: ${config.descDynamic}):
-   - High-yield Phase II questions focusing on contemporary reforms (CBDC, climate finance, AI/Fintech regulation, cross-border payments, resolution of stressed assets).
-   - Word limit: 400 or 600 words (or 250-400 words).
-   - Full 4-pillar marking scheme and exceptional benchmark model answer.
+4. DYNAMIC DESCRIPTIVE QUESTIONS (Count: ${config.descDynamic || 0}):
+   - High-yield Phase II questions focusing on contemporary structural reforms.
+   - Full 4-pillar marking scheme and benchmark model answer.
 
-STUDY NOTES TO BASE EXAM ON:
+STUDY NOTES & REFERENCE TEXT:
 """
 ${extractedText}
 """
@@ -156,15 +157,17 @@ Output valid JSON matching this exact schema:
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Core Concept'}",
       "text": "Consider the following statements regarding...",
-      "options": ["Only 1 and 2", "Only 2 and 3", "Only 1 and 3", "1, 2 and 3", "None of the above"],
-      "correctAnswer": "Only 1 and 3",
-      "explanation": "Detailed explanation of why statement 1 & 3 are correct and 2 is incorrect...",
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"],
+      "correctAnswer": "Option 1",
+      "explanation": "Detailed explanation...",
       "maxMarks": 1
     },
     {
       "type": "Descriptive",
       "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Macro Policy'}",
       "text": "Analytical question prompt...",
       "maxMarks": 15,
       "wordLimit": 400,

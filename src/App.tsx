@@ -10,11 +10,15 @@ import { auth } from './firebase';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { SubjectDashboard } from './pages/SubjectDashboard';
 import { TestHistory } from './pages/TestHistory';
 import { NewTest } from './pages/NewTest';
+import { MistakeNotebook } from './pages/MistakeNotebook';
+import { ManageSubjects } from './pages/ManageSubjects';
 import { Exam } from './pages/Exam';
 import { Results } from './pages/Results';
 import { SmoothScroll } from './components/SmoothScroll';
+import { SubjectProvider } from './context/SubjectContext';
 import { SketchProvider, Spinner } from 'sketchbook-ui';
 
 export default function App() {
@@ -44,23 +48,28 @@ export default function App() {
   }
 
   return (
-    <SketchProvider>
-      <BrowserRouter>
-        <SmoothScroll>
-          <Routes>
-            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-            <Route path="/exam/:testId" element={user ? <Exam user={user} /> : <Navigate to="/login" />} />
-            <Route path="/" element={user ? <Layout user={user} /> : <Navigate to="/login" />}>
-              <Route index element={<Dashboard user={user} />} />
-              <Route path="history" element={<TestHistory user={user} />} />
-              <Route path="new" element={<NewTest user={user} />} />
-              <Route path="results/:testId" element={<Results user={user} />} />
-            </Route>
-          </Routes>
-        </SmoothScroll>
-      </BrowserRouter>
-    </SketchProvider>
+    <SubjectProvider>
+      <SketchProvider>
+        <BrowserRouter>
+          <SmoothScroll>
+            <Routes>
+              <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+              <Route path="/exam/:testId" element={user ? <Exam user={user} /> : <Navigate to="/login" />} />
+              <Route path="/" element={user ? <Layout user={user} /> : <Navigate to="/login" />}>
+                <Route index element={<Dashboard user={user} />} />
+                <Route path="subject/:slug" element={<SubjectDashboard user={user} />} />
+                <Route path="new" element={<NewTest user={user} />} />
+                <Route path="exam/new" element={<NewTest user={user} />} />
+                <Route path="history" element={<TestHistory user={user} />} />
+                <Route path="archive" element={<TestHistory user={user} />} />
+                <Route path="mistakes" element={<MistakeNotebook user={user} />} />
+                <Route path="manage-subjects" element={<ManageSubjects user={user} />} />
+                <Route path="results/:testId" element={<Results user={user} />} />
+              </Route>
+            </Routes>
+          </SmoothScroll>
+        </BrowserRouter>
+      </SketchProvider>
+    </SubjectProvider>
   );
 }
-
-
