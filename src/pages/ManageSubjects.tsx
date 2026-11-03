@@ -111,11 +111,27 @@ export function ManageSubjects({ user }: { user: User }) {
 
       {/* Edit Subject Modal */}
       {editingSubject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 sm:p-7 shadow-2xl space-y-4">
-            <h3 className="text-xl font-serif font-black text-slate-900 dark:text-white">
-              Edit {editingSubject.name} Pattern
-            </h3>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in overflow-y-auto"
+          onClick={() => setEditingSubject(null)}
+        >
+          <div 
+            className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+              <h3 className="text-xl font-serif font-black text-slate-900 dark:text-white">
+                Edit {editingSubject.name} Pattern
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingSubject(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                aria-label="Close edit modal"
+              >
+                ✕
+              </button>
+            </div>
 
             <form onSubmit={handleSave} className="space-y-4 text-xs font-medium">
               <div>

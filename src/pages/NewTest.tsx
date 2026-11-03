@@ -1024,8 +1024,12 @@ export function NewTest({ user }: { user: User }) {
           className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/75 backdrop-blur-xl animate-in fade-in duration-300 p-4"
           role="dialog"
           aria-modal="true"
+          onClick={handleCancelAnalysis}
         >
-          <div className="relative w-full max-w-md rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-7 sm:p-9 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-2xl animate-in zoom-in-95 duration-200">
+          <div 
+            className="relative w-full max-w-md rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-7 sm:p-9 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Close / Cancel Button */}
             <button
               onClick={handleCancelAnalysis}

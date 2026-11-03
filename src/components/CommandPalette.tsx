@@ -48,24 +48,39 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-24 px-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
+    <div 
+      className="fixed inset-0 z-[99999] flex items-start justify-center pt-8 sm:pt-20 p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette quick navigation"
+    >
       <div 
-        className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+        className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto sm:my-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-white/10">
-          <Search className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+        <div className="flex items-center gap-2 sm:gap-3 px-3.5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0">
+          <Search className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-teal-400 shrink-0" />
           <input
             type="text"
-            placeholder="Type a subject, topic, or command (e.g., 'quant', 'mistakes', 'esi')..."
+            placeholder="Type a subject, topic, or command (e.g. 'quant', 'mistakes', 'esi')..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+            className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
             autoFocus
           />
-          <kbd className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-white/10 text-slate-500">
+          <kbd className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-white/10 text-slate-500 shrink-0">
             ESC
           </kbd>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 sm:p-2 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            title="Close dialog (Esc)"
+            aria-label="Close dialog"
+          >
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
         </div>
 
         <div className="max-h-96 overflow-y-auto p-2 space-y-3">
@@ -131,6 +146,24 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Footer info & touch close button */}
+        <div className="px-4 py-2.5 border-t border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span>Tap outside or</span>
+            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-semibold">
+              ESC
+            </kbd>
+            <span>to close</span>
+          </div>
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="text-teal-600 dark:text-teal-400 font-bold hover:underline cursor-pointer text-xs"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

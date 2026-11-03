@@ -371,8 +371,14 @@ export function TestHistory({ user }: { user: User }) {
 
       {/* Compare Modal */}
       {showCompareModal && compareTest1 && compareTest2 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in"
+          onClick={() => setShowCompareModal(false)}
+        >
+          <div 
+            className="w-full max-w-2xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <GitCompare className="w-5 h-5 text-indigo-500" />
@@ -382,13 +388,14 @@ export function TestHistory({ user }: { user: User }) {
               </div>
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                aria-label="Close compare modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[compareTest1, compareTest2].map((t, i) => {
                 const max = t.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
                 const score = Math.round(((t.totalScore || 0) / max) * 100);
@@ -416,8 +423,14 @@ export function TestHistory({ user }: { user: User }) {
 
       {/* Bulk Reassign Modal */}
       {showReassignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in"
+          onClick={() => setShowReassignModal(false)}
+        >
+          <div 
+            className="w-full max-w-xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
               <h3 className="font-serif font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-teal-600" />
@@ -425,7 +438,8 @@ export function TestHistory({ user }: { user: User }) {
               </h3>
               <button
                 onClick={() => setShowReassignModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                aria-label="Close reassign modal"
               >
                 <X className="w-5 h-5" />
               </button>

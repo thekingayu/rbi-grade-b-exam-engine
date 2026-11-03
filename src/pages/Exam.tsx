@@ -513,8 +513,14 @@ export function Exam({ user }: { user: User }) {
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/40 dark:bg-[#05050A]/60 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="sketch-modal bg-white/90 dark:bg-[#0A0F1C]/90 backdrop-blur-3xl rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-white/60 dark:border-white/10">
+        <div 
+          className="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-[#05050A]/75 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => !submitting && setShowConfirm(false)}
+        >
+          <div 
+            className="sketch-modal bg-white/95 dark:bg-[#0A0F1C]/95 backdrop-blur-3xl rounded-3xl max-w-sm w-full p-7 sm:p-8 shadow-2xl border border-white/60 dark:border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-2xl font-serif font-bold text-slate-900 dark:text-white mb-3">Submit Exam?</h3>
             <p className="text-slate-600 dark:text-slate-300 font-medium mb-8 leading-relaxed text-sm">
               You have attempted {attemptedCount} out of {test.questions.length} questions. You cannot change your answers after submission.

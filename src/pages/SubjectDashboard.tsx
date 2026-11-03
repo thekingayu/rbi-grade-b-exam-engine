@@ -28,6 +28,7 @@ export function SubjectDashboard({ user }: { user: User }) {
   const [loading, setLoading] = useState(true);
   const [filterScoreRange, setFilterScoreRange] = useState<string>('all');
   const [isUploadingNote, setIsUploadingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Find subject
@@ -248,7 +249,7 @@ export function SubjectDashboard({ user }: { user: User }) {
       });
     } catch (err: any) {
       console.error("Error uploading note:", err);
-      alert("Failed to extract note text: " + (err.message || String(err)));
+      setNoteError("Failed to extract note text: " + (err.message || String(err)));
     } finally {
       setIsUploadingNote(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -466,8 +467,8 @@ export function SubjectDashboard({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <table className="w-full min-w-[620px] text-left text-xs">
             <thead className="bg-slate-50 dark:bg-white/[0.02] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider border-b border-slate-200/60 dark:border-white/5">
               <tr>
                 <th className="py-3 px-4 sm:px-6">Syllabus Topic</th>
@@ -547,6 +548,13 @@ export function SubjectDashboard({ user }: { user: User }) {
                 </button>
               </div>
             </div>
+
+            {noteError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-700 dark:text-red-300 flex items-center justify-between">
+                <span>{noteError}</span>
+                <button onClick={() => setNoteError(null)} className="font-bold ml-2 cursor-pointer">✕</button>
+              </div>
+            )}
 
             {subjectNotes.length === 0 ? (
               <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
