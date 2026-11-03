@@ -18,11 +18,14 @@ import {
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { Spinner, Divider } from 'sketchbook-ui';
+import { calculateDaysRemaining } from '../utils/date';
 
 export function Dashboard({ user }: { user: User }) {
-  const { subjects, setActiveSubject } = useSubject();
+  const { subjects, setActiveSubject, targetExamDate } = useSubject();
   const [tests, setTests] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const daysRemaining = calculateDaysRemaining(targetExamDate);
 
   // Clear active subject on root dashboard
   useEffect(() => {
@@ -153,9 +156,15 @@ export function Dashboard({ user }: { user: User }) {
           <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
             Welcome back, <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">{user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Officer'}</span>
           </h1>
-          <p className="text-slate-600 dark:text-slate-300 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
-            Centralized preparation telemetry across all Phase 1 and Phase 2 curriculum verticals.
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-1.5">
+            <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium">
+              Centralized preparation telemetry across all Phase 1 and Phase 2 curriculum verticals.
+            </p>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 text-teal-800 dark:text-teal-200 text-xs font-bold">
+              <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span>{daysRemaining} Days Remaining</span>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">

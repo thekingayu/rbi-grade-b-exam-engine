@@ -21,6 +21,14 @@ service cloud.firestore {
       return request.resource.data;
     }
 
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /userSettings/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     match /tests/{testId} {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
@@ -38,14 +46,14 @@ service cloud.firestore {
     match /notes/{noteId} {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
     match /mistakes/{mistakeId} {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }

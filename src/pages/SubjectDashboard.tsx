@@ -18,11 +18,14 @@ import {
 } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Spinner, Divider } from 'sketchbook-ui';
+import { calculateDaysRemaining } from '../utils/date';
 
 export function SubjectDashboard({ user }: { user: User }) {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { subjects, setActiveSubject, notes, addNote, deleteNote, mistakes } = useSubject();
+  const { subjects, setActiveSubject, notes, addNote, deleteNote, mistakes, targetExamDate } = useSubject();
+  
+  const daysRemaining = calculateDaysRemaining(targetExamDate);
   
   const [tests, setTests] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,6 +319,9 @@ export function SubjectDashboard({ user }: { user: User }) {
                 </span>
                 <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                   {currentSubject.totalMarks} Marks · {currentSubject.durationMinutes} Minutes · -{currentSubject.negativeMarking} Neg Marking
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30">
+                  🎯 {daysRemaining}d to Exam ({targetExamDate})
                 </span>
               </div>
               <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
