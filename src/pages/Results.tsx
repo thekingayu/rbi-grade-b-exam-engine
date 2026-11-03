@@ -188,10 +188,10 @@ export function Results({ user }: { user: User }) {
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Test Not Found</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-6">The requested test record could not be loaded.</p>
         <Link 
-          to="/" 
+          to="/history" 
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white font-bold text-sm shadow-md shadow-teal-600/20 hover:opacity-95 transition-opacity"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+          <ArrowLeft className="w-4 h-4" /> Back to Historical Examination Archive
         </Link>
       </div>
     );
@@ -242,13 +242,21 @@ export function Results({ user }: { user: User }) {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-3">
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
-            <span className="cursor-pointer">Back to Dashboard</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link 
+              to="/history" 
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
+              <span className="cursor-pointer font-semibold">Back to Historical Examination Archive</span>
+            </Link>
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/40 dark:bg-white/5 hover:bg-white/70 dark:hover:bg-white/10 rounded-xl border border-slate-200/60 dark:border-white/10 text-slate-600 dark:text-slate-300 font-medium text-xs sm:text-sm transition-all"
+            >
+              <span>Dashboard</span>
+            </Link>
+          </div>
           
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40 backdrop-blur-md mb-2">
@@ -488,7 +496,7 @@ export function Results({ user }: { user: User }) {
                       </span>
                     </div>
                     
-                    <p className="text-slate-900 dark:text-white font-medium mb-5 text-sm sm:text-base leading-relaxed">
+                    <p className="text-slate-900 dark:text-white font-medium mb-5 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                       {q.text}
                     </p>
                     

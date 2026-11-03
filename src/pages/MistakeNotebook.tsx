@@ -175,7 +175,7 @@ export function MistakeNotebook({ user }: { user: User }) {
                       </span>
                     </div>
 
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white pt-1">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white pt-1 whitespace-pre-wrap">
                       {m.text}
                     </h4>
 

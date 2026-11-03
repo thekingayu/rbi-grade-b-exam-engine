@@ -319,9 +319,9 @@ export function Exam({ user }: { user: User }) {
 
             {/* Question Card */}
             <div className="bg-white/60 dark:bg-white/[0.03] backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-black/50">
-              <p className="text-xl font-medium text-slate-900 dark:text-white leading-relaxed mb-8 font-serif">
+              <div className="text-xl font-medium text-slate-900 dark:text-white leading-relaxed mb-8 font-serif whitespace-pre-wrap">
                 {currentQ.text}
-              </p>
+              </div>
 
               {currentQ.type === 'MCQ' && currentQ.options && (
                 <div className="space-y-3.5">

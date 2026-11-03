@@ -113,38 +113,78 @@ app.post('/api/generate-questions', async (req, res) => {
     const subjectName = config?.subject || 'General Banking & Economic Awareness';
     const targetTopic = config?.targetTopic ? `Specific Topic Focus: ${config.targetTopic}` : '';
     const examMode = config?.mode || 'Sectional';
+    const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0);
     
-    const prompt = `You are an elite Senior Paper Setter and Chief Examiner on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
-Your task is to draft an exceptionally rigorous, high-standard mock examination paper specifically for:
+    const prompt = `You are the Chief Examiner and Principal Paper Setter on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
+You must construct an exceptionally rigorous, high-difficulty mock examination that matches and exceeds the authentic difficulty level of the actual RBI Grade B examination (Phase 1 & Phase 2).
+
 SUBJECT: "${subjectName}"
 ${targetTopic}
 EXAM MODE: "${examMode}"
+TARGET MCQ COUNT: ${totalMcqs} (${config.mcqStatic || 0} Static, ${config.mcqDynamic || 0} Dynamic)
+TARGET DESCRIPTIVE COUNT: ${(config.descStatic || 0) + (config.descDynamic || 0)} (${config.descStatic || 0} Static, ${config.descDynamic || 0} Dynamic)
 
-DIFFICULTY LEVEL & BENCHMARK:
-- Match the exact syllabi and difficulty of actual RBI Grade B examination papers for this vertical.
-- If the subject is Quantitative Aptitude, craft high-precision data interpretation caselets, commercial mathematics, and polynomial comparisons.
-- If the subject is Reasoning Aptitude, craft intricate seating arrangement logic, multi-variable scheduling puzzles, and critical syllogisms.
-- If the subject is English Language / Writing, craft editorial reading comprehension, precis writing, or high-caliber macroeconomic essay prompts.
-- If the subject is General Awareness, ESI, or FM, benchmark against statutory rules (RBI Act, BR Act, FEMA, Basel III, PSL norms, monetary transmission, Union Budget, corporate governance).
+DIFFICULTY LEVEL & BENCHMARK (MANDATORY):
+- RBI Grade B is notoriously difficult. AVOID simplistic, trivial one-liner factual trivia.
+- Every question must test deep conceptual mastery, statutory provisions, regulatory circulars, multi-layered analytical deduction, or financial/mathematical calculations.
+- Distractors (incorrect options) must be realistic, tricky, and designed to trap candidates who only have superficial knowledge.
 
-QUESTION SPECIFICATIONS:
-1. STATIC MCQs (Count: ${config.mcqStatic || 0}):
-   - Exact IBPS / RBI 5-option format (Option 1 to Option 5).
-   - High conceptual rigor with comprehensive explanation.
-   - Include "topic" property matching the syllabus chapter.
+MANDATORY DIVERSITY OF RBI GRADE B MCQ FORMATS:
+Do NOT create only "Which statement is correct" questions. You MUST distribute the ${totalMcqs} MCQs across the following authentic RBI Grade B question archetypes:
 
-2. DYNAMIC / CURRENT AFFAIRS MCQs (Count: ${config.mcqDynamic || 0}):
-   - Grounded in contemporary circulars, policy rates, or central bank developments.
-   - Exactly 5 options (Option 1 to Option 5).
-   - Include "topic" property.
+1. [Multi-Statement Analytical Evaluation]:
+   Provide 3 to 4 technical statements labeled (I), (II), (III), and optionally (IV).
+   Prompt: "Which of the statements given above is/are correct?" or "is/are INCORRECT?"
+   Options MUST be combinations, e.g.:
+   - "Only I and III"
+   - "Only II and IV"
+   - "Only I, II and III"
+   - "All I, II, III and IV"
+   - "None of the above"
 
-3. STATIC DESCRIPTIVE QUESTIONS (Count: ${config.descStatic || 0}):
-   - Authentic Phase II 10-mark (400 words) or 15-mark (600 words) analytical questions.
-   - Comprehensive 4-pillar marking scheme and topper-caliber model answer.
+2. [Passage / Caselet Contextual Question]:
+   Provide a dense 3-5 line extract representing an RBI Circular, Union Budget excerpt, Economic Survey finding, or macroeconomic scenario labeled "[Context / Caselet]".
+   Follow with an analytical question evaluating policy implications, statutory limits, or indirect economic fallout.
 
-4. DYNAMIC DESCRIPTIVE QUESTIONS (Count: ${config.descDynamic || 0}):
-   - High-yield Phase II questions focusing on contemporary structural reforms.
-   - Full 4-pillar marking scheme and benchmark model answer.
+3. [Assertion (A) & Reason (R)]:
+   Assertion (A): [Proposition on monetary transmission, Basel III norms, fiscal deficit, or management theory]
+   Reason (R): [Theoretical mechanism or statutory foundation]
+   Options MUST follow standard RBI pattern:
+   - "Both (A) and (R) are true and (R) is the correct explanation of (A)"
+   - "Both (A) and (R) are true but (R) is NOT the correct explanation of (A)"
+   - "(A) is true but (R) is false"
+   - "(A) is false but (R) is true"
+   - "Both (A) and (R) are false"
+
+4. [Match the Following / Matrix Matching]:
+   Column I (A, B, C, D) listing regulatory bodies, committees, financial ratios, or schemes.
+   Column II (1, 2, 3, 4) listing recommendations, formulas, mandates, or statutory sections.
+   Options must be exact matching codes: "A-2, B-4, C-1, D-3", "A-3, B-1, C-4, D-2", etc.
+
+5. [Numerical / Financial Math Problem]:
+   For Finance, Management, or Quant: Real calculation problem (e.g. Yield to Maturity, Modified Duration, DuPont ROE decomposition, Debt Service Coverage Ratio (DSCR), WACC, Capital Adequacy / CRAR calculations, or Data Interpretation).
+   Options with precise calculated numerical values.
+
+6. [Chronological / Regulatory Sequencing]:
+   Provide 4 historical or policy milestones (I, II, III, IV) and ask to arrange them in the correct chronological sequence of notification or occurrence.
+
+7. [Technical Multi-Blank Verification]:
+   Regulatory framework with [Blank I] and [Blank II] (e.g. "Under the PCA framework, Threshold 1 is triggered when CET-1 is below [Blank I] and Net NPA exceeds [Blank II]").
+   Options with paired regulatory percentages or statutory figures.
+
+8. [Quantity I vs Quantity II Comparison] (for QA / Reasoning / Finance):
+   Quantity I: [Description / Value]
+   Quantity II: [Description / Value]
+   Options: "Quantity I > Quantity II", "Quantity I < Quantity II", "Quantity I >= Quantity II", "Quantity I <= Quantity II", "Quantity I = Quantity II or relation cannot be established".
+
+STRICT 5-OPTION RULE:
+- EVERY single MCQ MUST HAVE EXACTLY 5 DISTINCT OPTIONS (Option 1 to Option 5).
+- Never output only 4 options.
+
+DESCRIPTIVE QUESTION SPECIFICATIONS:
+- Authentic Phase II 10-mark (400 words) or 15-mark (600 words) analytical questions.
+- Demands multi-dimensional analysis: theoretical grounding, regulatory framework, contemporary challenges, and forward-looking pragmatic roadmap.
+- Provide a rigorous 4-pillar marking scheme and an exhaustive topper-standard model answer with clear section headings.
 
 STUDY NOTES & REFERENCE TEXT:
 """
@@ -157,27 +197,33 @@ Output valid JSON matching this exact schema:
     {
       "type": "MCQ",
       "sourceTag": "Static",
-      "topic": "${config.targetTopic || 'Core Concept'}",
-      "text": "Consider the following statements regarding...",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"],
-      "correctAnswer": "Option 1",
-      "explanation": "Detailed explanation...",
+      "topic": "${config.targetTopic || 'Regulatory Framework & Monetary Economics'}",
+      "text": "Consider the following statements regarding the Basel III Capital Regulations issued by the Reserve Bank of India:\\n\\nI. The minimum Common Equity Tier 1 (CET-1) capital requirement is 5.5% of Risk-Weighted Assets (RWAs).\\nII. The Capital Conservation Buffer (CCB) of 2.5% must be comprised entirely of Common Equity Tier 1 capital.\\nIII. The minimum total capital (CRAR) requirement for commercial banks in India is 8.0%, which matches the international Basel baseline.\\n\\nWhich of the statements given above is/are correct?",
+      "options": [
+        "Only I and II",
+        "Only II and III",
+        "Only I and III",
+        "All I, II, and III",
+        "None of the above"
+      ],
+      "correctAnswer": "Only I and II",
+      "explanation": "Statement I and II are correct. Under RBI guidelines (stricter than Basel norms), minimum CET-1 is 5.5% and CCB is 2.5% (all CET-1). Statement III is incorrect because RBI mandates a minimum CRAR of 9.0% for commercial banks, whereas the international Basel III minimum is 8.0%.",
       "maxMarks": 1
     },
     {
       "type": "Descriptive",
       "sourceTag": "Dynamic",
-      "topic": "${config.targetTopic || 'Macro Policy'}",
-      "text": "Analytical question prompt...",
+      "topic": "${config.targetTopic || 'Macroeconomic & Financial Stability'}",
+      "text": "Examine the macroeconomic trade-offs between fiscal consolidation and capital expenditure in India's post-pandemic growth trajectory. In this context, evaluate how the Reserve Bank of India's liquidity management framework supports sovereign borrowing without crowding out private sector credit.",
       "maxMarks": 15,
-      "wordLimit": 400,
+      "wordLimit": 600,
       "markingScheme": {
-        "Conceptual Grounding & Framework": 3.5,
-        "Analytical Depth & Banking Impact": 5.0,
-        "Regulatory & Policy Grounding": 3.5,
-        "Structure & Pragmatic Roadmap": 3.0
+        "Macro-Fiscal Context & Theoretical Foundation": 3.5,
+        "RBI Liquidity Tools & Sovereign Debt Dynamics": 4.5,
+        "Private Credit Crowding Out & Transmission Analysis": 4.0,
+        "Structural Recommendations & Policy Roadmap": 3.0
       },
-      "modelAnswer": "Comprehensive model answer formatted with clear headings, paragraph breaks (using \\n\\n), and bulleted recommendations..."
+      "modelAnswer": "### 1. Introduction & Macro-Fiscal Landscape\\n\\nIndia's post-pandemic fiscal policy has navigated the dual imperative of fiscal consolidation (targeting a fiscal deficit below 4.5% of GDP by FY26) while sustaining high-multiplier capital expenditure (exceeding 3.3% of GDP)...\\n\\n### 2. Monetary-Fiscal Coordination & Liquidity Management\\n\\nThe RBI facilitates the orderly absorption of sovereign borrowing through calibrated liquidity operations, utilizing the Standing Deposit Facility (SDF) as the floor and Marginal Standing Facility (MSF) as the ceiling of the Liquidity Adjustment Facility (LAF) corridor...\\n\\n### 3. Mitigating Private Sector Crowding-Out\\n\\nCrowding out is averted when public investment crowds IN private capex through infrastructure debottlenecking, accompanied by robust banking sector capitalization (CRAR > 16.8%) and historically low Non-Performing Assets (Gross NPAs < 2.8%)...\\n\\n### 4. Conclusion & Forward Roadmap\\n\\nA sustainable fiscal-monetary matrix necessitates deepening the corporate bond market, active secondary market sovereign debt management, and steadfast adherence to the FRBM debt-to-GDP trajectory."
     }
   ]
 }`;
@@ -186,6 +232,14 @@ Output valid JSON matching this exact schema:
     const parsed = safeJsonParse(rawJson);
     const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
 
+    // Safe option prefix cleaner: strips leading "A) ", "(A) ", "Option 1: ", "1. " etc. without destroying "A-2, B-1"
+    const cleanOptionText = (opt: any): string => {
+      if (!opt) return '';
+      return String(opt)
+        .replace(/^(?:Option\s+[A-E1-5][\:\.]?\s*|\(?[A-Ea-e1-5]\)\s*|[A-Ea-e1-5][\.\:]\s+)/i, '')
+        .trim();
+    };
+
     // Robust Question Normalization
     const normalizedQuestions = rawQuestions.map((q: any, index: number) => {
       const isMCQ = (q.type || '').toUpperCase() === 'MCQ' || (Array.isArray(q.options) && q.options.length > 0) || (q.options && typeof q.options === 'object');
@@ -193,44 +247,71 @@ Output valid JSON matching this exact schema:
       const sourceTag = (q.sourceTag === 'Dynamic' || q.source === 'Dynamic') ? 'Dynamic' : 'Static';
 
       if (isMCQ) {
-        // Extract options ensuring exactly 5 options if possible
+        // Extract options ensuring exactly 5 options
         let optionsList: string[] = [];
         if (Array.isArray(q.options)) {
-          optionsList = q.options.map((opt: any) => String(opt).trim());
+          optionsList = q.options.map(cleanOptionText).filter(Boolean);
         } else if (q.options && typeof q.options === 'object') {
-          optionsList = Object.values(q.options).map((opt: any) => String(opt).trim());
+          optionsList = Object.values(q.options).map(cleanOptionText).filter(Boolean);
         }
 
-        // Clean option prefixes like "A) " or "Option 1: "
-        optionsList = optionsList.map(opt => opt.replace(/^[A-Ea-e1-5][\).\:\-]\s*/, '').trim()).filter(Boolean);
-
         // Standardize correctAnswer
-        let correctAnswer = String(q.correctAnswer || '').trim();
-        correctAnswer = correctAnswer.replace(/^[A-Ea-e1-5][\).\:\-]\s*/, '').trim();
+        let rawCorrect = cleanOptionText(q.correctAnswer || '');
 
-        // If correctAnswer was just an index or letter like "A" or "0"
-        const letterIndex = ['A', 'B', 'C', 'D', 'E'].indexOf(correctAnswer.toUpperCase());
+        // If correctAnswer was just an index or letter like "A", "B", "C", "D", "E" or "1".."5"
+        const letterIndex = ['A', 'B', 'C', 'D', 'E'].indexOf(rawCorrect.toUpperCase());
+        const numIndex = ['1', '2', '3', '4', '5'].indexOf(rawCorrect);
+        
+        let resolvedCorrect = '';
         if (letterIndex !== -1 && optionsList[letterIndex]) {
-          correctAnswer = optionsList[letterIndex];
+          resolvedCorrect = optionsList[letterIndex];
+        } else if (numIndex !== -1 && optionsList[numIndex]) {
+          resolvedCorrect = optionsList[numIndex];
         } else {
-          // Check exact or partial match with one of the options
-          const matched = optionsList.find(opt => opt.toLowerCase() === correctAnswer.toLowerCase());
+          // Check match with one of the options
+          const matched = optionsList.find(opt => opt.toLowerCase() === rawCorrect.toLowerCase());
           if (matched) {
-            correctAnswer = matched;
-          } else if (optionsList.length > 0 && !optionsList.includes(correctAnswer)) {
-            // Default to first option if not matched
-            correctAnswer = optionsList[0];
+            resolvedCorrect = matched;
           }
+        }
+
+        // Strictly enforce 5 options per RBI Grade B standards
+        const defaultFillers = [
+          "None of the above",
+          "Cannot be determined from the available regulatory data",
+          "Both (b) and (c)",
+          "All of the above statements are valid"
+        ];
+        let fillerIdx = 0;
+        while (optionsList.length < 5) {
+          const candidate = defaultFillers[fillerIdx++] || `Option ${optionsList.length + 1}`;
+          if (!optionsList.includes(candidate)) {
+            optionsList.push(candidate);
+          }
+        }
+        if (optionsList.length > 5) {
+          // Truncate to 5 options, ensuring resolvedCorrect stays if present
+          if (resolvedCorrect && optionsList.indexOf(resolvedCorrect) >= 5) {
+            optionsList[4] = resolvedCorrect;
+          }
+          optionsList = optionsList.slice(0, 5);
+        }
+
+        // Finalize correctAnswer
+        if (!resolvedCorrect || !optionsList.includes(resolvedCorrect)) {
+          resolvedCorrect = optionsList[0];
         }
 
         return {
           id: q.id || `q_mcq_${index + 1}`,
           type: 'MCQ' as const,
           sourceTag,
+          topic: q.topic || config.targetTopic || (sourceTag === 'Dynamic' ? 'Current Regulatory & Policy Affairs' : 'Statutory & Core Principles'),
+          difficulty: q.difficulty || config.difficulty || 'Hard',
           text,
           options: optionsList,
-          correctAnswer,
-          explanation: q.explanation || 'Refer to the relevant RBI guidelines and conceptual notes for this question.',
+          correctAnswer: resolvedCorrect,
+          explanation: q.explanation || 'Refer to the statutory RBI circulars, Master Directions, and core economic literature for this question.',
           maxMarks: 1
         };
       } else {
@@ -252,6 +333,8 @@ Output valid JSON matching this exact schema:
           id: q.id || `q_desc_${index + 1}`,
           type: 'Descriptive' as const,
           sourceTag,
+          topic: q.topic || config.targetTopic || (sourceTag === 'Dynamic' ? 'Macroeconomic Policy & Structural Reforms' : 'Monetary Policy & Financial Architecture'),
+          difficulty: q.difficulty || config.difficulty || 'Hard',
           text,
           maxMarks,
           wordLimit,
