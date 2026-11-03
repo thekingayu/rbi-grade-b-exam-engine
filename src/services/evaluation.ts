@@ -249,6 +249,92 @@ export async function evaluateAndPersistTest(
 
   await updateDoc(docRef, persistencePayload);
 
+  // 6. Automatically extract and store Mistakes into Firestore collection 'mistakes' & local state
+  try {
+    const subjectId = testData.subjectId || 'general-awareness';
+    const subjectSlug = testData.subjectSlug || 'general-awareness';
+
+    const existingMistakesRaw = localStorage.getItem('rbi_mistake_entries_v1');
+    let localMistakesArr: any[] = [];
+    try {
+      if (existingMistakesRaw) localMistakesArr = JSON.parse(existingMistakesRaw);
+    } catch (e) {}
+
+    for (let i = 0; i < evaluatedQuestions.length; i++) {
+      const q = evaluatedQuestions[i];
+      const qId = q.id || i.toString();
+      const userAns = q.userAnswer || answersMap[qId] || answersMap[i.toString()] || null;
+
+      let isMistake = false;
+      let reason = '';
+
+      if (q.type === 'MCQ') {
+        if (!userAns || userAns.trim() === '') {
+          isMistake = true;
+          reason = 'Skipped / Unattempted MCQ';
+        } else if (q.isCorrect === false) {
+          isMistake = true;
+          reason = 'Incorrect MCQ Answer';
+        }
+      } else if (q.type === 'Descriptive') {
+        const evalObj = evals[qId];
+        const score = evalObj?.totalScore || 0;
+        const max = q.maxMarks || 15;
+        if (!userAns || userAns.trim() === '') {
+          isMistake = true;
+          reason = 'Unattempted Descriptive Prompt';
+        } else if (score < max * 0.5) {
+          isMistake = true;
+          reason = `Descriptive Score (${score}/${max}) below 50% benchmark`;
+        }
+      }
+
+      if (isMistake) {
+        const mistakeId = `mistake_${testId}_${qId}`;
+        const mistakeData = sanitizeForFirestore({
+          id: mistakeId,
+          userId,
+          testId,
+          subjectId,
+          subjectSlug,
+          questionId: qId,
+          type: q.type,
+          topic: q.topic || 'General Theory',
+          difficulty: q.difficulty || 'Moderate',
+          text: q.text,
+          options: q.options || null,
+          userAnswer: userAns || null,
+          correctAnswer: q.correctAnswer || (q.type === 'Descriptive' ? q.modelAnswer : null) || null,
+          explanation: q.explanation || evals[qId]?.evaluationSummary || reason,
+          leitnerBox: 1,
+          reviewCount: 0,
+          createdAt: Date.now(),
+          nextReviewDue: Date.now() + 24 * 60 * 60 * 1000
+        });
+
+        // Write to Firestore
+        try {
+          const { setDoc } = await import('firebase/firestore');
+          await setDoc(doc(db, 'mistakes', mistakeId), mistakeData, { merge: true });
+        } catch (mErr) {
+          console.error('Failed to write mistake to Firestore:', mErr);
+        }
+
+        // Update local storage array
+        const dupIdx = localMistakesArr.findIndex((m: any) => m.id === mistakeId || (m.questionId === qId && m.testId === testId));
+        if (dupIdx !== -1) {
+          localMistakesArr[dupIdx] = mistakeData;
+        } else {
+          localMistakesArr.unshift(mistakeData);
+        }
+      }
+    }
+
+    localStorage.setItem('rbi_mistake_entries_v1', JSON.stringify(localMistakesArr));
+  } catch (err) {
+    console.error('Error generating mistake entries:', err);
+  }
+
   onProgress?.('Complete!', 100);
 
   return {

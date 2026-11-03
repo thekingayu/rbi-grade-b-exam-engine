@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { collection, query, where, getDocs, setDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 import { Subject, SubjectNote, MistakeEntry } from '../types';
 import { INITIAL_SUBJECTS } from '../data/subjects';
 
@@ -100,6 +102,53 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.removeItem(STORAGE_KEYS.SUBJECTS);
   };
 
+  // Sync Firestore notes & mistakes when auth user is active
+  useEffect(() => {
+    const syncFromFirestore = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Fetch notes
+        const notesQuery = query(collection(db, 'notes'), where('userId', '==', user.uid));
+        const notesSnap = await getDocs(notesQuery);
+        const fsNotes = notesSnap.docs.map(d => ({ id: d.id, ...d.data() })) as SubjectNote[];
+
+        // Fetch mistakes
+        const mistakesQuery = query(collection(db, 'mistakes'), where('userId', '==', user.uid));
+        const mistakesSnap = await getDocs(mistakesQuery);
+        const fsMistakes = mistakesSnap.docs.map(d => ({ id: d.id, ...d.data() })) as MistakeEntry[];
+
+        if (fsNotes.length > 0) {
+          setNotes(prev => {
+            const map = new Map<string, SubjectNote>();
+            [...fsNotes, ...prev].forEach(n => map.set(n.id, n));
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        if (fsMistakes.length > 0) {
+          setMistakes(prev => {
+            const map = new Map<string, MistakeEntry>();
+            [...fsMistakes, ...prev].forEach(m => map.set(m.id, m));
+            const merged = Array.from(map.values());
+            localStorage.setItem(STORAGE_KEYS.MISTAKES, JSON.stringify(merged));
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.error("Firestore sync error in SubjectContext:", err);
+      }
+    };
+
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) syncFromFirestore();
+    });
+    return () => unsubscribe();
+  }, []);
+
   const addNote = (noteData: Omit<SubjectNote, 'id' | 'uploadedAt'>): SubjectNote => {
     const newNote: SubjectNote = {
       ...noteData,
@@ -111,6 +160,12 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(next));
       return next;
     });
+
+    // Write to Firestore
+    try {
+      setDoc(doc(db, 'notes', newNote.id), newNote, { merge: true }).catch(console.error);
+    } catch (e) {}
+
     return newNote;
   };
 
@@ -120,11 +175,14 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(next));
       return next;
     });
+
+    try {
+      deleteDoc(doc(db, 'notes', id)).catch(console.error);
+    } catch (e) {}
   };
 
   const recordMistake = (data: Omit<MistakeEntry, 'id' | 'createdAt' | 'reviewCount'>) => {
     setMistakes(prev => {
-      // Check if duplicate question already exists
       const existingIdx = prev.findIndex(m => m.questionId === data.questionId && m.testId === data.testId);
       if (existingIdx !== -1) return prev;
 
@@ -134,10 +192,15 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createdAt: Date.now(),
         reviewCount: 0,
         leitnerBox: data.leitnerBox || 1,
-        nextReviewDue: Date.now() + 24 * 60 * 60 * 1000 // 1 day
+        nextReviewDue: Date.now() + 24 * 60 * 60 * 1000
       };
       const next = [newEntry, ...prev];
       localStorage.setItem(STORAGE_KEYS.MISTAKES, JSON.stringify(next));
+
+      try {
+        setDoc(doc(db, 'mistakes', newEntry.id), newEntry, { merge: true }).catch(console.error);
+      } catch (e) {}
+
       return next;
     });
   };
@@ -147,16 +210,21 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const next = prev.map(m => {
         if (m.id !== id) return m;
         let newBox = promoted ? Math.min(5, m.leitnerBox + 1) : 1;
-        // Spaced repetition intervals: Box 1: 1d, Box 2: 3d, Box 3: 7d, Box 4: 14d, Box 5: 30d
         const intervals = [1, 3, 7, 14, 30];
         const days = intervals[newBox - 1] || 1;
-        return {
+        const updated = {
           ...m,
           leitnerBox: newBox,
           reviewCount: m.reviewCount + 1,
           lastReviewedAt: Date.now(),
           nextReviewDue: Date.now() + days * 24 * 60 * 60 * 1000
         };
+
+        try {
+          setDoc(doc(db, 'mistakes', id), updated, { merge: true }).catch(console.error);
+        } catch (e) {}
+
+        return updated;
       });
       localStorage.setItem(STORAGE_KEYS.MISTAKES, JSON.stringify(next));
       return next;
@@ -169,6 +237,10 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem(STORAGE_KEYS.MISTAKES, JSON.stringify(next));
       return next;
     });
+
+    try {
+      deleteDoc(doc(db, 'mistakes', id)).catch(console.error);
+    } catch (e) {}
   };
 
   return (

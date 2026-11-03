@@ -34,5 +34,19 @@ service cloud.firestore {
         allow delete: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
       }
     }
+
+    match /notes/{noteId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    match /mistakes/{mistakeId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
   }
 }

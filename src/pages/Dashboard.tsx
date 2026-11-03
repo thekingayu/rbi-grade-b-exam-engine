@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import { TestAttempt } from '../types';
@@ -30,27 +30,26 @@ export function Dashboard({ user }: { user: User }) {
   }, [setActiveSubject]);
 
   useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const q = query(
-          collection(db, 'tests'),
-          where('userId', '==', user.uid)
-        );
-        const snapshot = await getDocs(q);
-        const fetched = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        })) as TestAttempt[];
-        
-        fetched.sort((a, b) => b.createdAt - a.createdAt);
-        setTests(fetched);
-      } catch (error) {
-        console.error('Error fetching tests:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTests();
+    const q = query(
+      collection(db, 'tests'),
+      where('userId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })) as TestAttempt[];
+      
+      fetched.sort((a, b) => b.createdAt - a.createdAt);
+      setTests(fetched);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error listening to tests:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user.uid]);
 
   const handleTerminate = async (testId: string) => {

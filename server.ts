@@ -508,7 +508,7 @@ app.post('/api/upload-chunk', chunkUpload.single('chunk'), async (req: any, res)
 
 app.post('/api/extract-text', async (req, res) => {
   try {
-    const { uploadId, mimeType } = req.body;
+    let { uploadId, mimeType } = req.body;
     
     if (!uploadId) {
       return res.status(400).json({ error: 'No uploadId provided' });
@@ -519,16 +519,26 @@ app.post('/api/extract-text', async (req, res) => {
       return res.status(404).json({ error: 'Upload not found or incomplete' });
     }
 
+    // Normalize mimeType for images, docs, txt
+    if (mimeType === 'image/jpg') mimeType = 'image/jpeg';
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      if (tmpFilePath.endsWith('.png')) mimeType = 'image/png';
+      else if (tmpFilePath.endsWith('.jpg') || tmpFilePath.endsWith('.jpeg')) mimeType = 'image/jpeg';
+      else if (tmpFilePath.endsWith('.webp')) mimeType = 'image/webp';
+      else if (tmpFilePath.endsWith('.txt') || tmpFilePath.endsWith('.md')) mimeType = 'text/plain';
+      else mimeType = 'application/pdf';
+    }
+
     // Use streaming NDJSON to prevent Nginx proxy timeouts for long-running extractions
     res.setHeader('Content-Type', 'application/x-ndjson');
-    res.write(JSON.stringify({ status: 'Uploading to AI...' }) + '\n');
+    res.write(JSON.stringify({ status: 'Uploading file to AI engine...' }) + '\n');
 
     const genai = getGenAI();
     let uploadResponse;
     try {
       uploadResponse = await genai.files.upload({
         file: tmpFilePath,
-        config: { mimeType: mimeType || 'application/pdf' }
+        config: { mimeType }
       });
     } finally {
       // Clean up local temp file
@@ -536,12 +546,12 @@ app.post('/api/extract-text', async (req, res) => {
       await fs.promises.unlink(tmpFilePath).catch(e => console.error("Failed to delete tmp file:", e));
     }
     
-    res.write(JSON.stringify({ status: 'Processing document...' }) + '\n');
+    res.write(JSON.stringify({ status: 'Processing document & performing OCR...' }) + '\n');
 
     let fileState = await genai.files.get({ name: uploadResponse.name });
     while (fileState.state === 'PROCESSING') {
       await new Promise(r => setTimeout(r, 2000));
-      res.write(JSON.stringify({ status: 'Processing document...' }) + '\n');
+      res.write(JSON.stringify({ status: 'Processing document & performing OCR...' }) + '\n');
       fileState = await genai.files.get({ name: uploadResponse.name });
     }
 
@@ -549,9 +559,9 @@ app.post('/api/extract-text', async (req, res) => {
       throw new Error("Document processing failed on AI server.");
     }
     
-    res.write(JSON.stringify({ status: 'Analyzing notes...' }) + '\n');
+    res.write(JSON.stringify({ status: 'Extracting curriculum notes & text...' }) + '\n');
 
-    const prompt = `Please extract all the text from this document accurately. It contains study notes for an exam. Ensure you capture all headings, bullet points, and paragraphs clearly.`;
+    const prompt = `Please extract all the readable text, handwritten or typed notes, tables, circular references, and key study topics from this image/document accurately. Preserve headings and paragraph structure clearly.`;
     
     const responseStream = await genai.models.generateContentStream({
       model: 'gemini-3.1-flash-lite',

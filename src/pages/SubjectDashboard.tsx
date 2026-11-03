@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { TestAttempt, Subject } from '../types';
 import { useSubject } from '../context/SubjectContext';
@@ -41,33 +41,31 @@ export function SubjectDashboard({ user }: { user: User }) {
   }, [currentSubject, setActiveSubject]);
 
   useEffect(() => {
-    const fetchSubjectTests = async () => {
-      try {
-        const q = query(
-          collection(db, 'tests'),
-          where('userId', '==', user.uid)
-        );
-        const snapshot = await getDocs(q);
-        const allTests = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        })) as TestAttempt[];
+    const q = query(
+      collection(db, 'tests'),
+      where('userId', '==', user.uid)
+    );
 
-        // Filter tests for this subject
-        const scoped = allTests.filter(t => 
-          t.subjectId === currentSubject.id || 
-          t.subjectSlug === currentSubject.slug ||
-          (!t.subjectId && currentSubject.slug === 'uncategorized')
-        );
-        scoped.sort((a, b) => b.createdAt - a.createdAt);
-        setTests(scoped);
-      } catch (err) {
-        console.error('Error fetching subject tests:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSubjectTests();
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const allTests = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })) as TestAttempt[];
+
+      const scoped = allTests.filter(t => 
+        t.subjectId === currentSubject.id || 
+        t.subjectSlug === currentSubject.slug ||
+        (!t.subjectId && currentSubject.slug === 'uncategorized')
+      );
+      scoped.sort((a, b) => b.createdAt - a.createdAt);
+      setTests(scoped);
+      setLoading(false);
+    }, (err) => {
+      console.error('Error listening to subject tests:', err);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user.uid, currentSubject]);
 
   const completed = tests.filter(t => t.status === 'completed');
@@ -169,29 +167,88 @@ export function SubjectDashboard({ user }: { user: User }) {
     return true;
   });
 
-  // Note file upload handler
+  // Note file upload handler with real text extraction for PDF, DOCX, TXT, and Images
   const handleNoteUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     setIsUploadingNote(true);
     try {
-      // Mock reading text or small upload
       let text = '';
       if (file.type.includes('text') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
         text = await file.text();
       } else {
-        text = `Syllabus notes uploaded for ${currentSubject.name} (${file.name}). Topics include ${currentSubject.syllabusTopics.slice(0, 3).join(', ')}.`;
+        // Run chunked upload and Gemini OCR/extraction
+        const uploadId = Date.now().toString() + Math.random().toString(36).substring(7);
+        const chunkSize = 10 * 1024 * 1024;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, file.size);
+          const chunk = file.slice(start, end);
+
+          const formData = new FormData();
+          formData.append('uploadId', uploadId);
+          formData.append('fileName', file.name);
+          formData.append('chunkIndex', i.toString());
+          formData.append('totalChunks', totalChunks.toString());
+          formData.append('chunk', chunk);
+
+          const chunkRes = await fetch('/api/upload-chunk', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!chunkRes.ok) throw new Error('Chunk upload failed');
+        }
+
+        const res = await fetch('/api/extract-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uploadId, mimeType: file.type || 'application/pdf' })
+        });
+
+        if (!res.ok) throw new Error('Failed to extract text from document');
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const data = JSON.parse(line);
+              if (data.textChunk) text += data.textChunk;
+            } catch (e) {}
+          }
+        }
+        if (buffer.trim()) {
+          try {
+            const data = JSON.parse(buffer);
+            if (data.textChunk) text += data.textChunk;
+          } catch (e) {}
+        }
       }
+
+      const finalText = text.trim() || `Uploaded note for ${currentSubject.name} (${file.name}).`;
+
       addNote({
         userId: user.uid,
         subjectId: currentSubject.id,
         subjectSlug: currentSubject.slug,
         fileName: file.name,
-        extractedText: text,
+        extractedText: finalText,
         size: file.size
       });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Error uploading note:", err);
+      alert("Failed to extract note text: " + (err.message || String(err)));
     } finally {
       setIsUploadingNote(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -478,7 +535,7 @@ export function SubjectDashboard({ user }: { user: User }) {
                   ref={fileInputRef}
                   onChange={handleNoteUpload}
                   className="hidden"
-                  accept=".pdf,.docx,.txt,.md"
+                  accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.webp"
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}

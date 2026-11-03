@@ -526,7 +526,7 @@ export function NewTest({ user }: { user: User }) {
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".pdf,.docx,.txt,.md"
+                  accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.webp"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -534,10 +534,10 @@ export function NewTest({ user }: { user: User }) {
                   <UploadCloud className="w-8 h-8" />
                 </div>
                 <h3 className="font-serif font-bold text-lg text-slate-900 dark:text-white">
-                  Drop your study notes here or click to browse
+                  Drop your study notes or images here or click to browse
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-                  Supports PDF circulars, official RBI handouts, text outlines, and Markdown (up to 200MB).
+                  Supports PDF, DOCX, TXT, MD, and Images (PNG, JPG, JPEG, WEBP up to 200MB).
                 </p>
               </div>
 
@@ -730,93 +730,177 @@ export function NewTest({ user }: { user: User }) {
             </div>
           </div>
 
-          {/* Question Breakdown Sliders */}
+          {/* Keyboard-Entering Question Breakdown Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* MCQs */}
             {selectedSubject.questionTypeMix.mcq && (
-              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
                   <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
                     Multiple Choice Questions
                   </span>
-                  <span className="text-xs font-mono text-teal-600 dark:text-teal-400 font-bold">
-                    {config.mcqStatic + config.mcqDynamic} Qs
+                  <span className="text-xs font-mono text-teal-600 dark:text-teal-400 font-bold px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20">
+                    Total MCQ: {config.mcqStatic + config.mcqDynamic} Qs
                   </span>
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">Static Theory MCQs</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{config.mcqStatic}</span>
+                <div className="space-y-3">
+                  {/* Static MCQs Number Input */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Static Theory MCQs</span>
+                      <span className="text-[10px] text-slate-400">Core concepts & rules</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, mcqStatic: Math.max(0, config.mcqStatic - 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={config.mcqStatic === 0 ? '0' : config.mcqStatic}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setConfig({ ...config, mcqStatic: isNaN(val) ? 0 : Math.max(0, Math.min(50, val)) });
+                        }}
+                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, mcqStatic: Math.min(50, config.mcqStatic + 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="30"
-                    value={config.mcqStatic}
-                    onChange={(e) => setConfig({ ...config, mcqStatic: parseInt(e.target.value, 10) })}
-                    className="w-full accent-teal-600"
-                  />
-                </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">Dynamic Current Affairs MCQs</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{config.mcqDynamic}</span>
+                  {/* Dynamic MCQs Number Input */}
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Dynamic Current Affairs MCQs</span>
+                      <span className="text-[10px] text-slate-400">Policy circulars & budget</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, mcqDynamic: Math.max(0, config.mcqDynamic - 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={config.mcqDynamic === 0 ? '0' : config.mcqDynamic}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setConfig({ ...config, mcqDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(50, val)) });
+                        }}
+                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-inner"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, mcqDynamic: Math.min(50, config.mcqDynamic + 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="30"
-                    value={config.mcqDynamic}
-                    onChange={(e) => setConfig({ ...config, mcqDynamic: parseInt(e.target.value, 10) })}
-                    className="w-full accent-cyan-600"
-                  />
                 </div>
               </div>
             )}
 
             {/* Descriptive */}
             {selectedSubject.questionTypeMix.descriptive && (
-              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
                   <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
                     Phase 2 Analytical Descriptive
                   </span>
-                  <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold">
-                    {config.descStatic + config.descDynamic} Qs
+                  <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                    Total Desc: {config.descStatic + config.descDynamic} Qs
                   </span>
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">Static Analytical Essay / Questions</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{config.descStatic}</span>
+                <div className="space-y-3">
+                  {/* Static Descriptive Number Input */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Static Analytical Essays</span>
+                      <span className="text-[10px] text-slate-400">Theory & framework prompts</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, descStatic: Math.max(0, config.descStatic - 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={config.descStatic === 0 ? '0' : config.descStatic}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setConfig({ ...config, descStatic: isNaN(val) ? 0 : Math.max(0, Math.min(10, val)) });
+                        }}
+                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, descStatic: Math.min(10, config.descStatic + 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    value={config.descStatic}
-                    onChange={(e) => setConfig({ ...config, descStatic: parseInt(e.target.value, 10) })}
-                    className="w-full accent-indigo-600"
-                  />
-                </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">Dynamic Policy Questions</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{config.descDynamic}</span>
+                  {/* Dynamic Descriptive Number Input */}
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Dynamic Policy Questions</span>
+                      <span className="text-[10px] text-slate-400">Macroeconomic reforms</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, descDynamic: Math.max(0, config.descDynamic - 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={config.descDynamic === 0 ? '0' : config.descDynamic}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setConfig({ ...config, descDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(10, val)) });
+                        }}
+                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-inner"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, descDynamic: Math.min(10, config.descDynamic + 1) })}
+                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    value={config.descDynamic}
-                    onChange={(e) => setConfig({ ...config, descDynamic: parseInt(e.target.value, 10) })}
-                    className="w-full accent-purple-600"
-                  />
                 </div>
               </div>
             )}
