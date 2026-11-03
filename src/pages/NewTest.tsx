@@ -14,6 +14,7 @@ import { useSubject } from '../context/SubjectContext';
 import { Subject, ExamMode } from '../types';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { Spinner } from 'sketchbook-ui';
+import { SynthesisOverlay } from '../components/SynthesisOverlay';
 
 const getShortFileName = (name: string, max = 20) => {
   if (!name || name.length <= max) return name;
@@ -1019,52 +1020,13 @@ export function NewTest({ user }: { user: User }) {
       )}
 
       {/* IMMERSIVE FULL-PAGE PROCESSING OVERLAY (RENDERED DIRECTLY INTO DOCUMENT.BODY VIA PORTAL) */}
-      {uploading && createPortal(
-        <div 
-          className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/75 backdrop-blur-xl animate-in fade-in duration-300 p-4"
-          role="dialog"
-          aria-modal="true"
-          onClick={handleCancelAnalysis}
-        >
-          <div 
-            className="relative w-full max-w-md rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-7 sm:p-9 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-2xl animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close / Cancel Button */}
-            <button
-              onClick={handleCancelAnalysis}
-              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
-              title="Cancel Analysis (Esc)"
-              aria-label="Cancel analysis"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Immersive Spiral Spinner */}
-            <div className="w-16 h-16 rounded-2xl bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/25 flex items-center justify-center mx-auto mb-5 shadow-[0_0_25px_rgba(13,148,136,0.3)]">
-              <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
-            </div>
-
-            <h3 className="text-xl sm:text-2xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
-              Synthesizing Mock Exam
-            </h3>
-            
-            <p className="text-xs sm:text-sm font-mono text-teal-600 dark:text-teal-400 font-bold mt-2">
-              {loadingMessage || "Processing curriculum notes..."}
-            </p>
-
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
-              Evaluating statutory rules, drafting 5-option IBPS distractors, and formulating analytical model answers.
-            </p>
-
-            <button
-              onClick={handleCancelAnalysis}
-              className="mt-6 text-xs text-slate-400 hover:text-red-500 underline transition-colors cursor-pointer"
-            >
-              Cancel and return to configuration
-            </button>
-          </div>
-        </div>,
+      {createPortal(
+        <SynthesisOverlay
+          isOpen={uploading}
+          onCancel={handleCancelAnalysis}
+          loadingMessage={loadingMessage}
+          subjectName={selectedSubject?.name || 'Curriculum'}
+        />,
         document.body
       )}
 
