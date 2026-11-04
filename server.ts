@@ -13,9 +13,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Security headers middleware: enforce nosniff to prevent MIME-sniffing / cross-site scripting
+// Security headers middleware: enforce nosniff and HSTS to prevent MIME-sniffing & clear-text downgrade
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
 
