@@ -13,10 +13,27 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Security headers middleware: enforce nosniff and HSTS to prevent MIME-sniffing & clear-text downgrade
+// Comprehensive Security Headers: nosniff, HSTS, Referrer-Policy, and Content-Security-Policy (CSP)
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https://*.googleusercontent.com https://*.firebasestorage.app https://*.run.app",
+      "connect-src 'self' data: blob: https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://*.run.app https://rbi-grade-b-exam-engine.vercel.app ws: wss:",
+      "frame-src 'self' https://*.firebaseapp.com https://*.google.com",
+      "frame-ancestors 'self' https://*.google.com https://*.run.app https://ais-*.run.app https://rbi-grade-b-exam-engine.vercel.app",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ].join('; ')
+  );
   next();
 });
 
