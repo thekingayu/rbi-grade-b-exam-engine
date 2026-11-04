@@ -17,6 +17,7 @@ import { MistakeNotebook } from './pages/MistakeNotebook';
 import { ManageSubjects } from './pages/ManageSubjects';
 import { Exam } from './pages/Exam';
 import { Results } from './pages/Results';
+import { Profile } from './pages/Profile';
 import { SmoothScroll } from './components/SmoothScroll';
 import { SubjectProvider } from './context/SubjectContext';
 import { SketchProvider, Spinner } from 'sketchbook-ui';
@@ -65,6 +66,7 @@ export default function App() {
                 <Route path="mistakes" element={<MistakeNotebook user={user} />} />
                 <Route path="manage-subjects" element={<ManageSubjects user={user} />} />
                 <Route path="results/:testId" element={<Results user={user} />} />
+                <Route path="profile" element={<Profile user={user} />} />
               </Route>
             </Routes>
           </SmoothScroll>

@@ -2,6 +2,21 @@ export type TestStatus = 'setup' | 'in-progress' | 'completed';
 
 export type ExamMode = 'Full Mock' | 'Sectional' | 'Topic Drill' | 'Quick 10-min';
 
+export interface UserProfile {
+  displayName?: string;
+  photoURL?: string;
+  email?: string;
+  stream?: 'General' | 'DEPR' | 'DSIM';
+  category?: 'General' | 'EWS' | 'OBC' | 'SC' | 'ST' | 'PwBD';
+  attemptCount?: string;
+  educationBackground?: string;
+  dailyStudyHours?: number;
+  bio?: string;
+  phone?: string;
+  targetExamYear?: string;
+  updatedAt?: number;
+}
+
 export interface Subject {
   id: string;
   slug: string;

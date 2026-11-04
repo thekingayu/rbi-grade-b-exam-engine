@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSubject } from '../context/SubjectContext';
 import { 
   Search, Compass, Plus, Clock, RotateCcw, 
-  SlidersHorizontal, ArrowRight, BookOpen, X 
+  SlidersHorizontal, ArrowRight, BookOpen, X, User as UserIcon 
 } from 'lucide-react';
 import { SubjectIcon } from './dashboard/SubjectIcon';
 
@@ -29,6 +29,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   if (!isOpen) return null;
 
   const quickLinks = [
+    { label: 'Officer Profile & Dossier', path: '/profile', icon: UserIcon, badge: 'Profile' },
     { label: 'Global Command Center', path: '/', icon: Compass, badge: 'Home' },
     { label: 'Start New Exam Wizard', path: '/new', icon: Plus, badge: 'Exam' },
     { label: 'Spaced Mistake Notebook', path: '/mistakes', icon: RotateCcw, badge: 'Review' },

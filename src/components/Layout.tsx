@@ -4,7 +4,7 @@ import { auth } from '../firebase';
 import { 
   Moon, Sun, BookOpen, Compass, Plus, Clock, LogOut, 
   RotateCcw, SlidersHorizontal, ChevronDown, Sparkles, 
-  Search, Timer as TimerIcon 
+  Search, Timer as TimerIcon, User as UserIcon 
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,7 +19,7 @@ export function Layout({ user }: { user: User }) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
-  const { subjects, activeSubject, setActiveSubject } = useSubject();
+  const { subjects, activeSubject, setActiveSubject, userProfile } = useSubject();
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark' ||
@@ -63,6 +63,8 @@ export function Layout({ user }: { user: User }) {
   }, []);
 
   const activeColor = activeSubject ? activeSubject.accentColor : '#0D9488';
+  const currentDisplayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Cadre Officer';
+  const currentPhoto = userProfile?.photoURL || user.photoURL;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 font-sans selection:bg-teal-600 selection:text-white transition-colors duration-500">
@@ -275,14 +277,45 @@ export function Layout({ user }: { user: User }) {
                 {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
               </button>
 
+              {/* User Profile Button linking to /profile */}
+              <Link
+                to="/profile"
+                className={`flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-2xl border transition-all cursor-pointer shrink-0 ${
+                  location.pathname === '/profile'
+                    ? 'bg-teal-500/15 border-teal-500/40 ring-2 ring-teal-500/20 shadow-xs'
+                    : 'bg-slate-100/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                }`}
+                title="Manage Officer Profile & Settings"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden shrink-0">
+                  {currentPhoto ? (
+                    currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
+                      <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm leading-none">{currentPhoto}</span>
+                    )
+                  ) : (
+                    <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="hidden lg:flex flex-col text-left">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight truncate max-w-[110px]">
+                    {currentDisplayName.split(' ')[0]}
+                  </span>
+                  <span className="text-[9px] font-mono text-teal-600 dark:text-teal-400 font-bold leading-tight">
+                    {userProfile?.stream || 'Officer'}
+                  </span>
+                </div>
+              </Link>
+
               {/* Sign out */}
               <button 
                 onClick={() => signOut(auth)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 transition-all cursor-pointer shrink-0"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 transition-all cursor-pointer shrink-0"
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline font-semibold">Sign Out</span>
+                <span className="font-semibold">Sign Out</span>
               </button>
             </div>
           </div>
@@ -349,6 +382,26 @@ export function Layout({ user }: { user: User }) {
             <Search className="w-4 h-4" />
             <span>Search</span>
           </button>
+
+          <Link 
+            to="/profile" 
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold ${
+              location.pathname === '/profile' ? 'text-teal-600 dark:text-teal-400' : 'text-slate-500'
+            }`}
+          >
+            <div className="w-4 h-4 rounded-full overflow-hidden flex items-center justify-center bg-teal-500/20 text-teal-600 dark:text-teal-400 font-bold text-[8px]">
+              {currentPhoto ? (
+                currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
+                  <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{currentPhoto}</span>
+                )
+              ) : (
+                <UserIcon className="w-3 h-3" />
+              )}
+            </div>
+            <span>Profile</span>
+          </Link>
         </nav>
 
         <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 md:pb-12 w-full relative">

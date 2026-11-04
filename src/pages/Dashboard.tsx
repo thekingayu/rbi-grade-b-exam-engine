@@ -14,16 +14,21 @@ import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { 
   Plus, CheckCircle2, TrendingUp, Trophy, ArrowRight,
   Clock, Flame, BookOpen, Sparkles, AlertCircle, ArrowUpRight,
-  Layers, FileText
+  Layers, FileText, User as UserIcon, ShieldCheck
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { Spinner, Divider } from 'sketchbook-ui';
 import { calculateDaysRemaining } from '../utils/date';
 
 export function Dashboard({ user }: { user: User }) {
-  const { subjects, setActiveSubject, targetExamDate } = useSubject();
+  const { subjects, setActiveSubject, targetExamDate, userProfile } = useSubject();
   const [tests, setTests] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const displayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Officer';
+  const photoURL = userProfile?.photoURL || user.photoURL;
+  const stream = userProfile?.stream || 'General';
+  const targetYear = userProfile?.targetExamYear || '2026-27';
 
   const daysRemaining = calculateDaysRemaining(targetExamDate);
 
@@ -151,10 +156,10 @@ export function Dashboard({ user }: { user: User }) {
             <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-teal-200 tracking-wider uppercase">
               RESERVE BANK OF INDIA · OFFICER CADRE COMMAND CENTER
             </span>
-            <span className="px-1.5 py-0.2 rounded-full bg-teal-600 text-white text-[9px] font-bold">2026-27</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-teal-600 text-white text-[9px] font-bold">{targetYear}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
-            Welcome back, <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">{user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Officer'}</span>
+            Welcome back, <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">{displayName.split(' ')[0]}</span>
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-1.5">
             <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium">
@@ -167,13 +172,44 @@ export function Dashboard({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+          {/* Officer Profile Badge */}
+          <Link 
+            to="/profile"
+            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 hover:border-teal-500/40 hover:bg-teal-500/[0.04] dark:hover:bg-slate-850 transition-all duration-200 backdrop-blur-md shadow-xs cursor-pointer"
+            title="Open Officer Dossier & Profile Settings"
+          >
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-teal-500/30 flex items-center justify-center bg-gradient-to-tr from-teal-500/20 to-indigo-500/20 shrink-0">
+              {photoURL ? (
+                <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-bold text-teal-700 dark:text-teal-300 text-sm">
+                  {displayName.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors">
+                  {displayName}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                  {stream}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
+                Officer Dossier <ArrowRight className="w-2.5 h-2.5 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
+          </Link>
+
           <Link 
             to="/new" 
-            className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
+            className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
           >
-            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shadow-xs shrink-0">
-              <Plus className="w-4 h-4 text-white" />
+            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shadow-xs shrink-0">
+              <Plus className="w-3.5 h-3.5 text-white" />
             </div>
             <span>Start New Exam</span>
           </Link>

@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { 
   collection, query, where, getDocs, setDoc, deleteDoc, doc, onSnapshot, getDoc 
 } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
 import { db, auth } from '../firebase';
-import { Subject, SubjectNote, MistakeEntry, TestAttempt } from '../types';
+import { Subject, SubjectNote, MistakeEntry, TestAttempt, UserProfile } from '../types';
 import { INITIAL_SUBJECTS } from '../data/subjects';
 import { sanitizeForFirestore } from '../utils/firestore';
 
@@ -15,6 +16,8 @@ interface SubjectContextType {
   setTargetExamDate: (date: string) => void;
   targetScoreGoal: number;
   setTargetScoreGoal: (score: number) => void;
+  userProfile: UserProfile | null;
+  updateUserProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   notes: SubjectNote[];
   addNote: (note: Omit<SubjectNote, 'id' | 'uploadedAt'>) => SubjectNote;
   deleteNote: (id: string) => void;
@@ -32,6 +35,7 @@ const STORAGE_KEYS = {
   SUBJECTS: 'rbi_subjects_custom_v1',
   EXAM_DATE: 'rbi_target_exam_date_v1',
   SCORE_GOAL: 'rbi_target_score_goal_v1',
+  PROFILE: 'rbi_user_profile_v1',
   NOTES: 'rbi_subject_notes_v1',
   MISTAKES: 'rbi_mistake_entries_v1'
 };
@@ -81,6 +85,16 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return [];
   });
 
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  });
+
   // Keep a reference to current userId to avoid stale closures
   const currentUserIdRef = useRef<string | null>(null);
   const backfillDoneRef = useRef<boolean>(false);
@@ -92,7 +106,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const setupListeners = async (userId: string) => {
       currentUserIdRef.current = userId;
 
-      // 1. User document listener (targetExamDate, targetScoreGoal, customSubjects)
+      // 1. User document listener (targetExamDate, targetScoreGoal, customSubjects, profile)
       try {
         const userDocRef = doc(db, 'users', userId);
         const unsubUser = onSnapshot(userDocRef, (snap) => {
@@ -110,12 +124,36 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               setSubjects(data.customSubjects);
               localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(data.customSubjects));
             }
+            if (data.profile) {
+              setUserProfile(data.profile);
+              localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(data.profile));
+            } else if (data.displayName || data.photoURL) {
+              const p: UserProfile = {
+                displayName: data.displayName,
+                photoURL: data.photoURL,
+                email: auth.currentUser?.email || '',
+                targetExamYear: '2026-27'
+              };
+              setUserProfile(p);
+              localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(p));
+            }
           } else {
             // First time this user document is touched: seed with current local values
             const initialData = {
               userId,
               targetExamDate: localStorage.getItem(STORAGE_KEYS.EXAM_DATE) || DEFAULT_TARGET_DATE,
               targetScoreGoal: parseInt(localStorage.getItem(STORAGE_KEYS.SCORE_GOAL) || '75', 10),
+              profile: {
+                displayName: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Cadre Officer',
+                photoURL: auth.currentUser?.photoURL || undefined,
+                email: auth.currentUser?.email || '',
+                stream: 'General',
+                category: 'General',
+                attemptCount: '1st Attempt',
+                dailyStudyHours: 4,
+                bio: 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2',
+                targetExamYear: '2026-27'
+              },
               updatedAt: Date.now()
             };
             setDoc(userDocRef, sanitizeForFirestore(initialData), { merge: true }).catch(console.error);
@@ -435,6 +473,51 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     deleteDoc(doc(db, 'mistakes', id)).catch(console.error);
   };
 
+  const updateUserProfile = async (profileData: Partial<UserProfile>) => {
+    const uid = currentUserIdRef.current || auth.currentUser?.uid;
+    const currentAuth = auth.currentUser;
+    
+    const merged: UserProfile = {
+      displayName: currentAuth?.displayName || currentAuth?.email?.split('@')[0] || 'Cadre Officer',
+      photoURL: currentAuth?.photoURL || undefined,
+      email: currentAuth?.email || '',
+      stream: 'General',
+      category: 'General',
+      attemptCount: '1st Attempt',
+      dailyStudyHours: 4,
+      bio: 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2',
+      targetExamYear: '2026-27',
+      ...(userProfile || {}),
+      ...profileData,
+      updatedAt: Date.now()
+    };
+
+    setUserProfile(merged);
+    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(merged));
+
+    // Update Firebase Auth user profile if name or photo changed
+    if (currentAuth && (profileData.displayName !== undefined || profileData.photoURL !== undefined)) {
+      try {
+        await updateProfile(currentAuth, {
+          displayName: merged.displayName || undefined,
+          photoURL: merged.photoURL || undefined
+        });
+      } catch (authErr) {
+        console.warn('Could not update Firebase Auth profile:', authErr);
+      }
+    }
+
+    // Persist to Firestore users/{uid}
+    if (uid) {
+      await setDoc(doc(db, 'users', uid), {
+        profile: sanitizeForFirestore(merged),
+        displayName: merged.displayName,
+        photoURL: merged.photoURL,
+        updatedAt: Date.now()
+      }, { merge: true });
+    }
+  };
+
   return (
     <SubjectContext.Provider value={{
       subjects,
@@ -444,6 +527,8 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTargetExamDate,
       targetScoreGoal,
       setTargetScoreGoal,
+      userProfile,
+      updateUserProfile,
       notes,
       addNote,
       deleteNote,
