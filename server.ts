@@ -13,8 +13,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Comprehensive Security Headers: nosniff, HSTS, Referrer-Policy, and Content-Security-Policy (CSP)
+// Eliminate server software and technology disclosure
+app.disable('x-powered-by');
+
+// Comprehensive Security Headers: suppress technology identifiers, enforce nosniff, HSTS, Referrer-Policy, and hardened CSP
 app.use((_req, res, next) => {
+  res.removeHeader('X-Powered-By');
+  res.removeHeader('Server');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Referrer-Policy', 'no-referrer');
@@ -22,7 +27,7 @@ app.use((_req, res, next) => {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com",
+      "script-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.googleusercontent.com https://*.firebasestorage.app https://*.run.app",
