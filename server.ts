@@ -13,6 +13,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+// Security headers middleware: enforce nosniff to prevent MIME-sniffing / cross-site scripting
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
 // Authorized origins including the Vercel production domain
 const ALLOWED_ORIGINS = [
   'https://rbi-grade-b-exam-engine.vercel.app',
