@@ -132,23 +132,71 @@ export function Profile({ user }: { user: User }) {
 
   const daysRemaining = calculateDaysRemaining(tempExamDate);
 
-  // Handle custom image upload from computer / phone gallery
+  // Handle custom image upload with client-side canvas compression
+  // Ensures uploaded images never exceed Firestore document size limits (max 256x256, ~25KB)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image size must be under 5MB.');
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('Image size must be under 10MB.');
       return;
     }
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      setErrorMsg('Could not read image file. Please try another image.');
+    };
     reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (result) {
-        setPhotoURL(result);
-        setErrorMsg(null);
-      }
+      const rawDataUrl = event.target?.result as string;
+      if (!rawDataUrl) return;
+
+      const img = new Image();
+      img.onerror = () => {
+        setErrorMsg('Invalid image file format.');
+      };
+      img.onload = () => {
+        try {
+          const maxDim = 256;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+            setPhotoURL(compressed);
+            setErrorMsg(null);
+          } else {
+            setPhotoURL(rawDataUrl);
+            setErrorMsg(null);
+          }
+        } catch {
+          setPhotoURL(rawDataUrl);
+          setErrorMsg(null);
+        }
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -161,15 +209,15 @@ export function Profile({ user }: { user: User }) {
     try {
       // 1. Update Profile in Firestore & Firebase Auth
       await updateUserProfile({
-        displayName,
-        photoURL,
+        displayName: displayName.trim() || 'Cadre Officer',
+        photoURL: photoURL || '',
         stream,
         category,
         attemptCount,
-        dailyStudyHours,
-        educationBackground,
-        bio,
-        phone,
+        dailyStudyHours: Number(dailyStudyHours) || 4,
+        educationBackground: educationBackground.trim(),
+        bio: bio.trim(),
+        phone: phone.trim(),
         targetExamYear: '2026-27'
       });
 
@@ -179,9 +227,10 @@ export function Profile({ user }: { user: User }) {
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving profile:', err);
-      setErrorMsg('Failed to update profile. Please try again.');
+      const msg = err?.message || (typeof err === 'string' ? err : 'Failed to update profile. Please try again.');
+      setErrorMsg(msg);
     } finally {
       setSaving(false);
     }

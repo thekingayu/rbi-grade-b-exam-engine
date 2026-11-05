@@ -56,9 +56,32 @@
         "evaluation": { "type": "object" }
       },
       "required": ["testId", "type", "sourceTag", "text"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Cadre officer profile and preparation parameters",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "email": { "type": "string" },
+        "stream": { "type": "string", "enum": ["General", "DEPR", "DSIM"] },
+        "category": { "type": "string" },
+        "attemptCount": { "type": "string" },
+        "dailyStudyHours": { "type": "number" },
+        "educationBackground": { "type": "string" },
+        "bio": { "type": "string" },
+        "phone": { "type": "string" },
+        "targetExamYear": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile and target settings"
+    },
     "/tests/{testId}": {
       "schema": { "$ref": "#/entities/Test" },
       "description": "Test records"

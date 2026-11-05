@@ -474,12 +474,12 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateUserProfile = async (profileData: Partial<UserProfile>) => {
-    const uid = currentUserIdRef.current || auth.currentUser?.uid;
     const currentAuth = auth.currentUser;
-    
+    const uid = currentAuth?.uid || currentUserIdRef.current;
+
     const merged: UserProfile = {
       displayName: currentAuth?.displayName || currentAuth?.email?.split('@')[0] || 'Cadre Officer',
-      photoURL: currentAuth?.photoURL || undefined,
+      photoURL: currentAuth?.photoURL || '',
       email: currentAuth?.email || '',
       stream: 'General',
       category: 'General',
@@ -492,29 +492,48 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatedAt: Date.now()
     };
 
+    // Update local state and storage immediately for zero-latency UI response
     setUserProfile(merged);
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(merged));
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(merged));
+    } catch (e) {
+      console.warn('Could not cache profile in localStorage:', e);
+    }
 
-    // Update Firebase Auth user profile if name or photo changed
-    if (currentAuth && (profileData.displayName !== undefined || profileData.photoURL !== undefined)) {
-      try {
-        await updateProfile(currentAuth, {
-          displayName: merged.displayName || undefined,
-          photoURL: merged.photoURL || undefined
-        });
-      } catch (authErr) {
-        console.warn('Could not update Firebase Auth profile:', authErr);
+    // Update Firebase Auth user profile safely (Firebase Auth only accepts http/https URLs up to 2048 chars)
+    if (currentAuth) {
+      const authUpdates: { displayName?: string; photoURL?: string | null } = {};
+      if (merged.displayName && merged.displayName.trim() !== '') {
+        authUpdates.displayName = merged.displayName.trim();
+      }
+      if (typeof merged.photoURL === 'string') {
+        if (merged.photoURL.startsWith('http://') || merged.photoURL.startsWith('https://')) {
+          if (merged.photoURL.length <= 2048) {
+            authUpdates.photoURL = merged.photoURL;
+          }
+        }
+      }
+
+      if (Object.keys(authUpdates).length > 0) {
+        try {
+          await updateProfile(currentAuth, authUpdates);
+        } catch (authErr) {
+          console.warn('Firebase Auth updateProfile skipped/warned:', authErr);
+        }
       }
     }
 
-    // Persist to Firestore users/{uid}
+    // Persist to Firestore users/{uid} with full payload sanitization
     if (uid) {
-      await setDoc(doc(db, 'users', uid), {
+      const payload = sanitizeForFirestore({
+        userId: uid,
         profile: sanitizeForFirestore(merged),
-        displayName: merged.displayName,
-        photoURL: merged.photoURL,
+        displayName: merged.displayName || null,
+        photoURL: merged.photoURL || null,
         updatedAt: Date.now()
-      }, { merge: true });
+      });
+
+      await setDoc(doc(db, 'users', uid), payload, { merge: true });
     }
   };
 
