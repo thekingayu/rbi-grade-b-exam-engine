@@ -86,7 +86,8 @@ export function Login() {
       return 'Google sign-in popup was closed before completing.';
     }
     if (msg.includes('auth/unauthorized-domain')) {
-      return 'Domain not authorized yet. Add rbi-grade-b-exam-engine.vercel.app to Firebase Console -> Authentication -> Settings -> Authorized Domains.';
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'rbi-grade-b-exam-engine-1.onrender.com';
+      return `Domain not authorized yet. Add "${currentHost}" to Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
     }
     return msg.replace('Firebase: ', '').replace(/\(auth\/[^)]+\)\.?/, '').trim() || 'Authentication failed. Please retry.';
   };

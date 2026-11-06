@@ -145,7 +145,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               targetScoreGoal: parseInt(localStorage.getItem(STORAGE_KEYS.SCORE_GOAL) || '75', 10),
               profile: {
                 displayName: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Cadre Officer',
-                photoURL: auth.currentUser?.photoURL || undefined,
+                photoURL: auth.currentUser?.photoURL || null,
                 email: auth.currentUser?.email || '',
                 stream: 'General',
                 category: 'General',
@@ -156,7 +156,9 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               },
               updatedAt: Date.now()
             };
-            setDoc(userDocRef, sanitizeForFirestore(initialData), { merge: true }).catch(console.error);
+            setDoc(userDocRef, sanitizeForFirestore(initialData), { merge: true }).catch((e) => {
+              console.warn('Initial user profile seed non-blocking notice:', e);
+            });
           }
         }, (err) => {
           console.warn('User profile sync listener error:', err);
@@ -523,7 +525,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
 
-    // Persist to Firestore users/{uid} with full payload sanitization
+    // Persist to Firestore users/{uid} with full payload sanitization and fallback resilience
     if (uid) {
       const payload = sanitizeForFirestore({
         userId: uid,
@@ -535,7 +537,16 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatedAt: Date.now()
       });
 
-      await setDoc(doc(db, 'users', uid), payload, { merge: true });
+      try {
+        await setDoc(doc(db, 'users', uid), payload, { merge: true });
+      } catch (primaryErr) {
+        console.warn('Primary users collection save note, attempting userSettings fallback:', primaryErr);
+        try {
+          await setDoc(doc(db, 'userSettings', uid), payload, { merge: true });
+        } catch (fallbackErr) {
+          console.warn('userSettings fallback note:', fallbackErr);
+        }
+      }
     }
 
     if (profileData.targetExamDate) {

@@ -31,9 +31,9 @@ app.use((_req, res, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.googleusercontent.com https://*.firebasestorage.app https://*.run.app",
-      "connect-src 'self' data: blob: https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://*.run.app https://rbi-grade-b-exam-engine.vercel.app ws: wss:",
+      "connect-src 'self' data: blob: https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://*.run.app https://*.onrender.com https://rbi-grade-b-exam-engine.vercel.app ws: wss:",
       "frame-src 'self' https://*.firebaseapp.com https://*.google.com",
-      "frame-ancestors 'self' https://*.google.com https://*.run.app https://ais-*.run.app https://rbi-grade-b-exam-engine.vercel.app",
+      "frame-ancestors 'self' https://*.google.com https://*.run.app https://ais-*.run.app https://*.onrender.com https://rbi-grade-b-exam-engine.vercel.app",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'"
@@ -42,8 +42,9 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Authorized origins including the Vercel production domain
+// Authorized origins including the Render and Vercel production domains
 const ALLOWED_ORIGINS = [
+  'https://rbi-grade-b-exam-engine-1.onrender.com',
   'https://rbi-grade-b-exam-engine.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173',
@@ -57,6 +58,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (
       ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith('.onrender.com') ||
       origin.endsWith('.vercel.app') ||
       origin.endsWith('.run.app')
     ) {
