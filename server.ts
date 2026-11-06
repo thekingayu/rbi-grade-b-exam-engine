@@ -139,7 +139,8 @@ function safeJsonParse(text: string): any {
 }
 
 function buildSubjectPrompt(subjectSlug: string, subjectName: string, config: any, extractedText: string): string {
-  const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0);
+  const pyqCount = typeof config.pyqCount === 'number' ? config.pyqCount : 0;
+  const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0) + pyqCount;
   const totalDescs = (config.descStatic || 0) + (config.descDynamic || 0);
   const mcq1Count = config.mcqStatic || 0;
   const mcq2Count = config.mcqDynamic || 0;
@@ -164,18 +165,10 @@ This is a pure examination of high-difficulty logical deduction, puzzles, and an
 
 QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics to cover:
-  * Reverse Syllogisms & Syllogisms with modern qualifiers ("Only a few", "Can never be", "At least some", "Definite conclusions").
-  * Machine Input-Output: 4 to 5 step rearrangement of alphanumeric words and numbers with transformation rules (e.g., digit-sum, word alphabetical/vowel count reversal).
-  * Coded Inequalities: Chained symbolic equations (using @, #, $, %, &) with composite conclusions.
-  * Coded Blood Relations: Multi-generation family lineage with professions and gender deduction.
-  * Direction Sense: Angular shifts, Pythagoras shortest distance, and coordinate-plane shadow deductions.
-
+  Topics: Reverse Syllogisms & Syllogisms ("Only a few", "Can never be"), Machine Input-Output with multi-step alphanumeric shifting/reversal, Coded Inequalities (@, #, $, %, &), Coded Blood Relations with 3-generation lineage, Direction & Distance with angular degree shifts.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics to cover:
-  * Multi-variable Floor/Flat Puzzles: (e.g., 8 people on 4 floors with Flat 1 & Flat 2, distinct banks/cities/colors).
-  * Circular / Linear Seating Arrangements: Some facing inward, some outward, or parallel dual-row seating with variable attributes.
-  * Critical & Analytical Reasoning: Statement-Assumption, Statement-Course of Action, Strong/Weak Arguments, Cause and Effect, Implicit Inference.
+  Topics: Multi-variable Floor/Flat Puzzles (8 persons on 4 floors, 2 flats, banks/cities/colors), Linear/Circular/Square Seating arrangements (inward/outward facing), Critical & Evaluative Reasoning (Statement-Assumption, Statement-Course of Action, Strong/Weak Arguments, Inferences).
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 1 Reasoning papers (2018–2025) matching the selected topic or puzzle patterns. Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, 2021, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every MCQ MUST have EXACTLY 5 distinct options.
@@ -186,6 +179,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Syllogisms & Reverse Syllogisms'}",
       "text": "Statements:\\nOnly a few Banks are NBFCs.\\nAll NBFCs are Fintechs.\\nNo Fintech is a ChitFund.\\n\\nConclusions:\\nI. Some Banks can never be ChitFunds.\\nII. All NBFCs being ChitFunds is a possibility.\\nIII. At least some Banks are Fintechs.\\n\\nWhich of the conclusion(s) logically follow(s)?",
       "options": [
@@ -202,6 +196,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Puzzles, Seating & Critical Reasoning'}",
       "text": "Eight persons - P, Q, R, S, T, U, V, and W - live on four different floors of a building (Floors 1 to 4 from bottom to top). Each floor has two flats: Flat-1 (west) and Flat-2 (east). Each person works in a different financial institution.\\n- P lives on an even-numbered floor in Flat-1.\\n- Only one floor is between P and the person working in SBI, who lives in Flat-2.\\n- T lives immediately above the person from SBI in the same flat type.\\n- R lives to the immediate east of T on the same floor.\\nWho among the following lives in Flat-2 on Floor 4?",
       "options": [
@@ -225,21 +220,10 @@ This is a pure examination of advanced quantitative ability, commercial arithmet
 
 QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics to cover:
-  * Commercial Mathematics: Compound vs Simple Interest with mixed periods/compounding, Profit-Loss with successive markups and dishonest weight ratios, Time-Speed-Distance (trains, boats and streams, circular track head-starts), Time & Work (alternate days, efficiency fractions).
-  * Quadratic Equations & Algebraic Comparisons: Two quadratic equations (Equation I: ax² + bx + c = 0, Equation II: dy² + ey + f = 0) with roots comparison: x > y, x < y, x ≥ y, x ≤ y, x = y or relation cannot be established.
-  * Missing & Wrong Number Series: Challenging polynomial, difference-of-cubes, or alternate operation series.
-  * Probability & Combinatorics: High-difficulty selection problems with conditional constraints.
-
+  Topics: Commercial Mathematics (SI/CI with mixed compounding, Profit-Loss with successive markups and dishonest weights, Time-Speed-Distance, Time & Work), Quadratic Equations & Algebraic Comparisons (Equation I: ax² + bx + c = 0 vs Equation II: dy² + ey + f = 0), Missing & Wrong Number Series, Probability & Combinatorics.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics to cover:
-  * Caselet Data Interpretation: Multi-sentence data-dense scenarios requiring ratio analysis, percentage changes, or weighted totals.
-  * Tabular & Radar DI Sets: Tabular or multidimensional data sets testing compound annual growth rate (CAGR), proportional distribution, and comparative variance.
-  * Quantity I vs Quantity II:
-    Quantity I: [Mathematical problem solving for value A]
-    Quantity II: [Mathematical problem solving for value B]
-    Options: Quantity I > Quantity II, Quantity I < Quantity II, Quantity I ≥ Quantity II, Quantity I ≤ Quantity II, Quantity I = Quantity II or relation cannot be established.
-  * Data Sufficiency: Evaluating if Statement I alone, Statement II alone, or both are sufficient.
+  Topics: Caselet Data Interpretation, Tabular & Radar DI Sets testing CAGR and proportional variance, Quantity I vs Quantity II comparisons, Data Sufficiency.
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Quantitative Aptitude papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every MCQ MUST have EXACTLY 5 distinct options.
@@ -250,6 +234,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Quadratic Equations & Series'}",
       "text": "In the following question, two quadratic equations numbered I and II are given. Solve both equations and find the mathematical relation between x and y:\\n\\nEquation I: 3x² - 19x + 28 = 0\\nEquation II: 2y² - 17y + 36 = 0",
       "options": [
@@ -266,6 +251,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Data Interpretation & Quantity Comparisons'}",
       "text": "Compare the quantities given below:\\n\\nQuantity I: The compound interest earned on Rs. 16,000 for 1.5 years at 20% per annum, compounded half-yearly.\\n\\nQuantity II: The simple interest earned on Rs. 25,000 for 3 years at 7.5% per annum.\\n\\nDetermine the relation between Quantity I and Quantity II:",
       "options": [
@@ -288,16 +274,10 @@ CRITICAL RULE: Advanced verbal acuity, grammatical syntax, vocabulary in context
 
 QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics to cover:
-  * Error Detection: Sentences partitioned into [A], [B], [C], [D] or identifying the grammatically flawless sentence among 5 options. Focus on subjunctive mood, parallelism, dangling modifiers, inverted conditionals.
-  * Phrase Replacement / Sentence Improvement: Replacing highlighted idiomatic or prepositional phrases.
-  * Sentence Connectors & Starters: Combining two statements using specific transitionals (e.g., 'Notwithstanding...', 'Insofar as...', 'Albeit...').
-  * High-register Double Fillers & Cloze Mechanics.
-
+  Topics: Error Detection (subjunctive mood, parallelism, inverted conditionals), Phrase Replacement, Sentence Connectors & Starters, High-register Double Fillers & Cloze Mechanics.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics to cover:
-  * Reading Comprehension: Provide a dense 200-250 word passage on macroeconomic policy, central banking, or technological transition, followed by deep inferential questions (author's thesis, implicit assumptions, tone, vocabulary in context).
-  * Para Jumbles: 5 to 6 statements to be arranged in coherent logical sequence, with questions asking for sequence order, penultimate statement, or full combination.
+  Topics: Reading Comprehension on macroeconomic/central banking themes with inferential questions, Para Jumbles (5-6 sentence coherent sequencing).
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B English Language papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every MCQ MUST have EXACTLY 5 distinct options.
@@ -308,6 +288,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Grammar & Syntax Error Detection'}",
       "text": "In the following sentence, identify the segment containing a grammatical error. If the sentence is grammatically correct, select 'No error':\\n\\n(A) Had the Monetary Policy Committee anticipated / (B) the sharp escalation in headline food inflation, / (C) they would have had tightened the policy corridor / (D) much earlier in the tightening cycle.",
       "options": [
@@ -324,6 +305,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Reading Comprehension & Inference'}",
       "text": "Read the following editorial excerpt:\\n'The post-pandemic normalization of global liquidity has confronted emerging market central banks with a classic trilemma tradeoff. As core central banks aggressively unwind quantitative easing, currency depreciation pressures risk un-anchoring domestic inflation expectations. Rather than mechanically matching external rate hikes, monetary authorities have relied on macroprudential foreign exchange interventions and standing absorption windows to insulate yield curves without prematurely stifling domestic credit formation.'\\n\\nBased on the excerpt, what is the author's primary assertion regarding emerging market central banking strategy?",
       "options": [
@@ -342,21 +324,16 @@ STRICT FORMAT REQUIREMENTS:
   } else if (subjectSlug === 'general-awareness') {
     subjectSpecificRules = `
 SUBJECT-SPECIFIC MANDATE (GENERAL AWARENESS - RBI GRADE B PHASE 1):
-CRITICAL RULE: High-speed, high-rigor 80-mark section testing banking & financial architecture, statutory acts, central banking tools, and dynamic national/international current affairs.
+High-speed, high-rigor 80-mark section testing central banking, financial architecture, statutory acts, and dynamic national/international current affairs.
 
-QUESTION DISTRIBUTION:
-- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics to cover:
-  * RBI Act 1934, Banking Regulation Act 1949, FEMA 1999, DICGC Act, PMLA statutory sections.
-  * Monetary Policy tools: Repo, Reverse Repo, SDF, MSF, CRR, SLR, Open Market Operations, MPC framework.
-  * Banking terms, money & capital market instruments (CP, CD, T-Bills, Treps), Priority Sector Lending (PSL) targets, Basel III standards.
-  * Static GK: Headquarters of international institutions (BIS, IMF, World Bank, ADB, NDB), national parks, tiger reserves, power plants.
-
-- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics to cover:
-  * Dynamic Current Affairs (last 6 months): National and international developments, bilateral summits (G20, BRICS, COP), reports & rankings (Global Innovation Index, HDI, Logistics Performance Index).
-  * Union Budget & Economic Survey: Fiscal deficit targets, capital expenditure allocations, macroeconomic forecasts.
-  * RBI Circulars, Master Directions, Prompt Corrective Action (PCA) framework, regulatory sandbox cohorts, dynamic risk weights.
+MANDATORY RULES FOR BOTH STATIC & DYNAMIC QUESTIONS:
+- FOR DYNAMIC QUESTIONS ("${secondaryMcqLabel}"):
+  Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  You MUST strictly anchor these questions to RECENT EVENTS, developments, circulars, and policies from the LAST 6-8 MONTHS (2024–2026), Union Budget provisions, Economic Survey findings, latest RBI Master Directions (e.g. PCA framework, dynamic risk weights, regulatory sandbox, digital lending norms), and national/international summits (G20, BRICS, COP).
+- FOR STATIC QUESTIONS ("${primaryMcqLabel}"):
+  Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  You MUST base these questions directly on the archetypes, depth, and traps found in authentic RBI Grade B Previous Year Questions (PYQs). Test core statutory provisions of RBI Act 1934, Banking Regulation Act 1949, DICGC Act, FEMA 1999, PMLA, monetary tools (Repo, SDF, MSF, LAF corridor, CRR, SLR), money/capital markets (CP, CD, T-Bills), and international financial institutions (BIS, IMF, World Bank). The difficulty level must match or EXCEED the hardest RBI Grade B PYQs.
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B General Awareness papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every single MCQ MUST have EXACTLY 5 distinct options.
@@ -367,6 +344,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Statutory Banking & Monetary Policy'}",
       "text": "Consider the following statements regarding the Standing Deposit Facility (SDF) introduced by the Reserve Bank of India:\\n\\nI. The SDF allows the RBI to absorb liquidity from commercial banks without providing collateral in return.\\nII. The SDF rate serves as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. The RBI was empowered to introduce the SDF through an amendment to Section 17 of the RBI Act, 1934.\\n\\nWhich of the statements given above is/are correct?",
       "options": [
@@ -383,6 +361,7 @@ STRICT FORMAT REQUIREMENTS:
     {
       "type": "MCQ",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Dynamic Current Affairs & Circulars'}",
       "text": "Under the Prompt Corrective Action (PCA) Framework for Non-Banking Financial Companies (NBFCs) notified by the Reserve Bank of India, which of the following represents the Tier 1 Capital threshold trigger for Risk Threshold 1?",
       "options": [
@@ -401,23 +380,28 @@ STRICT FORMAT REQUIREMENTS:
   } else if (subjectSlug === 'esi') {
     subjectSpecificRules = `
 SUBJECT-SPECIFIC MANDATE (ECONOMIC & SOCIAL ISSUES - RBI GRADE B PHASE 2):
-Comprehensive 100-mark paper: 50 Marks MCQ + 50 Marks Descriptive covering Indian economy, macroeconomics, social structures, and dynamic policy frameworks.
+Comprehensive 100-mark paper: 50 Marks MCQ + 50 Marks Descriptive covering Indian macroeconomics, social structures, and dynamic policy frameworks.
 
-QUESTION DISTRIBUTION:
-- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Growth models, poverty lines (Tendulkar, Rangarajan), national income accounting, Phillips curve, Solow model, fiscal/monetary transmission, balance of payments, inflation measures (CPI, WPI).
-- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Flagship welfare schemes (PM-KISAN, PMFBY, Ayushman Bharat, NRLM, PLI schemes), Union Budget allocations, Economic Survey analysis, NITI Aayog SDG indices, environmental sustainability policies.
-- DESCRIPTIVE QUESTIONS:
-  * Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words each). Conceptual socio-economic essays.
-  * Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words each). Applied contemporary policy dilemma and forward roadmap.
-  Provide a 4-pillar marking rubric and structured model answer with headings for every descriptive question.`;
+MANDATORY RULES FOR BOTH STATIC & DYNAMIC QUESTIONS:
+- FOR DYNAMIC QUESTIONS ("${secondaryMcqLabel}"):
+  Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  You MUST strictly anchor to RECENT CONTEMPORARY EVENTS, latest Union Budget allocations, Economic Survey findings, government flagship welfare schemes (PM-KISAN, PMFBY, Ayushman Bharat, PLI schemes, NRLM), NITI Aayog SDG indices, and recent environmental/green finance commitments.
+- FOR STATIC QUESTIONS ("${primaryMcqLabel}"):
+  Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  You MUST base these questions directly on the archetypes, theoretical depth, and traps found in authentic RBI Grade B ESI Previous Year Questions (PYQs). Cover Solow growth models, poverty estimation committees (Tendulkar, Rangarajan, Alagh, Lakdawala), national income accounting, Phillips curve, fiscal/monetary transmission, and balance of payments. The difficulty level must match or EXCEED the hardest RBI Grade B PYQs.
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 2 ESI papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
+
+DESCRIPTIVE QUESTIONS:
+- Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words each). Conceptual socio-economic essays grounded in economic theory.
+- Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words each). Contemporary policy dilemma and forward roadmap analyzing recent events.
+Provide a 4-pillar marking rubric and structured model answer with headings.`;
 
     jsonSchemaExample = `{
   "questions": [
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Macroeconomic Theory & National Income'}",
       "text": "Which of the following macroeconomic indicators correctly captures the 'Net Domestic Product at Factor Cost' (NDP_FC)?",
       "options": [
@@ -434,6 +418,7 @@ QUESTION DISTRIBUTION:
     {
       "type": "Descriptive",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Applied Policy & Institutional Analysis'}",
       "text": "Examine the structural challenges in India's labor market dynamics, specifically regarding female labor force participation and youth unemployment. How can targeted fiscal policy and skill development initiatives effectively harness the demographic dividend?",
       "maxMarks": 15,
@@ -453,20 +438,25 @@ QUESTION DISTRIBUTION:
 SUBJECT-SPECIFIC MANDATE (FINANCE & MANAGEMENT - RBI GRADE B PHASE 2):
 50 Marks MCQ + 50 Marks Descriptive covering financial architecture, central banking regulation, corporate finance numericals, and management/leadership theory.
 
-QUESTION DISTRIBUTION:
-- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Financial system structure, primary & secondary markets, Basel III capital ratios (CET-1, CCB, Countercyclical buffer), financial numericals (YTM, Modified Duration, WACC, DuPont ROE decomposition, Debt Service Coverage Ratio (DSCR), Beta, Capital Adequacy).
-- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Management thought (Taylor, Fayol, Weber), Motivation theories (Maslow, Herzberg, McClelland, Vroom, Alderfer), Leadership models (Blake-Mouton grid, Fiedler, Hersey-Blanchard), Corporate Governance committees (Kotak, Kumar Mangalam Birla), Business Ethics.
-- DESCRIPTIVE QUESTIONS:
-  * Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words). Financial regulation & supervision.
-  * Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words). Organizational leadership & governance case dilemma.`;
+MANDATORY RULES FOR BOTH STATIC & DYNAMIC QUESTIONS:
+- FOR DYNAMIC QUESTIONS ("${secondaryMcqLabel}"):
+  Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  You MUST strictly anchor to RECENT DEVELOPMENTS in Indian financial markets, latest RBI regulatory frameworks (2024–2026 circulars, dynamic risk weights, digital lending guidelines, FinTech sandbox cohorts, Central Bank Digital Currency e-Rupee rollout), contemporary corporate governance dilemmas, and leadership change in public/private institutions.
+- FOR STATIC QUESTIONS ("${primaryMcqLabel}"):
+  Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  You MUST base these questions directly on the archetypes, depth, and traps found in authentic RBI Grade B FM Previous Year Questions (PYQs). Include rigorous numerical calculations (Yield to Maturity, Modified Duration, WACC, DuPont ROE decomposition, Debt Service Coverage Ratio, Beta), Basel III capital adequacy ratios (CET-1, CCB, Countercyclical buffer), corporate governance committee recommendations (Kumar Mangalam Birla, Naresh Chandra, Narayana Murthy, Uday Kotak), and classical motivation/leadership models (Maslow, Herzberg, Vroom, Alderfer, Blake-Mouton). The difficulty level must match or EXCEED the hardest RBI Grade B PYQs.
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 2 FM papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
+
+DESCRIPTIVE QUESTIONS:
+- Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words). Financial regulation & supervision.
+- Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words). Organizational leadership & governance case dilemma.`;
 
     jsonSchemaExample = `{
   "questions": [
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Corporate Finance & Basel III'}",
       "text": "A commercial bank in India reports Risk-Weighted Assets (RWAs) of Rs. 100,000 crore. Under RBI Basel III guidelines, what is the minimum Common Equity Tier 1 (CET-1) capital including the Capital Conservation Buffer (CCB) required to be maintained by this bank?",
       "options": [
@@ -483,6 +473,7 @@ QUESTION DISTRIBUTION:
     {
       "type": "Descriptive",
       "sourceTag": "Dynamic",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Organizational Leadership & Governance'}",
       "text": "Differentiate between Transformational and Transactional leadership models. In the context of digital transformation in public sector banking, analyze how transformational leaders can overcome organizational inertia and mitigate resistance to change.",
       "maxMarks": 15,
@@ -515,6 +506,7 @@ QUESTION SPECIFICATIONS:
     {
       "type": "Descriptive",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Macroeconomic Policy Essay'}",
       "text": "Write a comprehensive essay in approximately 400 words on the topic:\\n'Central Bank Digital Currencies (CBDCs): Catalysts for Financial Inclusion or Challenges to Commercial Bank Disintermediation?'",
       "maxMarks": 40,
@@ -536,6 +528,7 @@ SUBJECT: "${subjectName}"
 Generate high-rigor RBI Grade B examination questions testing syllabus mastery, statutory provisions, and applied analytical problems.
 - Category 1: "${primaryMcqLabel}" -> ${mcq1Count} MCQs with "sourceTag": "Static".
 - Category 2: "${secondaryMcqLabel}" -> ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+${pyqCount > 0 ? `- Authentic PYQs -> ${pyqCount} questions with "isPyq": true.` : ''}
 - Descriptive Category 1: "${primaryDescLabel}" -> ${desc1Count} questions.
 - Descriptive Category 2: "${secondaryDescLabel}" -> ${desc2Count} questions.
 Every MCQ must have EXACTLY 5 distinct options.`;
@@ -545,6 +538,7 @@ Every MCQ must have EXACTLY 5 distinct options.`;
     {
       "type": "MCQ",
       "sourceTag": "Static",
+      "isPyq": false,
       "topic": "${config.targetTopic || 'Core Concept Assessment'}",
       "text": "Which of the following principles forms the bedrock of the regulatory framework under discussion?",
       "options": ["Option 1", "Option 2", "Option 3", "Option 4", "None of the above"],
@@ -563,7 +557,7 @@ SUBJECT: "${subjectName}"
 ${topicFocus}
 EXAM MODE: "${examMode}"
 DIFFICULTY: "${difficulty}"
-TARGET MCQ COUNT: ${totalMcqs} (${mcq1Count} in "${primaryMcqLabel}", ${mcq2Count} in "${secondaryMcqLabel}")
+TARGET MCQ COUNT: ${totalMcqs} (${mcq1Count} in "${primaryMcqLabel}", ${mcq2Count} in "${secondaryMcqLabel}"${pyqCount > 0 ? `, ${pyqCount} Authentic PYQs` : ''})
 TARGET DESCRIPTIVE COUNT: ${totalDescs} (${desc1Count} in "${primaryDescLabel}", ${desc2Count} in "${secondaryDescLabel}")
 
 ${subjectSpecificRules}
@@ -573,8 +567,9 @@ MANDATORY EXAMINATION STANDARDS:
 2. DIFFICULTY BENCHMARK: AVOID simplistic, trivial one-liner factual trivia. Every question must test deep conceptual mastery, statutory accuracy, multi-layered analytical deduction, or exact calculations.
 3. DISTRACTOR INTEGRITY: Distractors (incorrect options) must be realistic, tricky, and designed to trap candidates with superficial knowledge.
 4. QUESTION COUNT ENFORCEMENT:
-   - Output EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-   - Output EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+   - Output EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static" and "isPyq": false.
+   - Output EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic" and "isPyq": false.
+   ${pyqCount > 0 ? `- Output EXACTLY ${pyqCount} Authentic PYQs with "isPyq": true, "pyqYear": "RBI Grade B [Year]", and "sourceTag": "Static".` : ''}
    - Output EXACTLY ${desc1Count} Descriptive questions with "sourceTag": "Static".
    - Output EXACTLY ${desc2Count} Descriptive questions with "sourceTag": "Dynamic".
 
@@ -690,6 +685,8 @@ app.post('/api/generate-questions', async (req, res) => {
           id: q.id || `q_mcq_${index + 1}`,
           type: 'MCQ' as const,
           sourceTag,
+          isPyq: Boolean(q.isPyq),
+          pyqYear: q.pyqYear || (q.isPyq ? 'RBI Grade B' : undefined),
           topic: fallbackTopic,
           difficulty: q.difficulty || config.difficulty || 'Hard',
           text,
@@ -717,6 +714,8 @@ app.post('/api/generate-questions', async (req, res) => {
           id: q.id || `q_desc_${index + 1}`,
           type: 'Descriptive' as const,
           sourceTag,
+          isPyq: Boolean(q.isPyq),
+          pyqYear: q.pyqYear || (q.isPyq ? 'RBI Grade B' : undefined),
           topic: q.topic || config.targetTopic || (sourceTag === 'Dynamic' ? 'Macroeconomic Policy & Structural Reforms' : 'Monetary Policy & Financial Architecture'),
           difficulty: q.difficulty || config.difficulty || 'Hard',
           text,

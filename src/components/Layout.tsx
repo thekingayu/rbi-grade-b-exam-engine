@@ -245,6 +245,17 @@ export function Layout({ user }: { user: User }) {
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>Subjects</span>
               </Link>
+              <Link 
+                to="/syllabus" 
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  location.pathname === '/syllabus' 
+                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Syllabus</span>
+              </Link>
             </nav>
 
             {/* Right Action Controls */}

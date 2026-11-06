@@ -492,10 +492,16 @@ export function Results({ user }: { user: User }) {
                 return (
                   <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-5 sm:p-6 shadow-lg shadow-slate-200/30 dark:shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)]">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="px-3 py-1 bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25 text-xs font-mono font-bold rounded-full">
                           {q.sourceTag}
                         </span>
+                        {q.isPyq && (
+                          <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full flex items-center gap-1 ring-1 ring-amber-400/20">
+                            <Award className="w-3 h-3 text-amber-500 shrink-0" />
+                            <span>{q.pyqYear || 'RBI Grade B PYQ'}</span>
+                          </span>
+                        )}
                         <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">
                           QUESTION {i + 1} OF {mcqQuestions.length}
                         </span>
@@ -614,10 +620,16 @@ export function Results({ user }: { user: User }) {
                 return (
                   <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(0,0,0,0.5)]">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="px-3 py-1 bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 text-xs font-mono font-bold rounded-full">
                           {q.sourceTag} DESCRIPTIVE
                         </span>
+                        {q.isPyq && (
+                          <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full flex items-center gap-1 ring-1 ring-amber-400/20">
+                            <Award className="w-3 h-3 text-amber-500 shrink-0" />
+                            <span>{q.pyqYear || 'RBI Grade B PYQ'}</span>
+                          </span>
+                        )}
                         {q.wordLimit && (
                           <span className="px-2.5 py-0.5 bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-mono rounded-full">
                             Word Limit: {q.wordLimit}

@@ -212,6 +212,15 @@ export function Dashboard({ user }: { user: User }) {
           </Link>
 
           <Link 
+            to="/syllabus" 
+            className="sketch-tactile-btn inline-flex items-center justify-center gap-2 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-white/10 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl font-bold transition-all shadow-xs backdrop-blur-xl w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0"
+            title="Download & Track Official RBI Grade B Syllabus"
+          >
+            <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+            <span>Syllabus & PDF</span>
+          </Link>
+
+          <Link 
             to="/new" 
             className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3.5 rounded-2xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
           >

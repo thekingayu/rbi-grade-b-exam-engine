@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw, ChevronUp, ChevronDown, Award } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { motion } from 'motion/react';
@@ -297,7 +297,7 @@ export function Exam({ user }: { user: User }) {
           <div className="max-w-4xl mx-auto space-y-8 pb-32">
             
             {/* Badges */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-1.5 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
                 Question {currentIndex + 1} of {test.questions.length}
               </span>
@@ -307,6 +307,12 @@ export function Exam({ user }: { user: User }) {
               <span className="px-4 py-1.5 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
                 {currentQ.type}
               </span>
+              {currentQ.isPyq && (
+                <span className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-yellow-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-black uppercase tracking-wider rounded-full shadow-sm flex items-center gap-1.5 ring-1 ring-amber-400/30">
+                  <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>{currentQ.pyqYear || 'RBI Grade B PYQ'}</span>
+                </span>
+              )}
             </div>
             
             {currentQ.type === 'Descriptive' && (

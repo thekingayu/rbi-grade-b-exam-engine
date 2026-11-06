@@ -24,6 +24,7 @@ export interface SubjectQuestionPreset {
   mcqDynamic: number;
   descStatic: number;
   descDynamic: number;
+  pyqCount?: number;
   durationMinutes: number;
 }
 
@@ -101,17 +102,24 @@ export interface TestConfig {
   mcqDynamic: number;
   descStatic: number;
   descDynamic: number;
+  pyqCount?: number;
   mode?: ExamMode;
   targetTopic?: string;
   difficulty?: 'Easy' | 'Moderate' | 'Hard';
   timerEnabled?: boolean;
   negativeMarkingEnabled?: boolean;
+  primaryMcqLabel?: string;
+  secondaryMcqLabel?: string;
+  primaryDescLabel?: string;
+  secondaryDescLabel?: string;
 }
 
 export interface Question {
   id?: string;
   type: 'MCQ' | 'Descriptive';
   sourceTag: 'Static' | 'Dynamic';
+  isPyq?: boolean;
+  pyqYear?: string;
   topic?: string;
   difficulty?: 'Easy' | 'Moderate' | 'Hard';
   subjectId?: string;
@@ -158,6 +166,7 @@ export interface TestAttempt {
     mcqDynamic: number;
     descStatic: number;
     descDynamic: number;
+    pyq?: number;
   };
   evaluations?: Record<string, {
     totalScore: number;

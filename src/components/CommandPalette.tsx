@@ -34,6 +34,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
     { label: 'Start New Exam Wizard', path: '/new', icon: Plus, badge: 'Exam' },
     { label: 'Spaced Mistake Notebook', path: '/mistakes', icon: RotateCcw, badge: 'Review' },
     { label: 'Exam Attempt Archive', path: '/history', icon: Clock, badge: 'History' },
+    { label: 'Official Syllabus & PDF Checklist', path: '/syllabus', icon: BookOpen, badge: 'Syllabus' },
     { label: 'Manage Subjects & Patterns', path: '/manage-subjects', icon: SlidersHorizontal, badge: 'Admin' },
   ];
 

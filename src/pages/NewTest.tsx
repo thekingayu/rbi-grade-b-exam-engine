@@ -33,6 +33,7 @@ export function NewTest({ user }: { user: User }) {
 
   // Wizard step: 1 = Choose Subject, 2 = Choose Source / Upload Notes, 3 = Configure & Launch
   const [step, setStep] = useState<number>(() => {
+    if (searchParams.get('topic')) return 3;
     const initialSub = searchParams.get('subject');
     return initialSub ? 2 : 1;
   });
@@ -74,6 +75,7 @@ export function NewTest({ user }: { user: User }) {
     mcqDynamic: 5,
     descStatic: 1,
     descDynamic: 1,
+    pyqCount: 2,
     difficulty: 'Moderate' as 'Easy' | 'Moderate' | 'Hard',
     timerEnabled: true,
     negativeMarkingEnabled: true
@@ -89,9 +91,9 @@ export function NewTest({ user }: { user: User }) {
     primaryDescSubtext: 'Syllabus framework prompts',
     secondaryDescLabel: 'Practical Case Studies',
     secondaryDescSubtext: 'Applied real-world scenarios',
-    fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
-    sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 0, durationMinutes: 25 },
-    topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 15 }
+    fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 1, descDynamic: 1, pyqCount: 2, durationMinutes: 45 },
+    sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
+    topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 15 }
   };
 
   // Load last-used subject config or initialize with authentic RBI Grade B sectional preset
@@ -100,7 +102,7 @@ export function NewTest({ user }: { user: User }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setConfig(prev => ({ ...prev, ...parsed }));
+        setConfig(prev => ({ ...prev, ...parsed, pyqCount: parsed.pyqCount ?? 2 }));
       } catch (e) {}
     } else {
       const preset = categoryConfig.sectional;
@@ -109,6 +111,7 @@ export function NewTest({ user }: { user: User }) {
         mcqDynamic: preset.mcqDynamic,
         descStatic: preset.descStatic,
         descDynamic: preset.descDynamic,
+        pyqCount: preset.pyqCount ?? 2,
         difficulty: 'Moderate',
         timerEnabled: true,
         negativeMarkingEnabled: selectedSubject.negativeMarking > 0
@@ -206,12 +209,12 @@ export function NewTest({ user }: { user: User }) {
     if (examMode === 'Quick 10-min') {
       return 10;
     }
-    const totalMcqs = config.mcqStatic + config.mcqDynamic;
+    const totalMcqs = config.mcqStatic + config.mcqDynamic + (config.pyqCount || 0);
     const totalDesc = config.descStatic + config.descDynamic;
     const mcqMins = (totalMcqs * 45) / 60;
     const descMins = (totalDesc * 15 * 60) / 60;
     return Math.max(5, Math.ceil(mcqMins + descMins));
-  }, [examMode, categoryConfig, config.mcqStatic, config.mcqDynamic, config.descStatic, config.descDynamic]);
+  }, [examMode, categoryConfig, config.mcqStatic, config.mcqDynamic, config.descStatic, config.descDynamic, config.pyqCount]);
 
   // GENERATE EXAM HANDLER
   const handleGenerateExam = async () => {
@@ -360,6 +363,8 @@ export function NewTest({ user }: { user: User }) {
         subjectId: selectedSubject.id,
         topic: q.topic || selectedTopic || selectedSubject.syllabusTopics[0] || 'Core',
         difficulty: config.difficulty,
+        isPyq: !!q.isPyq,
+        pyqYear: q.pyqYear || (q.isPyq ? 'RBI Grade B' : undefined),
         maxMarks: q.type === 'MCQ' ? 1 : (q.maxMarks || 15)
       }));
 
@@ -747,7 +752,8 @@ export function NewTest({ user }: { user: User }) {
                         mcqStatic: categoryConfig.fullMock.mcqStatic,
                         mcqDynamic: categoryConfig.fullMock.mcqDynamic,
                         descStatic: categoryConfig.fullMock.descStatic,
-                        descDynamic: categoryConfig.fullMock.descDynamic
+                        descDynamic: categoryConfig.fullMock.descDynamic,
+                        pyqCount: categoryConfig.fullMock.pyqCount ?? 2
                       }));
                     } else if (mode === 'Sectional' && categoryConfig.sectional) {
                       setConfig(prev => ({
@@ -755,7 +761,8 @@ export function NewTest({ user }: { user: User }) {
                         mcqStatic: categoryConfig.sectional.mcqStatic,
                         mcqDynamic: categoryConfig.sectional.mcqDynamic,
                         descStatic: categoryConfig.sectional.descStatic,
-                        descDynamic: categoryConfig.sectional.descDynamic
+                        descDynamic: categoryConfig.sectional.descDynamic,
+                        pyqCount: categoryConfig.sectional.pyqCount ?? 2
                       }));
                     } else if (mode === 'Topic Drill' && categoryConfig.topicDrill) {
                       setConfig(prev => ({
@@ -763,15 +770,17 @@ export function NewTest({ user }: { user: User }) {
                         mcqStatic: categoryConfig.topicDrill.mcqStatic,
                         mcqDynamic: categoryConfig.topicDrill.mcqDynamic,
                         descStatic: categoryConfig.topicDrill.descStatic,
-                        descDynamic: categoryConfig.topicDrill.descDynamic
+                        descDynamic: categoryConfig.topicDrill.descDynamic,
+                        pyqCount: categoryConfig.topicDrill.pyqCount ?? 0
                       }));
                     } else if (mode === 'Quick 10-min') {
                       setConfig(prev => ({
                         ...prev,
-                        mcqStatic: selectedSubject.questionTypeMix.mcq ? 5 : 0,
-                        mcqDynamic: selectedSubject.questionTypeMix.mcq ? 5 : 0,
+                        mcqStatic: selectedSubject.questionTypeMix.mcq ? 4 : 0,
+                        mcqDynamic: selectedSubject.questionTypeMix.mcq ? 4 : 0,
                         descStatic: 0,
-                        descDynamic: 0
+                        descDynamic: 0,
+                        pyqCount: 2
                       }));
                     }
                   }}
@@ -977,7 +986,62 @@ export function NewTest({ user }: { user: User }) {
                 </div>
               </div>
             )}
+            {/* Authentic Previous Year Questions (PYQ) Section */}
+            <div className={`p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm ${
+              selectedSubject.questionTypeMix.descriptive ? 'sm:col-span-2' : ''
+            }`}>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
+                    Authentic Previous Year Questions (PYQs)
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 font-bold">
+                    Official Papers 2018–2025
+                  </span>
+                </div>
+                <span className="text-xs font-mono text-amber-600 dark:text-amber-400 font-bold px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                  Total PYQ: {config.pyqCount || 0} Qs
+                </span>
+              </div>
 
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 pr-2">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                    Exact Previous Year Questions (PYQ)
+                  </span>
+                  <span className="text-[10px] text-slate-400 line-clamp-1">
+                    Authentic questions asked in official RBI Grade B matching syllabus / notes with exact past difficulty
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setConfig({ ...config, pyqCount: Math.max(0, (config.pyqCount || 0) - 1) })}
+                    className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    value={config.pyqCount === 0 ? '0' : (config.pyqCount || 0)}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      setConfig({ ...config, pyqCount: isNaN(val) ? 0 : Math.max(0, Math.min(30, val)) });
+                    }}
+                    className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setConfig({ ...config, pyqCount: Math.min(30, (config.pyqCount || 0) + 1) })}
+                    className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
 
           </div>
 

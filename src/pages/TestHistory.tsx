@@ -233,11 +233,11 @@ export function TestHistory({ user }: { user: User }) {
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
+            className="text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
           >
-            <option value="all">All Subjects ({tests.length})</option>
+            <option value="all" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">All Subjects ({tests.length})</option>
             {subjects.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{s.name}</option>
             ))}
           </select>
         </div>
@@ -459,10 +459,12 @@ export function TestHistory({ user }: { user: User }) {
               <select
                 value={targetReassignSubjectId}
                 onChange={(e) => setTargetReassignSubjectId(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200"
+                className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
               >
                 {subjects.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.phase})</option>
+                  <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-1.5 font-medium">
+                    {s.name} ({s.phase})
+                  </option>
                 ))}
               </select>
             </div>

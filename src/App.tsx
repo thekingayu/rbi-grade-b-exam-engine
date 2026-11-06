@@ -18,6 +18,7 @@ import { ManageSubjects } from './pages/ManageSubjects';
 import { Exam } from './pages/Exam';
 import { Results } from './pages/Results';
 import { Profile } from './pages/Profile';
+import { Syllabus } from './pages/Syllabus';
 import { SmoothScroll } from './components/SmoothScroll';
 import { SubjectProvider } from './context/SubjectContext';
 import { SketchProvider } from 'sketchbook-ui';
@@ -64,6 +65,7 @@ export default function App() {
                 <Route path="archive" element={<TestHistory user={user} />} />
                 <Route path="mistakes" element={<MistakeNotebook user={user} />} />
                 <Route path="manage-subjects" element={<ManageSubjects user={user} />} />
+                <Route path="syllabus" element={<Syllabus user={user} />} />
                 <Route path="results/:testId" element={<Results user={user} />} />
                 <Route path="profile" element={<Profile user={user} />} />
               </Route>

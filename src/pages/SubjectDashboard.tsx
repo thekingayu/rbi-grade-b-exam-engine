@@ -338,6 +338,14 @@ export function SubjectDashboard({ user }: { user: User }) {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <Link
+              to={`/syllabus`}
+              className="sketch-tactile-btn inline-flex items-center justify-center gap-2 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-white/10 px-5 py-3.5 sm:py-4 rounded-2xl font-bold transition-all shadow-xs backdrop-blur-xl text-xs sm:text-sm cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span>Syllabus & PDF</span>
+            </Link>
+
             <button
               onClick={() => navigate(`/new?subject=${currentSubject.slug}`)}
               className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold shadow-xl transition-all cursor-pointer"

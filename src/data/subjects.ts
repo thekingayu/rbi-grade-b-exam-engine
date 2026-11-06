@@ -22,20 +22,19 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryMcqLabel: 'Static Banking & Financial Awareness',
       primaryMcqSubtext: 'RBI Act 1934, BR Act 1949, monetary policy tools, banking terms & Static GK',
       secondaryMcqLabel: 'Dynamic Current Affairs & Circulars',
-      secondaryMcqSubtext: 'Recent 6-month national/intl affairs, Union Budget, Economic Survey & circulars',
-      fullMock: { mcqStatic: 30, mcqDynamic: 50, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
-      sectional: { mcqStatic: 8, mcqDynamic: 12, descStatic: 0, descDynamic: 0, durationMinutes: 12 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 8 }
+      secondaryMcqSubtext: 'Recent 6-8 month national/intl affairs, Union Budget, Economic Survey & circulars',
+      fullMock: { mcqStatic: 30, mcqDynamic: 45, descStatic: 0, descDynamic: 0, pyqCount: 5, durationMinutes: 25 },
+      sectional: { mcqStatic: 8, mcqDynamic: 10, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 12 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 8 }
     },
-    categories: ['Static GK', 'Current Affairs', 'Banking & Financial Awareness', 'RBI Notifications', 'Union Budget & Surveys'],
+    categories: ['Current Affairs', 'Banking & Financial Awareness', 'Economy & Budget', 'Government Schemes', 'Reports & Indices', 'Static GK'],
     syllabusTopics: [
-      'Monetary Policy & Inflation Dynamics',
-      'Banking Structure & Basel III Norms',
-      'RBI Circulars & Regulatory Frameworks',
-      'Union Budget & Fiscal Policy',
-      'International Financial Institutions (IMF, WB, BIS)',
-      'Government Social Sector Schemes',
-      'National & International Current Affairs'
+      'Current Affairs (Last 6-8 months: National, International & Banking)',
+      'Banking & Financial Awareness (Monetary Policy, Basel, NPAs, PCA)',
+      'Economy & Budget (Economic Survey, Union Budget, Fiscal Policies)',
+      'Government Schemes (PM-JAY, SVAMITVA, Digital India, Social Welfare)',
+      'Reports & Indices (GDP, Inflation, HDI, Global Financial Stability)',
+      'Static GK (Institutions, Headquarters, Capitals, Currencies & Reserves)'
     ],
     description: 'High-speed 80-mark section testing central banking, financial developments, and macroeconomic updates.'
   },
@@ -60,18 +59,23 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryMcqSubtext: 'Syllogisms, Input-Output, Blood Relations, Inequalities & Direction Sense',
       secondaryMcqLabel: 'Puzzles, Seating & Critical Reasoning',
       secondaryMcqSubtext: 'Floor/flat, circular/linear multi-variable puzzles & Statement-Assumption/Argument',
-      fullMock: { mcqStatic: 30, mcqDynamic: 30, descStatic: 0, descDynamic: 0, durationMinutes: 45 },
-      sectional: { mcqStatic: 10, mcqDynamic: 10, descStatic: 0, descDynamic: 0, durationMinutes: 20 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 12 }
+      fullMock: { mcqStatic: 28, mcqDynamic: 28, descStatic: 0, descDynamic: 0, pyqCount: 4, durationMinutes: 45 },
+      sectional: { mcqStatic: 9, mcqDynamic: 9, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 20 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 12 }
     },
-    categories: ['Critical Reasoning', 'Puzzles & Seating', 'Analytical Logic', 'Data Sufficiency'],
+    categories: ['Puzzles & Seating', 'Syllogism', 'Input-Output', 'Inequality', 'Logical Reasoning'],
     syllabusTopics: [
-      'Complex Multi-variable Puzzles',
-      'Floor & Scheduling Seating Arrangements',
-      'Critical & Evaluative Reasoning',
-      'Syllogisms & Reverse Syllogisms',
-      'Machine Input-Output Dynamics',
-      'Data Sufficiency & Statement Logic'
+      'Puzzles & Seating Arrangement (Floor, Flat, Circular, Square, Box)',
+      'Syllogism & Reverse Syllogism (Only a few, Definite conclusions)',
+      'Coding-Decoding (Pattern-based word & number transformations)',
+      'Inequality (Direct & Coded symbolic chains)',
+      'Blood Relations (Multi-generation family tree & coded relations)',
+      'Input-Output (Machine-based alphanumeric step arrangement)',
+      'Direction & Distance (Movement tracking, angles & shadow angles)',
+      'Order & Ranking & Alphanumeric Series',
+      'Data Sufficiency (2 & 3 statement evaluations)',
+      'Logical & Critical Reasoning (Assumptions, Inferences, Course of Action)',
+      'Cause & Effect (Relationship between institutional events)'
     ],
     description: 'Advanced logical rigor, multi-layer scheduling puzzles, and critical administrative decision logic.'
   },
@@ -96,18 +100,22 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryMcqSubtext: 'Profit-loss, SI/CI, time-work, probability, missing/wrong series & quadratic equations',
       secondaryMcqLabel: 'Data Interpretation & Data Sufficiency',
       secondaryMcqSubtext: 'Caselets, Tabular, Radar/Missing DI sets & Quantity I vs Quantity II comparisons',
-      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
-      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 0, descDynamic: 0, durationMinutes: 15 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 10 }
+      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
+      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 15 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 10 }
     },
-    categories: ['Data Interpretation', 'Arithmetic Systems', 'Algebraic Inequalities', 'Number Series'],
+    categories: ['Data Interpretation', 'Commercial Arithmetic', 'Quadratic Equations', 'Number Series'],
     syllabusTopics: [
-      'Caselet & Radar Data Interpretation',
-      'Profit, Loss & Commercial Mathematics',
-      'Time, Speed, Distance & Work Equations',
-      'Probability & Combinatorics',
-      'Missing & Wrong Number Series',
-      'Quadratic & Polynomial Comparisons'
+      'Data Interpretation & Caselets (Tables, Bar, Line, Pie, Radar & Missing DI)',
+      'Number Series (Missing number & wrong number pattern finding)',
+      'Quadratic Equations & Quantity Comparison (Q1 vs Q2)',
+      'Simple & Compound Interest (Half-yearly/annual growth differences)',
+      'Profit, Loss & Discount (Cost price, selling price, successive markups)',
+      'Time & Work (Pipes, cisterns & alternate-day efficiency)',
+      'Time, Speed & Distance (Relative speed, trains, boats & circular motion)',
+      'Percentage, Average & Partnership (Weighted averages & ratio variation)',
+      'Mixture & Allegation (Replacement & ratio blending)',
+      'Mensuration & Probability (Permutations, combinations & geometry)'
     ],
     description: 'High-precision numerical problem solving, caselet analysis, and mathematical modeling.'
   },
@@ -132,17 +140,21 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryMcqSubtext: 'Error detection, phrase replacement, sentence connectors & single/double fillers',
       secondaryMcqLabel: 'Reading Comprehension & Para Jumbles',
       secondaryMcqSubtext: 'Financial/economic editorial passage inference & discourse sentence rearrangement',
-      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
-      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 0, descDynamic: 0, durationMinutes: 15 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 10 }
+      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
+      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 15 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 10 }
     },
-    categories: ['Reading Comprehension', 'Error Detection', 'Sentence Rearrangement', 'Cloze Test'],
+    categories: ['Reading Comprehension', 'Cloze Test', 'Error Detection', 'Para Jumbles', 'Vocabulary'],
     syllabusTopics: [
-      'Financial & Macroeconomic Passage Comprehension',
-      'Parajumbles & Coherence Analysis',
-      'Phrase Replacement & Contextual Usage',
-      'Sentence Connector & Fillers',
-      'Idiomatic & Grammatical Nuances'
+      'Reading Comprehension (Financial/editorial passages, tone & inferences)',
+      'Cloze Test (Contextual grammar & technical vocabulary)',
+      'Error Detection & Sentence Correction (Subjunctive, parallelism, inversion)',
+      'Para Jumbles (Arranging sentences in coherent editorial order)',
+      'Vocabulary, Synonyms & Antonyms in Context',
+      'Sentence Improvement & Connectors (Clause linkers & starters)',
+      'Fill in the Blanks (Single and double contextual fillers)',
+      'Phrase Replacement & Word Swap in Economic Context',
+      'Idioms, Phrasal Verbs & Paragraph Completion'
     ],
     description: 'Verbal acumen, complex passage inference, and editorial syntactic comprehension.'
   },
@@ -173,18 +185,22 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryDescSubtext: '10-Mark / 400-word conceptual policy evaluation prompts',
       secondaryDescLabel: 'Applied Policy & Institutional Analysis',
       secondaryDescSubtext: '15-Mark / 600-word contemporary economic dilemma & roadmap prompts',
-      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 2, descDynamic: 2, durationMinutes: 120 },
-      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 25 }
+      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 2, descDynamic: 2, pyqCount: 2, durationMinutes: 120 },
+      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 1, descDynamic: 1, pyqCount: 2, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, pyqCount: 0, durationMinutes: 25 }
     },
-    categories: ['Static Theory', 'Dynamic Economic Policy', 'Social Infrastructure', 'Sustainable Development'],
+    categories: ['Growth & Development', 'Poverty & Employment', 'Sustainable Development', 'Economic Reforms', 'Money & Banking'],
     syllabusTopics: [
-      'Growth & Development: Poverty, Unemployment & HDI',
-      'Monetary & Fiscal Transmission Mechanism',
-      'Balance of Payments & Foreign Trade Policy',
-      'Sustainable Development & Green Finance',
-      'Demographic Dividend & Social Sector Reforms',
-      'Multilateral Institutions & Global Financial System'
+      'Growth & Development (National income, per capita, sector shares in GDP)',
+      'Poverty & Employment (Measurement, alleviation programmes, job creation)',
+      'Sustainable Development (Environmental issues, climate change, green finance)',
+      'Economic Reforms (LPG, public/private sector roles, recent structural reforms)',
+      'Money, Banking & Public Finance (Monetary/fiscal policy, inflation, Union Budget)',
+      'Globalisation (BOP, EXIM policy, IMF, World Bank, WTO, regional trade)',
+      'Social Structure in India (Demographics, urbanisation, gender, social justice)',
+      'Indian Political System (Governance structure, public policy formulation)',
+      'Human Development & Social Sector (Health, education, welfare indices)',
+      'Priority Focus Areas (Agriculture, MSME, labour reforms, digital economy)'
     ],
     description: 'Comprehensive 100-mark paper: 50 Marks MCQ + 50 Marks Analytical Descriptive on India’s socio-economic landscape.'
   },
@@ -213,17 +229,16 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryDescSubtext: '400-word economic/tech essay + 170-word central banking précis prompt',
       secondaryDescLabel: 'Business Reading Comprehension',
       secondaryDescSubtext: 'Descriptive analytical answers based on dense editorial passage',
-      fullMock: { mcqStatic: 0, mcqDynamic: 0, descStatic: 2, descDynamic: 1, durationMinutes: 90 },
-      sectional: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
-      topicDrill: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 30 }
+      fullMock: { mcqStatic: 0, mcqDynamic: 0, descStatic: 2, descDynamic: 1, pyqCount: 0, durationMinutes: 90 },
+      sectional: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 1, pyqCount: 0, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 0, pyqCount: 0, durationMinutes: 30 }
     },
-    categories: ['Essay Writing', 'Précis Writing', 'Reading Comprehension Analysis'],
+    categories: ['Essay Writing', 'Precis Writing', 'Reading Comprehension', 'Business Correspondence'],
     syllabusTopics: [
-      'Economic Policy Essay (400 words)',
-      'Central Banking & FinTech Disruption Essay',
-      'Précis Writing of Financial Speeches (170 words)',
-      'Descriptive Business Reading Comprehension',
-      'Drafting Official Reports & Policy Briefs'
+      'Essay Writing (400 words on economic, social, technological or current themes)',
+      'Precis Writing (170 words summarising official banking speech or policy report)',
+      'Reading Comprehension (Descriptive analysis & inferences on dense passages)',
+      'Business & Office Correspondence (Formal central banking letters & policy memos)'
     ],
     description: 'Phase 2 descriptive paper evaluating clarity, structural coherence, and editorial precision in written expression.'
   },
@@ -252,18 +267,30 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryDescSubtext: '10-Mark / 400-word banking supervision & regulatory prompts',
       secondaryDescLabel: 'Organizational Leadership Case Studies',
       secondaryDescSubtext: '15-Mark / 600-word management decision dilemma & leadership prompts',
-      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 2, descDynamic: 2, durationMinutes: 120 },
-      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 25 }
+      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 2, descDynamic: 2, pyqCount: 2, durationMinutes: 120 },
+      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 1, descDynamic: 1, pyqCount: 2, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, pyqCount: 0, durationMinutes: 25 }
     },
-    categories: ['Financial System', 'Financial Markets', 'General Management', 'Corporate Governance'],
+    categories: ['Financial System', 'Financial Markets', 'Risk Management', 'General Management', 'Leadership', 'Ethics'],
     syllabusTopics: [
-      'Structure of Financial & Capital Markets',
-      'RBI Regulations, Risk Management & Basel III',
-      'Fintech, CBDC & Digital Payment Architecture',
-      'Leadership Theories & Organizational Behavior',
-      'Motivation, Emotional Intelligence & Ethics',
-      'Corporate Governance & Communication Channels'
+      'Financial System & Intermediaries (Structure, regulators & instruments)',
+      'Functions of RBI & Specialized Institutions (NABARD, SIDBI, EXIM, NHB)',
+      'Financial Markets (Money, capital, forex, bond and equity markets)',
+      'Risk Management & Basel Norms (Credit, market, operational risk & NPAs)',
+      'Derivatives (Forwards, futures, options, swaps & hedging)',
+      'Banking Sector Trends & Reforms (Digital transformation, UPI, CBDC)',
+      'Financial Inclusion & Technology in Banking',
+      'Public Finance, Union Budget & Fiscal Policy (FRBM Act, GST, taxes)',
+      'Inflation (CPI, WPI trends, causes & monetary control measures)',
+      'Corporate Governance in Banking & Financial Sector',
+      'PPP & Portfolio Investments',
+      'Management Basics & Process (Planning, organising, staffing, directing, controlling)',
+      'Leadership Styles & Theories (Transformational, situational, Blake-Mouton)',
+      'Human Resource Development (HRD, performance appraisal, training)',
+      'Motivation & Morale (Maslow, Herzberg, McGregor, Vroom theories)',
+      'Communication (Processes, barriers & role of IT in communication)',
+      'Organisational Behaviour (Team dynamics, conflict & decision making)',
+      'Corporate Governance & Business Ethics'
     ],
     description: '50 Marks MCQ + 50 Marks Descriptive covering financial architecture, central banking regulation, and leadership theory.'
   },
@@ -294,9 +321,9 @@ export const INITIAL_SUBJECTS: Subject[] = [
       primaryDescSubtext: 'Syllabus framework prompts',
       secondaryDescLabel: 'Practical Case Studies',
       secondaryDescSubtext: 'Applied real-world scenarios',
-      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
-      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 0, durationMinutes: 25 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 15 }
+      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 1, descDynamic: 1, pyqCount: 2, durationMinutes: 45 },
+      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 1, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 15 }
     },
     categories: ['General', 'Mixed'],
     syllabusTopics: ['Mixed Curriculum', 'Uncategorized Practice'],
