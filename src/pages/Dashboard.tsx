@@ -17,8 +17,9 @@ import {
   Layers, FileText, User as UserIcon, ShieldCheck
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { Spinner, Divider } from 'sketchbook-ui';
+import { Divider } from 'sketchbook-ui';
 import { calculateDaysRemaining } from '../utils/date';
+import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 
 export function Dashboard({ user }: { user: User }) {
   const { subjects, setActiveSubject, targetExamDate, userProfile } = useSubject();
@@ -73,9 +74,12 @@ export function Dashboard({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-slate-500 dark:text-slate-400 gap-3">
-        <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
-        <span className="text-xs font-mono tracking-wider uppercase text-slate-400">Loading Cadre Command Center...</span>
+      <div className="py-20 flex items-center justify-center">
+        <FuturisticScreenLoader 
+          title="Cadre Command Center" 
+          subtitle="CALIBRATING PREPARATION TELEMETRY..." 
+          color="teal"
+        />
       </div>
     );
   }

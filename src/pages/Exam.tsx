@@ -8,9 +8,9 @@ import { Clock, ChevronLeft, ChevronRight, Flag, Loader2, BookOpen, RotateCcw, C
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { motion } from 'motion/react';
-import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { evaluateAndPersistTest } from '../services/evaluation';
-import { Spinner, Progress } from 'sketchbook-ui';
+import { AtmosphericBackground } from '../components/AtmosphericBackground';
+import { FuturisticSpinner, FuturisticProgressBar, FuturisticScreenLoader } from '../components/FuturisticLoader';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -217,14 +217,12 @@ export function Exam({ user }: { user: User }) {
 
   if (loading || !test) {
     return (
-      <div className="fixed inset-0 z-50 min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#030612] text-slate-800 dark:text-slate-100 gap-4">
-        <div className="p-6 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-lg flex flex-col items-center gap-3">
-          <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
-          <div className="text-center">
-            <p className="font-serif font-bold text-base text-slate-900 dark:text-white">RBI Grade B Examination</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono tracking-wider mt-0.5">PREPARING QUESTION CARDS & ENVIRONMENT...</p>
-          </div>
-        </div>
+      <div className="fixed inset-0 z-50 min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#030612]">
+        <FuturisticScreenLoader 
+          title="RBI Grade B Examination"
+          subtitle="INITIALIZING QUESTION CARDS & SECURE ENVIRONMENT..."
+          color="teal"
+        />
       </div>
     );
   }
@@ -529,9 +527,9 @@ export function Exam({ user }: { user: User }) {
               <button 
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="sketch-tactile-btn w-full py-4 font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-700 hover:via-cyan-700 hover:to-indigo-700 text-white rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-teal-600/20 transition-all cursor-pointer"
+                className="sketch-tactile-btn w-full py-4 font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-700 hover:via-cyan-700 hover:to-indigo-700 text-white rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-teal-600/20 transition-all cursor-pointer"
               >
-                {submitting && <Spinner variant="spiral" size="sm" colors={{ stroke: '#ffffff' }} />}
+                {submitting && <FuturisticSpinner size="xs" color="white" />}
                 Confirm Submit
               </button>
               <button 
@@ -546,25 +544,31 @@ export function Exam({ user }: { user: User }) {
         </div>
       )}
 
-      {/* Evaluation & Persistence Progress Overlay with Sketchbook Animations */}
+      {/* Evaluation & Persistence Progress Overlay with Futuristic Animations */}
       {evalProgress && (
         <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white/90 dark:bg-[#0A0F1C]/90 backdrop-blur-2xl rounded-3xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-white/10 text-center space-y-6">
-            <div className="w-20 h-20 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center mx-auto text-teal-600 dark:text-teal-400">
-              <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
+          <div className="relative bg-white/90 dark:bg-[#0A0F1C]/90 backdrop-blur-2xl rounded-3xl max-w-md w-full p-8 shadow-2xl border border-white/60 dark:border-white/10 text-center space-y-6">
+            {/* Corner HUD reticles */}
+            <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-teal-500/50 rounded-tl-sm" />
+            <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-teal-500/50 rounded-tr-sm" />
+            <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-teal-500/50 rounded-bl-sm" />
+            <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-teal-500/50 rounded-br-sm" />
+
+            <div className="flex items-center justify-center mx-auto">
+              <FuturisticSpinner size="xl" color="teal" />
             </div>
             <div>
               <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white mb-2">Grading & Storing Results</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 min-h-[44px] flex items-center justify-center px-2">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 min-h-[44px] flex items-center justify-center px-2">
                 {evalProgress.message}
               </p>
             </div>
             <div className="w-full">
-              <Progress 
-                value={evalProgress.percent}
-                variant="scribble"
-                animated={true}
-                colors={{ stroke: '#0D9488', fill: '#0D9488' }}
+              <FuturisticProgressBar 
+                progress={evalProgress.percent}
+                color="teal"
+                height={7}
+                label="SYNCHRONIZING MARKS & RUBRICS"
               />
             </div>
             <p className="text-xs text-slate-400 dark:text-slate-500">

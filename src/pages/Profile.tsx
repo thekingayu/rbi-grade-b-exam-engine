@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useSubject } from '../context/SubjectContext';
@@ -11,6 +11,7 @@ import {
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { calculateDaysRemaining } from '../utils/date';
+import { FuturisticSpinner } from '../components/FuturisticLoader';
 
 // 6 Curated High-Fidelity RBI Officer Avatars
 const PRESET_AVATARS = [
@@ -111,7 +112,7 @@ export function Profile({ user }: { user: User }) {
   useEffect(() => {
     if (userProfile) {
       if (userProfile.displayName) setDisplayName(userProfile.displayName);
-      if (userProfile.photoURL) setPhotoURL(userProfile.photoURL);
+      if (userProfile.photoURL !== undefined) setPhotoURL(userProfile.photoURL || '');
       if (userProfile.stream) setStream(userProfile.stream);
       if (userProfile.category) setCategory(userProfile.category);
       if (userProfile.attemptCount) setAttemptCount(userProfile.attemptCount);
@@ -131,6 +132,40 @@ export function Profile({ user }: { user: User }) {
   }, [targetScoreGoal]);
 
   const daysRemaining = calculateDaysRemaining(tempExamDate);
+
+  // Determine if user has made any modifications to the profile
+  const isDirty = useMemo(() => {
+    const baseName = (userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Cadre Officer').trim();
+    const basePhoto = userProfile?.photoURL || user.photoURL || '';
+    const baseStream = userProfile?.stream || 'General';
+    const baseCategory = userProfile?.category || 'General';
+    const baseAttempt = userProfile?.attemptCount || '1st Attempt';
+    const baseHours = Number(userProfile?.dailyStudyHours || 4);
+    const baseEdu = (userProfile?.educationBackground || 'Commerce / Economics').trim();
+    const baseBio = (userProfile?.bio || 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2 examination').trim();
+    const basePhone = (userProfile?.phone || '').trim();
+    const baseDate = targetExamDate;
+    const baseGoal = targetScoreGoal;
+
+    return (
+      displayName.trim() !== baseName ||
+      (photoURL || '') !== basePhoto ||
+      stream !== baseStream ||
+      category !== baseCategory ||
+      attemptCount !== baseAttempt ||
+      Number(dailyStudyHours) !== baseHours ||
+      educationBackground.trim() !== baseEdu ||
+      bio.trim() !== baseBio ||
+      phone.trim() !== basePhone ||
+      tempExamDate !== baseDate ||
+      tempScoreGoal !== baseGoal
+    );
+  }, [
+    displayName, photoURL, stream, category, attemptCount,
+    dailyStudyHours, educationBackground, bio, phone,
+    tempExamDate, tempScoreGoal, userProfile, user,
+    targetExamDate, targetScoreGoal
+  ]);
 
   // Handle custom image upload with client-side canvas compression
   // Ensures uploaded images never exceed Firestore document size limits (max 256x256, ~25KB)
@@ -207,7 +242,7 @@ export function Profile({ user }: { user: User }) {
     setErrorMsg(null);
 
     try {
-      // 1. Update Profile in Firestore & Firebase Auth
+      // 1. Update Profile in Firestore & Firebase Auth with all parameters atomically
       await updateUserProfile({
         displayName: displayName.trim() || 'Cadre Officer',
         photoURL: photoURL || '',
@@ -218,12 +253,10 @@ export function Profile({ user }: { user: User }) {
         educationBackground: educationBackground.trim(),
         bio: bio.trim(),
         phone: phone.trim(),
-        targetExamYear: '2026-27'
+        targetExamYear: '2026-27',
+        targetExamDate: tempExamDate,
+        targetScoreGoal: tempScoreGoal
       });
-
-      // 2. Sync Exam Date & Score goal
-      setTargetExamDate(tempExamDate);
-      setTargetScoreGoal(tempScoreGoal);
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
@@ -629,11 +662,29 @@ export function Profile({ user }: { user: User }) {
           <div className="flex items-center gap-3">
             <button
               type="submit"
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-teal-600/20 transition-all cursor-pointer disabled:opacity-50"
+              disabled={!isDirty || saving}
+              className={`inline-flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 shadow-lg ${
+                isDirty && !saving
+                  ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-indigo-600 hover:from-teal-400 hover:via-cyan-400 hover:to-indigo-500 text-white shadow-teal-500/25 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ring-2 ring-teal-400/40'
+                  : 'bg-slate-200/70 dark:bg-white/5 text-slate-400 dark:text-slate-500 border border-slate-300/40 dark:border-white/10 cursor-not-allowed opacity-60 shadow-none'
+              }`}
+              title={isDirty ? 'Click to commit your profile changes' : 'No changes detected'}
             >
-              {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              <span>{saving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+              {saving ? (
+                <FuturisticSpinner size="sm" color="white" />
+              ) : (
+                <Save className={`w-4 h-4 ${isDirty ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+              )}
+              <span>
+                {saving 
+                  ? 'Saving Changes...' 
+                  : isDirty 
+                    ? 'Save Profile Changes' 
+                    : 'No Changes to Save'}
+              </span>
+              {isDirty && !saving && (
+                <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse" />
+              )}
             </button>
           </div>
 

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
-import { Spinner } from 'sketchbook-ui';
+import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 
 export function TestHistory({ user }: { user: User }) {
   const [tests, setTests] = useState<TestAttempt[]>([]);
@@ -156,9 +156,12 @@ export function TestHistory({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-slate-500 font-medium gap-3">
-        <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
-        <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Loading Test History...</span>
+      <div className="py-20 flex items-center justify-center">
+        <FuturisticScreenLoader 
+          title="Exam Attempt Archive" 
+          subtitle="RETRIEVING HISTORICAL TELEMETRY..." 
+          color="teal"
+        />
       </div>
     );
   }

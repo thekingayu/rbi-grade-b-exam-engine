@@ -14,6 +14,8 @@ export interface UserProfile {
   bio?: string;
   phone?: string;
   targetExamYear?: string;
+  targetExamDate?: string;
+  targetScoreGoal?: number;
   updatedAt?: number;
 }
 

@@ -20,7 +20,8 @@ import { Results } from './pages/Results';
 import { Profile } from './pages/Profile';
 import { SmoothScroll } from './components/SmoothScroll';
 import { SubjectProvider } from './context/SubjectContext';
-import { SketchProvider, Spinner } from 'sketchbook-ui';
+import { SketchProvider } from 'sketchbook-ui';
+import { FuturisticScreenLoader } from './components/FuturisticLoader';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -36,14 +37,12 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#030612] text-slate-800 dark:text-slate-100 gap-4">
-        <div className="p-6 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-lg flex flex-col items-center gap-3">
-          <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
-          <div className="text-center">
-            <p className="font-serif font-bold text-base text-slate-900 dark:text-white">RBI Grade B Engine</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono tracking-wider mt-0.5">INITIALIZING CADRE WORKSPACE...</p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#030612]">
+        <FuturisticScreenLoader 
+          title="Reserve Bank of India" 
+          subtitle="INITIALIZING OFFICER CADRE WORKSPACE..." 
+          color="teal"
+        />
       </div>
     );
   }

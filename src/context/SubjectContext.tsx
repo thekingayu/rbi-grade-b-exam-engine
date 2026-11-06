@@ -530,10 +530,21 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         profile: sanitizeForFirestore(merged),
         displayName: merged.displayName || null,
         photoURL: merged.photoURL || null,
+        targetExamDate: merged.targetExamDate || targetExamDate,
+        targetScoreGoal: merged.targetScoreGoal || targetScoreGoal,
         updatedAt: Date.now()
       });
 
       await setDoc(doc(db, 'users', uid), payload, { merge: true });
+    }
+
+    if (profileData.targetExamDate) {
+      setTargetExamDateState(profileData.targetExamDate);
+      localStorage.setItem(STORAGE_KEYS.EXAM_DATE, profileData.targetExamDate);
+    }
+    if (profileData.targetScoreGoal !== undefined) {
+      setTargetScoreGoalState(profileData.targetScoreGoal);
+      localStorage.setItem(STORAGE_KEYS.SCORE_GOAL, profileData.targetScoreGoal.toString());
     }
   };
 

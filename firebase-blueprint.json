@@ -73,6 +73,8 @@
         "bio": { "type": "string" },
         "phone": { "type": "string" },
         "targetExamYear": { "type": "string" },
+        "targetExamDate": { "type": "string" },
+        "targetScoreGoal": { "type": "number" },
         "updatedAt": { "type": "number" }
       }
     }

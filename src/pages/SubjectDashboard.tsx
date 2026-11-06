@@ -17,8 +17,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Spinner, Divider } from 'sketchbook-ui';
+import { Divider } from 'sketchbook-ui';
 import { calculateDaysRemaining } from '../utils/date';
+import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 
 export function SubjectDashboard({ user }: { user: User }) {
   const { slug } = useParams<{ slug: string }>();
@@ -261,9 +262,12 @@ export function SubjectDashboard({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-slate-500 dark:text-slate-400 gap-3">
-        <Spinner variant="spiral" size="lg" colors={{ stroke: currentSubject.accentColor }} />
-        <span className="text-xs font-mono tracking-wider uppercase text-slate-400">Loading {currentSubject.name}...</span>
+      <div className="py-20 flex items-center justify-center">
+        <FuturisticScreenLoader 
+          title={currentSubject.name}
+          subtitle="INITIALIZING SUBJECT TELEMETRY..." 
+          color="teal"
+        />
       </div>
     );
   }

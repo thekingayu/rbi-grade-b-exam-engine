@@ -160,3 +160,17 @@ html {
   stroke: rgba(255, 255, 255, 0.15) !important;
 }
 
+@keyframes indeterminateSlide {
+  0% {
+    transform: translateX(-100%);
+    width: 25%;
+  }
+  50% {
+    width: 60%;
+  }
+  100% {
+    transform: translateX(350%);
+    width: 25%;
+  }
+}
+

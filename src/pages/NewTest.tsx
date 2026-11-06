@@ -13,7 +13,6 @@ import {
 import { useSubject } from '../context/SubjectContext';
 import { Subject, ExamMode } from '../types';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
-import { Spinner } from 'sketchbook-ui';
 import { SynthesisOverlay } from '../components/SynthesisOverlay';
 
 const getShortFileName = (name: string, max = 20) => {

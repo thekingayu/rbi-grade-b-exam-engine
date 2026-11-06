@@ -9,7 +9,8 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
-import { Spinner, Progress, Divider } from 'sketchbook-ui';
+import { Divider } from 'sketchbook-ui';
+import { FuturisticSpinner, FuturisticProgressBar } from '../components/FuturisticLoader';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -155,7 +156,7 @@ export function Results({ user }: { user: User }) {
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 px-4">
         <div className="relative">
           <div className="w-20 h-20 rounded-3xl bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-[0_0_30px_rgba(13,148,136,0.25)]">
-            <Spinner variant="spiral" size="lg" colors={{ stroke: '#0D9488' }} />
+            <FuturisticSpinner size="xl" color="teal" />
           </div>
           <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 opacity-25 blur-lg animate-pulse pointer-events-none" />
         </div>
@@ -163,16 +164,16 @@ export function Results({ user }: { user: User }) {
           <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
             {evaluating ? 'Grading & Storing Descriptive Rubrics' : 'Loading Results...'}
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
             {evalProgress.message}
           </p>
           {evaluating && (
             <div className="w-full mt-4">
-              <Progress 
-                value={evalProgress.percent} 
-                variant="scribble" 
-                animated={true} 
-                colors={{ stroke: '#0D9488', fill: '#0D9488' }}
+              <FuturisticProgressBar 
+                progress={evalProgress.percent}
+                color="teal"
+                height={7}
+                label="SYNCHRONIZING BENCHMARK MARKS"
               />
             </div>
           )}
@@ -617,7 +618,7 @@ export function Results({ user }: { user: User }) {
                         >
                           {isCurrentlyReevaluating ? (
                             <>
-                              <Spinner variant="spiral" size="sm" colors={{ stroke: '#0D9488' }} />
+                              <FuturisticSpinner size="xs" color="teal" />
                               <span>Re-Grading...</span>
                             </>
                           ) : (
@@ -686,16 +687,10 @@ export function Results({ user }: { user: User }) {
                                         <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
                                         <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
                                       </div>
-                                      <Progress 
-                                        value={pct}
-                                        variant="hatching"
-                                        animated={true}
-                                        size="sm"
-                                        colors={{
-                                          stroke: '#0D9488',
-                                          fill: '#0D9488',
-                                          bg: 'rgba(13, 148, 136, 0.1)'
-                                        }}
+                                      <FuturisticProgressBar 
+                                        progress={pct}
+                                        color="teal"
+                                        height={5}
                                       />
                                     </div>
                                   );
