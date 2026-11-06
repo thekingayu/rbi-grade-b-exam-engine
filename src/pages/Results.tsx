@@ -11,6 +11,7 @@ import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
 import { Divider } from 'sketchbook-ui';
 import { FuturisticSpinner, FuturisticProgressBar } from '../components/FuturisticLoader';
+import { getSubjectBySlug } from '../data/subjects';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -310,6 +311,12 @@ export function Results({ user }: { user: User }) {
                 const descStaticQs = descQuestions.filter(q => q.sourceTag === 'Static');
                 const descDynamicQs = descQuestions.filter(q => q.sourceTag === 'Dynamic');
                 
+                const subjectMeta = test.subjectSlug ? getSubjectBySlug(test.subjectSlug) : null;
+                const primaryMcqLabel = (test.config as any)?.primaryMcqLabel || subjectMeta?.questionCategories?.primaryMcqLabel || 'Core Theory';
+                const secondaryMcqLabel = (test.config as any)?.secondaryMcqLabel || subjectMeta?.questionCategories?.secondaryMcqLabel || 'Applied / Puzzles';
+                const primaryDescLabel = (test.config as any)?.primaryDescLabel || subjectMeta?.questionCategories?.primaryDescLabel || 'Static Desc.';
+                const secondaryDescLabel = (test.config as any)?.secondaryDescLabel || subjectMeta?.questionCategories?.secondaryDescLabel || 'Dynamic Desc.';
+
                 const getScore = (qs: typeof test.questions) => qs.reduce((sum, q) => {
                   if (q.type === 'Descriptive') {
                     const qId = q.id || test.questions.indexOf(q).toString();
@@ -364,7 +371,7 @@ export function Results({ user }: { user: User }) {
                     </div>
 
                     {/* Card 2: MCQ Accuracy Breakdown */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-emerald-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(16,185,129,0.15)] flex flex-col justify-between">
+                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-emerald-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(160,185,129,0.15)] flex flex-col justify-between">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           MCQ Tally
@@ -395,7 +402,7 @@ export function Results({ user }: { user: User }) {
                       </div>
                     </div>
 
-                    {/* Card 3: MCQ Static vs Dynamic - Cyan Lighted */}
+                    {/* Card 3: MCQ Breakdown with Dynamic Domain Labels */}
                     <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-cyan-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(6,182,212,0.15)] flex flex-col justify-between">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -408,8 +415,10 @@ export function Results({ user }: { user: User }) {
                       <div className="space-y-3.5">
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">Static MCQ</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">{mcqStaticScore}/{mcqStaticMax}</span>
+                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={primaryMcqLabel}>
+                              {primaryMcqLabel}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{mcqStaticScore}/{mcqStaticMax}</span>
                           </div>
                           <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
                             <div className="bg-gradient-to-r from-teal-500 to-cyan-500 h-full rounded-full shadow-[0_0_8px_rgba(20,184,166,0.5)]" style={{ width: `${mcqStaticMax > 0 ? (mcqStaticScore / mcqStaticMax) * 100 : 0}%` }} />
@@ -417,8 +426,10 @@ export function Results({ user }: { user: User }) {
                         </div>
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">Dynamic MCQ</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">{mcqDynamicScore}/{mcqDynamicMax}</span>
+                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={secondaryMcqLabel}>
+                              {secondaryMcqLabel}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{mcqDynamicScore}/{mcqDynamicMax}</span>
                           </div>
                           <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
                             <div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: `${mcqDynamicMax > 0 ? (mcqDynamicScore / mcqDynamicMax) * 100 : 0}%` }} />
@@ -427,7 +438,7 @@ export function Results({ user }: { user: User }) {
                       </div>
                     </div>
 
-                    {/* Card 4: Descriptive Modules - Purple Lighted */}
+                    {/* Card 4: Descriptive Modules with Dynamic Domain Labels */}
                     <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-purple-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(168,85,247,0.15)] flex flex-col justify-between">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -440,8 +451,10 @@ export function Results({ user }: { user: User }) {
                       <div className="space-y-3.5">
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">Static Desc.</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">{descStaticScore}/{descStaticMax}</span>
+                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={primaryDescLabel}>
+                              {primaryDescLabel}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{descStaticScore}/{descStaticMax}</span>
                           </div>
                           <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
                             <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full shadow-[0_0_8px_rgba(168,85,247,0.5)]" style={{ width: `${descStaticMax > 0 ? (descStaticScore / descStaticMax) * 100 : 0}%` }} />
@@ -449,8 +462,10 @@ export function Results({ user }: { user: User }) {
                         </div>
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">Dynamic Desc.</span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">{descDynamicScore}/{descDynamicMax}</span>
+                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={secondaryDescLabel}>
+                              {secondaryDescLabel}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{descDynamicScore}/{descDynamicMax}</span>
                           </div>
                           <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
                             <div className="bg-gradient-to-r from-amber-500 to-pink-500 h-full rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]" style={{ width: `${descDynamicMax > 0 ? (descDynamicScore / descDynamicMax) * 100 : 0}%` }} />

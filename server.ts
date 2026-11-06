@@ -138,126 +138,462 @@ function safeJsonParse(text: string): any {
   }
 }
 
-app.post('/api/generate-questions', async (req, res) => {
-  try {
-    const { extractedText, config } = req.body;
-    const subjectName = config?.subject || 'General Banking & Economic Awareness';
-    const targetTopic = config?.targetTopic ? `Specific Topic Focus: ${config.targetTopic}` : '';
-    const examMode = config?.mode || 'Sectional';
-    const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0);
-    
-    const prompt = `You are the Chief Examiner and Principal Paper Setter on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
-You must construct an exceptionally rigorous, high-difficulty mock examination that matches and exceeds the authentic difficulty level of the actual RBI Grade B examination (Phase 1 & Phase 2).
+function buildSubjectPrompt(subjectSlug: string, subjectName: string, config: any, extractedText: string): string {
+  const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0);
+  const totalDescs = (config.descStatic || 0) + (config.descDynamic || 0);
+  const mcq1Count = config.mcqStatic || 0;
+  const mcq2Count = config.mcqDynamic || 0;
+  const desc1Count = config.descStatic || 0;
+  const desc2Count = config.descDynamic || 0;
+  const primaryMcqLabel = config.primaryMcqLabel || 'Category 1 Core MCQs';
+  const secondaryMcqLabel = config.secondaryMcqLabel || 'Category 2 Applied MCQs';
+  const primaryDescLabel = config.primaryDescLabel || 'Category 1 Descriptive';
+  const secondaryDescLabel = config.secondaryDescLabel || 'Category 2 Descriptive';
+  const topicFocus = config.targetTopic ? `SPECIFIC TOPIC FOCUS: "${config.targetTopic}"` : '';
+  const examMode = config.mode || 'Sectional';
+  const difficulty = config.difficulty || 'Hard';
+
+  let subjectSpecificRules = '';
+  let jsonSchemaExample = '';
+
+  if (subjectSlug === 'reasoning') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (REASONING APTITUDE - RBI GRADE B PHASE 1):
+CRITICAL RULE: ABSOLUTELY ZERO GENERAL KNOWLEDGE, CURRENT AFFAIRS, BANKING LAWS, OR CIRCULARS.
+This is a pure examination of high-difficulty logical deduction, puzzles, and analytical reasoning as conducted by IBPS for RBI Grade B Officers (60 Marks / 45 Minutes benchmark).
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Topics to cover:
+  * Reverse Syllogisms & Syllogisms with modern qualifiers ("Only a few", "Can never be", "At least some", "Definite conclusions").
+  * Machine Input-Output: 4 to 5 step rearrangement of alphanumeric words and numbers with transformation rules (e.g., digit-sum, word alphabetical/vowel count reversal).
+  * Coded Inequalities: Chained symbolic equations (using @, #, $, %, &) with composite conclusions.
+  * Coded Blood Relations: Multi-generation family lineage with professions and gender deduction.
+  * Direction Sense: Angular shifts, Pythagoras shortest distance, and coordinate-plane shadow deductions.
+
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Topics to cover:
+  * Multi-variable Floor/Flat Puzzles: (e.g., 8 people on 4 floors with Flat 1 & Flat 2, distinct banks/cities/colors).
+  * Circular / Linear Seating Arrangements: Some facing inward, some outward, or parallel dual-row seating with variable attributes.
+  * Critical & Analytical Reasoning: Statement-Assumption, Statement-Course of Action, Strong/Weak Arguments, Cause and Effect, Implicit Inference.
+
+STRICT FORMAT REQUIREMENTS:
+- Every MCQ MUST have EXACTLY 5 distinct options.
+- The explanation must detail the logical step-by-step reasoning or deduction path.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Syllogisms & Reverse Syllogisms'}",
+      "text": "Statements:\\nOnly a few Banks are NBFCs.\\nAll NBFCs are Fintechs.\\nNo Fintech is a ChitFund.\\n\\nConclusions:\\nI. Some Banks can never be ChitFunds.\\nII. All NBFCs being ChitFunds is a possibility.\\nIII. At least some Banks are Fintechs.\\n\\nWhich of the conclusion(s) logically follow(s)?",
+      "options": [
+        "Only I follows",
+        "Only I and III follow",
+        "Only II follows",
+        "Only II and III follow",
+        "None of the conclusions follow"
+      ],
+      "correctAnswer": "Only I and III follow",
+      "explanation": "Conclusion I is valid: The specific portion of Banks that are NBFCs are wholly contained within Fintechs, which are disjoint from ChitFunds; thus, those Banks can never be ChitFunds. Conclusion II is false since no NBFC can ever be a ChitFund. Conclusion III is valid as the overlap between Banks and NBFCs is subset within Fintechs.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Puzzles, Seating & Critical Reasoning'}",
+      "text": "Eight persons - P, Q, R, S, T, U, V, and W - live on four different floors of a building (Floors 1 to 4 from bottom to top). Each floor has two flats: Flat-1 (west) and Flat-2 (east). Each person works in a different financial institution.\\n- P lives on an even-numbered floor in Flat-1.\\n- Only one floor is between P and the person working in SBI, who lives in Flat-2.\\n- T lives immediately above the person from SBI in the same flat type.\\n- R lives to the immediate east of T on the same floor.\\nWho among the following lives in Flat-2 on Floor 4?",
+      "options": [
+        "R",
+        "T",
+        "P",
+        "W",
+        "Cannot be determined from the given conditions"
+      ],
+      "correctAnswer": "R",
+      "explanation": "Following the flat-floor spatial layout: P is placed on Floor 2, Flat 1. One floor gap places the SBI employee on Floor 4 or Floor 1 in Flat-2. Given T is immediately above SBI in the same flat type, the SBI employee must be on Floor 1, Flat 2. Thus T is on Floor 2, Flat 2, or following the inverted constraints, R occupies Flat-2 on Floor 4.",
+      "maxMarks": 1
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'quant') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (QUANTITATIVE APTITUDE - RBI GRADE B PHASE 1):
+CRITICAL RULE: ABSOLUTELY ZERO GENERAL KNOWLEDGE, CURRENT AFFAIRS, OR THEORETICAL ESSAYS.
+This is a pure examination of advanced quantitative ability, commercial arithmetic, algebra, and data interpretation calibrated to RBI Grade B Phase 1 (30 Marks / 25 Minutes benchmark).
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Topics to cover:
+  * Commercial Mathematics: Compound vs Simple Interest with mixed periods/compounding, Profit-Loss with successive markups and dishonest weight ratios, Time-Speed-Distance (trains, boats and streams, circular track head-starts), Time & Work (alternate days, efficiency fractions).
+  * Quadratic Equations & Algebraic Comparisons: Two quadratic equations (Equation I: ax² + bx + c = 0, Equation II: dy² + ey + f = 0) with roots comparison: x > y, x < y, x ≥ y, x ≤ y, x = y or relation cannot be established.
+  * Missing & Wrong Number Series: Challenging polynomial, difference-of-cubes, or alternate operation series.
+  * Probability & Combinatorics: High-difficulty selection problems with conditional constraints.
+
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Topics to cover:
+  * Caselet Data Interpretation: Multi-sentence data-dense scenarios requiring ratio analysis, percentage changes, or weighted totals.
+  * Tabular & Radar DI Sets: Tabular or multidimensional data sets testing compound annual growth rate (CAGR), proportional distribution, and comparative variance.
+  * Quantity I vs Quantity II:
+    Quantity I: [Mathematical problem solving for value A]
+    Quantity II: [Mathematical problem solving for value B]
+    Options: Quantity I > Quantity II, Quantity I < Quantity II, Quantity I ≥ Quantity II, Quantity I ≤ Quantity II, Quantity I = Quantity II or relation cannot be established.
+  * Data Sufficiency: Evaluating if Statement I alone, Statement II alone, or both are sufficient.
+
+STRICT FORMAT REQUIREMENTS:
+- Every MCQ MUST have EXACTLY 5 distinct options.
+- The explanation must include complete mathematical formulas and step-by-step arithmetic/algebraic calculations.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Quadratic Equations & Series'}",
+      "text": "In the following question, two quadratic equations numbered I and II are given. Solve both equations and find the mathematical relation between x and y:\\n\\nEquation I: 3x² - 19x + 28 = 0\\nEquation II: 2y² - 17y + 36 = 0",
+      "options": [
+        "x > y",
+        "x < y",
+        "x ≥ y",
+        "x ≤ y",
+        "x = y or relationship between x and y cannot be established"
+      ],
+      "correctAnswer": "x ≤ y",
+      "explanation": "Equation I: 3x² - 12x - 7x + 28 = 0 => 3x(x - 4) - 7(x - 4) = 0 => (3x - 7)(x - 4) = 0 => x = 7/3 (≈2.33) or x = 4.\\nEquation II: 2y² - 8y - 9y + 36 = 0 => 2y(y - 4) - 9(y - 4) = 0 => (2y - 9)(y - 4) = 0 => y = 9/2 (4.5) or y = 4.\\nComparing values: 2.33 < 4.5; 2.33 < 4; 4 < 4.5; 4 = 4. Therefore, x ≤ y.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Data Interpretation & Quantity Comparisons'}",
+      "text": "Compare the quantities given below:\\n\\nQuantity I: The compound interest earned on Rs. 16,000 for 1.5 years at 20% per annum, compounded half-yearly.\\n\\nQuantity II: The simple interest earned on Rs. 25,000 for 3 years at 7.5% per annum.\\n\\nDetermine the relation between Quantity I and Quantity II:",
+      "options": [
+        "Quantity I > Quantity II",
+        "Quantity I < Quantity II",
+        "Quantity I ≥ Quantity II",
+        "Quantity I ≤ Quantity II",
+        "Quantity I = Quantity II or relation cannot be established"
+      ],
+      "correctAnswer": "Quantity I < Quantity II",
+      "explanation": "Quantity I: Semi-annual rate r = 10%, n = 3 half-years. Amount = 16000 * (1 + 0.10)³ = 16000 * 1.331 = Rs. 21,296. CI = 21,296 - 16,000 = Rs. 5,296.\\nQuantity II: SI = (25,000 * 7.5 * 3) / 100 = 250 * 22.5 = Rs. 5,625.\\nComparing: 5,296 < 5,625 => Quantity I < Quantity II.",
+      "maxMarks": 1
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'english') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (ENGLISH LANGUAGE - RBI GRADE B PHASE 1):
+CRITICAL RULE: Advanced verbal acuity, grammatical syntax, vocabulary in context, and macroeconomic passage comprehension (30 Marks / 25 Minutes benchmark).
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Topics to cover:
+  * Error Detection: Sentences partitioned into [A], [B], [C], [D] or identifying the grammatically flawless sentence among 5 options. Focus on subjunctive mood, parallelism, dangling modifiers, inverted conditionals.
+  * Phrase Replacement / Sentence Improvement: Replacing highlighted idiomatic or prepositional phrases.
+  * Sentence Connectors & Starters: Combining two statements using specific transitionals (e.g., 'Notwithstanding...', 'Insofar as...', 'Albeit...').
+  * High-register Double Fillers & Cloze Mechanics.
+
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Topics to cover:
+  * Reading Comprehension: Provide a dense 200-250 word passage on macroeconomic policy, central banking, or technological transition, followed by deep inferential questions (author's thesis, implicit assumptions, tone, vocabulary in context).
+  * Para Jumbles: 5 to 6 statements to be arranged in coherent logical sequence, with questions asking for sequence order, penultimate statement, or full combination.
+
+STRICT FORMAT REQUIREMENTS:
+- Every MCQ MUST have EXACTLY 5 distinct options.
+- The explanation must provide grammatical rules and contextual justification.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Grammar & Syntax Error Detection'}",
+      "text": "In the following sentence, identify the segment containing a grammatical error. If the sentence is grammatically correct, select 'No error':\\n\\n(A) Had the Monetary Policy Committee anticipated / (B) the sharp escalation in headline food inflation, / (C) they would have had tightened the policy corridor / (D) much earlier in the tightening cycle.",
+      "options": [
+        "Segment (A)",
+        "Segment (B)",
+        "Segment (C)",
+        "Segment (D)",
+        "No error"
+      ],
+      "correctAnswer": "Segment (C)",
+      "explanation": "In conditional third clause 'Had + Subject + V3...', the result clause requires 'would have + V3'. Here 'would have had tightened' introduces redundant auxiliary 'had'. The correct phrasing is 'they would have tightened'.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Reading Comprehension & Inference'}",
+      "text": "Read the following editorial excerpt:\\n'The post-pandemic normalization of global liquidity has confronted emerging market central banks with a classic trilemma tradeoff. As core central banks aggressively unwind quantitative easing, currency depreciation pressures risk un-anchoring domestic inflation expectations. Rather than mechanically matching external rate hikes, monetary authorities have relied on macroprudential foreign exchange interventions and standing absorption windows to insulate yield curves without prematurely stifling domestic credit formation.'\\n\\nBased on the excerpt, what is the author's primary assertion regarding emerging market central banking strategy?",
+      "options": [
+        "Emerging central banks must rigidly synchronize policy rate hikes with advanced economy central banks.",
+        "Central banks have deployed targeted macroprudential and liquidity tools to insulate domestic credit from external shocks.",
+        "Quantitative tightening in developed markets makes domestic yield curve stability impossible.",
+        "Monetary policy transmission is ineffective unless supported by statutory capital account controls.",
+        "Foreign exchange market interventions necessarily exacerbate domestic inflationary pressures."
+      ],
+      "correctAnswer": "Central banks have deployed targeted macroprudential and liquidity tools to insulate domestic credit from external shocks.",
+      "explanation": "The excerpt explicitly underscores that rather than mechanically copying external hikes, authorities used macroprudential FX tools and standing windows to insulate yield curves and protect domestic credit formation.",
+      "maxMarks": 1
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'general-awareness') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (GENERAL AWARENESS - RBI GRADE B PHASE 1):
+CRITICAL RULE: High-speed, high-rigor 80-mark section testing banking & financial architecture, statutory acts, central banking tools, and dynamic national/international current affairs.
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Topics to cover:
+  * RBI Act 1934, Banking Regulation Act 1949, FEMA 1999, DICGC Act, PMLA statutory sections.
+  * Monetary Policy tools: Repo, Reverse Repo, SDF, MSF, CRR, SLR, Open Market Operations, MPC framework.
+  * Banking terms, money & capital market instruments (CP, CD, T-Bills, Treps), Priority Sector Lending (PSL) targets, Basel III standards.
+  * Static GK: Headquarters of international institutions (BIS, IMF, World Bank, ADB, NDB), national parks, tiger reserves, power plants.
+
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Topics to cover:
+  * Dynamic Current Affairs (last 6 months): National and international developments, bilateral summits (G20, BRICS, COP), reports & rankings (Global Innovation Index, HDI, Logistics Performance Index).
+  * Union Budget & Economic Survey: Fiscal deficit targets, capital expenditure allocations, macroeconomic forecasts.
+  * RBI Circulars, Master Directions, Prompt Corrective Action (PCA) framework, regulatory sandbox cohorts, dynamic risk weights.
+
+STRICT FORMAT REQUIREMENTS:
+- Every single MCQ MUST have EXACTLY 5 distinct options.
+- Utilize authentic multi-statement formats (Statement I, II, III) and Assertion-Reason pairs.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Statutory Banking & Monetary Policy'}",
+      "text": "Consider the following statements regarding the Standing Deposit Facility (SDF) introduced by the Reserve Bank of India:\\n\\nI. The SDF allows the RBI to absorb liquidity from commercial banks without providing collateral in return.\\nII. The SDF rate serves as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. The RBI was empowered to introduce the SDF through an amendment to Section 17 of the RBI Act, 1934.\\n\\nWhich of the statements given above is/are correct?",
+      "options": [
+        "Only I and II",
+        "Only II and III",
+        "Only I and III",
+        "All I, II and III",
+        "None of the above"
+      ],
+      "correctAnswer": "All I, II and III",
+      "explanation": "All three statements are correct: (I) SDF is uncollateralized liquidity absorption; (II) it replaced fixed-rate reverse repo as the LAF corridor floor (25 bps below the policy repo rate); (III) Section 17 of the RBI Act was amended in 2018 to empower the RBI to introduce SDF.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Dynamic Current Affairs & Circulars'}",
+      "text": "Under the Prompt Corrective Action (PCA) Framework for Non-Banking Financial Companies (NBFCs) notified by the Reserve Bank of India, which of the following represents the Tier 1 Capital threshold trigger for Risk Threshold 1?",
+      "options": [
+        "Tier 1 Capital ratio falling below 10.0%",
+        "Tier 1 Capital ratio falling below 12.0%",
+        "Tier 1 Capital ratio falling below 15.0%",
+        "Tier 1 Capital ratio falling below 8.0%",
+        "Net NPA ratio exceeding 9.0%"
+      ],
+      "correctAnswer": "Tier 1 Capital ratio falling below 10.0%",
+      "explanation": "Under the RBI PCA Framework for NBFCs (Middle, Upper, and Top Layers), Risk Threshold 1 is triggered when the CRAR falls below 15.0% or the Tier 1 Capital ratio drops below 10.0%.",
+      "maxMarks": 1
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'esi') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (ECONOMIC & SOCIAL ISSUES - RBI GRADE B PHASE 2):
+Comprehensive 100-mark paper: 50 Marks MCQ + 50 Marks Descriptive covering Indian economy, macroeconomics, social structures, and dynamic policy frameworks.
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Growth models, poverty lines (Tendulkar, Rangarajan), national income accounting, Phillips curve, Solow model, fiscal/monetary transmission, balance of payments, inflation measures (CPI, WPI).
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Flagship welfare schemes (PM-KISAN, PMFBY, Ayushman Bharat, NRLM, PLI schemes), Union Budget allocations, Economic Survey analysis, NITI Aayog SDG indices, environmental sustainability policies.
+- DESCRIPTIVE QUESTIONS:
+  * Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words each). Conceptual socio-economic essays.
+  * Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words each). Applied contemporary policy dilemma and forward roadmap.
+  Provide a 4-pillar marking rubric and structured model answer with headings for every descriptive question.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Macroeconomic Theory & National Income'}",
+      "text": "Which of the following macroeconomic indicators correctly captures the 'Net Domestic Product at Factor Cost' (NDP_FC)?",
+      "options": [
+        "GDP at Market Prices - Depreciation - Net Indirect Taxes",
+        "GNP at Market Prices - Depreciation + Net Indirect Taxes",
+        "GDP at Factor Cost + Net Factor Income from Abroad",
+        "NDP at Market Prices + Subsidies - Indirect Taxes",
+        "Both (A) and (D) are correct formulations"
+      ],
+      "correctAnswer": "Both (A) and (D) are correct formulations",
+      "explanation": "NDP_FC = GDP_MP - Depreciation - Net Indirect Taxes (where NIT = Indirect Taxes - Subsidies). Equivalently, NDP_FC = NDP_MP - NIT = NDP_MP - Indirect Taxes + Subsidies. Hence both (A) and (D) represent valid formulations.",
+      "maxMarks": 1
+    },
+    {
+      "type": "Descriptive",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Applied Policy & Institutional Analysis'}",
+      "text": "Examine the structural challenges in India's labor market dynamics, specifically regarding female labor force participation and youth unemployment. How can targeted fiscal policy and skill development initiatives effectively harness the demographic dividend?",
+      "maxMarks": 15,
+      "wordLimit": 600,
+      "markingScheme": {
+        "Demographic Profile & Statistical Context": 3.5,
+        "Structural Impediments & Female LFPR Barriers": 4.5,
+        "Fiscal Interventions & Skill Development Evaluation": 4.0,
+        "Strategic Policy Recommendations & Roadmap": 3.0
+      },
+      "modelAnswer": "### 1. Introduction & Demographic Context\\n\\nIndia stands at a pivotal demographic inflection point with a median age of 28.7 years...\\n\\n### 2. Structural Barriers to Labor Absorption\\n\\nKey bottlenecks include informal employment concentration, caregiving burdens limiting female participation, and educational-skill mismatches...\\n\\n### 3. Fiscal & Policy Levers\\n\\nFiscal incentives through production-linked schemes and formalization credits combined with modernized apprenticeships...\\n\\n### 4. Pragmatic Policy Roadmap\\n\\nStrengthening social care infrastructure, localized vocational clusters, and flexible working frameworks."
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'fm') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (FINANCE & MANAGEMENT - RBI GRADE B PHASE 2):
+50 Marks MCQ + 50 Marks Descriptive covering financial architecture, central banking regulation, corporate finance numericals, and management/leadership theory.
+
+QUESTION DISTRIBUTION:
+- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+  Financial system structure, primary & secondary markets, Basel III capital ratios (CET-1, CCB, Countercyclical buffer), financial numericals (YTM, Modified Duration, WACC, DuPont ROE decomposition, Debt Service Coverage Ratio (DSCR), Beta, Capital Adequacy).
+- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+  Management thought (Taylor, Fayol, Weber), Motivation theories (Maslow, Herzberg, McClelland, Vroom, Alderfer), Leadership models (Blake-Mouton grid, Fiedler, Hersey-Blanchard), Corporate Governance committees (Kotak, Kumar Mangalam Birla), Business Ethics.
+- DESCRIPTIVE QUESTIONS:
+  * Category 1: "${primaryDescLabel}" -> Generate ${desc1Count} questions (10 Marks / 400 words). Financial regulation & supervision.
+  * Category 2: "${secondaryDescLabel}" -> Generate ${desc2Count} questions (15 Marks / 600 words). Organizational leadership & governance case dilemma.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Corporate Finance & Basel III'}",
+      "text": "A commercial bank in India reports Risk-Weighted Assets (RWAs) of Rs. 100,000 crore. Under RBI Basel III guidelines, what is the minimum Common Equity Tier 1 (CET-1) capital including the Capital Conservation Buffer (CCB) required to be maintained by this bank?",
+      "options": [
+        "Rs. 5,500 crore",
+        "Rs. 7,000 crore",
+        "Rs. 8,000 crore",
+        "Rs. 9,000 crore",
+        "Rs. 11,500 crore"
+      ],
+      "correctAnswer": "Rs. 8,000 crore",
+      "explanation": "Under RBI regulations, minimum CET-1 is 5.5% of RWAs and the CCB is 2.5% of RWAs (which must be met entirely with CET-1). Total CET-1 requirement = 5.5% + 2.5% = 8.0% of Rs. 100,000 crore = Rs. 8,000 crore.",
+      "maxMarks": 1
+    },
+    {
+      "type": "Descriptive",
+      "sourceTag": "Dynamic",
+      "topic": "${config.targetTopic || 'Organizational Leadership & Governance'}",
+      "text": "Differentiate between Transformational and Transactional leadership models. In the context of digital transformation in public sector banking, analyze how transformational leaders can overcome organizational inertia and mitigate resistance to change.",
+      "maxMarks": 15,
+      "wordLimit": 600,
+      "markingScheme": {
+        "Theoretical Grounding & Conceptual Contrast": 3.5,
+        "Public Sector Banking Inertia & Change Dynamics": 4.5,
+        "Transformational Levers (4 I's Framework)": 4.0,
+        "Implementation Governance & Cultural Roadmap": 3.0
+      },
+      "modelAnswer": "### 1. Conceptual Distinction in Leadership Models\\n\\nTransactional leadership operates on contingent rewards and active exception management, whereas Transformational leadership inspires followers through idealized influence, inspirational motivation, intellectual stimulation, and individualized consideration (Bass's 4 I's)...\\n\\n### 2. Sources of Inertia in Digital Banking Transitions\\n\\nLegacy hierarchical cultures, union resistance, fear of technological obsolescence, and siloed operational practices...\\n\\n### 3. Deploying Transformational Leadership\\n\\nFraming digital enablement as empowerment rather than replacement, cross-functional upskilling, and psychological safety...\\n\\n### 4. Governance & Cultural Integration\\n\\nEstablishing transparent metric dashboards, continuous feedback loops, and inclusive organizational redesign."
+    }
+  ]
+}`;
+  } else if (subjectSlug === 'english-writing') {
+    subjectSpecificRules = `
+SUBJECT-SPECIFIC MANDATE (ENGLISH WRITING SKILLS - RBI GRADE B PHASE 2):
+100-mark descriptive examination (90 minutes): 1 Essay (40 Marks / 400 words), 1 Précis (30 Marks / 170 words), and Business Reading Comprehension (30 Marks / 5 analytical questions).
+
+QUESTION SPECIFICATIONS:
+- Category 1: "${primaryDescLabel || 'Official Essay & Speech Précis'}" -> Generate ${desc1Count || 2} questions.
+  Provide:
+  1) An authoritative, thought-provoking 400-word essay prompt on central banking, digital economy, or financial inclusion.
+  2) A 450-word excerpt from an official central banking speech or policy report, requiring a précis of exactly 170 words with a suitable title.
+- Category 2: "${secondaryDescLabel || 'Business Reading Comprehension'}" -> Generate ${desc2Count || 1} questions.
+  Provide a dense 350-word financial analysis passage with 4-5 descriptive analytical comprehension questions.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "Descriptive",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Macroeconomic Policy Essay'}",
+      "text": "Write a comprehensive essay in approximately 400 words on the topic:\\n'Central Bank Digital Currencies (CBDCs): Catalysts for Financial Inclusion or Challenges to Commercial Bank Disintermediation?'",
+      "maxMarks": 40,
+      "wordLimit": 400,
+      "markingScheme": {
+        "Conceptual Depth & Thematic Coherence": 10.0,
+        "Financial Architecture & Disintermediation Risks": 12.0,
+        "Structural Organization & Paragraph Transitions": 10.0,
+        "Grammatical Precision & Formal Register": 8.0
+      },
+      "modelAnswer": "### Central Bank Digital Currencies: Balancing Inclusion and Disintermediation\\n\\nThe advent of Central Bank Digital Currencies (CBDCs) represents the most profound reimagining of sovereign money since the abandonment of the gold standard...\\n\\nWholesale and retail CBDC implementations offer distinct utility curves...\\n\\nTo avert deposit disintermediation during financial stress, central banks must calibrate holding caps and non-remunerated architectures...\\n\\nIn conclusion, CBDCs can anchor sovereign trust in the digital era without disrupting private credit creation."
+    }
+  ]
+}`;
+  } else {
+    // General / Uncategorized
+    subjectSpecificRules = `
+SUBJECT: "${subjectName}"
+Generate high-rigor RBI Grade B examination questions testing syllabus mastery, statutory provisions, and applied analytical problems.
+- Category 1: "${primaryMcqLabel}" -> ${mcq1Count} MCQs with "sourceTag": "Static".
+- Category 2: "${secondaryMcqLabel}" -> ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+- Descriptive Category 1: "${primaryDescLabel}" -> ${desc1Count} questions.
+- Descriptive Category 2: "${secondaryDescLabel}" -> ${desc2Count} questions.
+Every MCQ must have EXACTLY 5 distinct options.`;
+
+    jsonSchemaExample = `{
+  "questions": [
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "topic": "${config.targetTopic || 'Core Concept Assessment'}",
+      "text": "Which of the following principles forms the bedrock of the regulatory framework under discussion?",
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "None of the above"],
+      "correctAnswer": "Option 1",
+      "explanation": "Detailed theoretical and empirical explanation.",
+      "maxMarks": 1
+    }
+  ]
+}`;
+  }
+
+  return `You are the Chief Examiner and Principal Paper Setter on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
+You must construct an exceptionally rigorous, high-difficulty mock examination that matches and exceeds the authentic difficulty level of the actual RBI Grade B examination.
 
 SUBJECT: "${subjectName}"
-${targetTopic}
+${topicFocus}
 EXAM MODE: "${examMode}"
-TARGET MCQ COUNT: ${totalMcqs} (${config.mcqStatic || 0} Static, ${config.mcqDynamic || 0} Dynamic)
-TARGET DESCRIPTIVE COUNT: ${(config.descStatic || 0) + (config.descDynamic || 0)} (${config.descStatic || 0} Static, ${config.descDynamic || 0} Dynamic)
+DIFFICULTY: "${difficulty}"
+TARGET MCQ COUNT: ${totalMcqs} (${mcq1Count} in "${primaryMcqLabel}", ${mcq2Count} in "${secondaryMcqLabel}")
+TARGET DESCRIPTIVE COUNT: ${totalDescs} (${desc1Count} in "${primaryDescLabel}", ${desc2Count} in "${secondaryDescLabel}")
 
-DIFFICULTY LEVEL & BENCHMARK (MANDATORY):
-- RBI Grade B is notoriously difficult. AVOID simplistic, trivial one-liner factual trivia.
-- Every question must test deep conceptual mastery, statutory provisions, regulatory circulars, multi-layered analytical deduction, or financial/mathematical calculations.
-- Distractors (incorrect options) must be realistic, tricky, and designed to trap candidates who only have superficial knowledge.
+${subjectSpecificRules}
 
-MANDATORY DIVERSITY OF RBI GRADE B MCQ FORMATS:
-Do NOT create only "Which statement is correct" questions. You MUST distribute the ${totalMcqs} MCQs across the following authentic RBI Grade B question archetypes:
-
-1. [Multi-Statement Analytical Evaluation]:
-   Provide 3 to 4 technical statements labeled (I), (II), (III), and optionally (IV).
-   Prompt: "Which of the statements given above is/are correct?" or "is/are INCORRECT?"
-   Options MUST be combinations, e.g.:
-   - "Only I and III"
-   - "Only II and IV"
-   - "Only I, II and III"
-   - "All I, II, III and IV"
-   - "None of the above"
-
-2. [Passage / Caselet Contextual Question]:
-   Provide a dense 3-5 line extract representing an RBI Circular, Union Budget excerpt, Economic Survey finding, or macroeconomic scenario labeled "[Context / Caselet]".
-   Follow with an analytical question evaluating policy implications, statutory limits, or indirect economic fallout.
-
-3. [Assertion (A) & Reason (R)]:
-   Assertion (A): [Proposition on monetary transmission, Basel III norms, fiscal deficit, or management theory]
-   Reason (R): [Theoretical mechanism or statutory foundation]
-   Options MUST follow standard RBI pattern:
-   - "Both (A) and (R) are true and (R) is the correct explanation of (A)"
-   - "Both (A) and (R) are true but (R) is NOT the correct explanation of (A)"
-   - "(A) is true but (R) is false"
-   - "(A) is false but (R) is true"
-   - "Both (A) and (R) are false"
-
-4. [Match the Following / Matrix Matching]:
-   Column I (A, B, C, D) listing regulatory bodies, committees, financial ratios, or schemes.
-   Column II (1, 2, 3, 4) listing recommendations, formulas, mandates, or statutory sections.
-   Options must be exact matching codes: "A-2, B-4, C-1, D-3", "A-3, B-1, C-4, D-2", etc.
-
-5. [Numerical / Financial Math Problem]:
-   For Finance, Management, or Quant: Real calculation problem (e.g. Yield to Maturity, Modified Duration, DuPont ROE decomposition, Debt Service Coverage Ratio (DSCR), WACC, Capital Adequacy / CRAR calculations, or Data Interpretation).
-   Options with precise calculated numerical values.
-
-6. [Chronological / Regulatory Sequencing]:
-   Provide 4 historical or policy milestones (I, II, III, IV) and ask to arrange them in the correct chronological sequence of notification or occurrence.
-
-7. [Technical Multi-Blank Verification]:
-   Regulatory framework with [Blank I] and [Blank II] (e.g. "Under the PCA framework, Threshold 1 is triggered when CET-1 is below [Blank I] and Net NPA exceeds [Blank II]").
-   Options with paired regulatory percentages or statutory figures.
-
-8. [Quantity I vs Quantity II Comparison] (for QA / Reasoning / Finance):
-   Quantity I: [Description / Value]
-   Quantity II: [Description / Value]
-   Options: "Quantity I > Quantity II", "Quantity I < Quantity II", "Quantity I >= Quantity II", "Quantity I <= Quantity II", "Quantity I = Quantity II or relation cannot be established".
-
-STRICT 5-OPTION RULE:
-- EVERY single MCQ MUST HAVE EXACTLY 5 DISTINCT OPTIONS (Option 1 to Option 5).
-- Never output only 4 options.
-
-DESCRIPTIVE QUESTION SPECIFICATIONS:
-- Authentic Phase II 10-mark (400 words) or 15-mark (600 words) analytical questions.
-- Demands multi-dimensional analysis: theoretical grounding, regulatory framework, contemporary challenges, and forward-looking pragmatic roadmap.
-- Provide a rigorous 4-pillar marking scheme and an exhaustive topper-standard model answer with clear section headings.
+MANDATORY EXAMINATION STANDARDS:
+1. STRICT 5-OPTION RULE: EVERY single MCQ MUST HAVE EXACTLY 5 DISTINCT OPTIONS (Option 1 to Option 5). Never output only 4 options.
+2. DIFFICULTY BENCHMARK: AVOID simplistic, trivial one-liner factual trivia. Every question must test deep conceptual mastery, statutory accuracy, multi-layered analytical deduction, or exact calculations.
+3. DISTRACTOR INTEGRITY: Distractors (incorrect options) must be realistic, tricky, and designed to trap candidates with superficial knowledge.
+4. QUESTION COUNT ENFORCEMENT:
+   - Output EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
+   - Output EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
+   - Output EXACTLY ${desc1Count} Descriptive questions with "sourceTag": "Static".
+   - Output EXACTLY ${desc2Count} Descriptive questions with "sourceTag": "Dynamic".
 
 STUDY NOTES & REFERENCE TEXT:
 """
 ${extractedText}
 """
 
-Output valid JSON matching this exact schema:
-{
-  "questions": [
-    {
-      "type": "MCQ",
-      "sourceTag": "Static",
-      "topic": "${config.targetTopic || 'Regulatory Framework & Monetary Economics'}",
-      "text": "Consider the following statements regarding the Basel III Capital Regulations issued by the Reserve Bank of India:\\n\\nI. The minimum Common Equity Tier 1 (CET-1) capital requirement is 5.5% of Risk-Weighted Assets (RWAs).\\nII. The Capital Conservation Buffer (CCB) of 2.5% must be comprised entirely of Common Equity Tier 1 capital.\\nIII. The minimum total capital (CRAR) requirement for commercial banks in India is 8.0%, which matches the international Basel baseline.\\n\\nWhich of the statements given above is/are correct?",
-      "options": [
-        "Only I and II",
-        "Only II and III",
-        "Only I and III",
-        "All I, II, and III",
-        "None of the above"
-      ],
-      "correctAnswer": "Only I and II",
-      "explanation": "Statement I and II are correct. Under RBI guidelines (stricter than Basel norms), minimum CET-1 is 5.5% and CCB is 2.5% (all CET-1). Statement III is incorrect because RBI mandates a minimum CRAR of 9.0% for commercial banks, whereas the international Basel III minimum is 8.0%.",
-      "maxMarks": 1
-    },
-    {
-      "type": "Descriptive",
-      "sourceTag": "Dynamic",
-      "topic": "${config.targetTopic || 'Macroeconomic & Financial Stability'}",
-      "text": "Examine the macroeconomic trade-offs between fiscal consolidation and capital expenditure in India's post-pandemic growth trajectory. In this context, evaluate how the Reserve Bank of India's liquidity management framework supports sovereign borrowing without crowding out private sector credit.",
-      "maxMarks": 15,
-      "wordLimit": 600,
-      "markingScheme": {
-        "Macro-Fiscal Context & Theoretical Foundation": 3.5,
-        "RBI Liquidity Tools & Sovereign Debt Dynamics": 4.5,
-        "Private Credit Crowding Out & Transmission Analysis": 4.0,
-        "Structural Recommendations & Policy Roadmap": 3.0
-      },
-      "modelAnswer": "### 1. Introduction & Macro-Fiscal Landscape\\n\\nIndia's post-pandemic fiscal policy has navigated the dual imperative of fiscal consolidation (targeting a fiscal deficit below 4.5% of GDP by FY26) while sustaining high-multiplier capital expenditure (exceeding 3.3% of GDP)...\\n\\n### 2. Monetary-Fiscal Coordination & Liquidity Management\\n\\nThe RBI facilitates the orderly absorption of sovereign borrowing through calibrated liquidity operations, utilizing the Standing Deposit Facility (SDF) as the floor and Marginal Standing Facility (MSF) as the ceiling of the Liquidity Adjustment Facility (LAF) corridor...\\n\\n### 3. Mitigating Private Sector Crowding-Out\\n\\nCrowding out is averted when public investment crowds IN private capex through infrastructure debottlenecking, accompanied by robust banking sector capitalization (CRAR > 16.8%) and historically low Non-Performing Assets (Gross NPAs < 2.8%)...\\n\\n### 4. Conclusion & Forward Roadmap\\n\\nA sustainable fiscal-monetary matrix necessitates deepening the corporate bond market, active secondary market sovereign debt management, and steadfast adherence to the FRBM debt-to-GDP trajectory."
-    }
-  ]
-}`;
+Output valid JSON matching this exact structure:
+${jsonSchemaExample}`;
+}
+
+app.post('/api/generate-questions', async (req, res) => {
+  try {
+    const { extractedText, config } = req.body;
+    const subjectSlug = config?.subjectSlug || 'general-awareness';
+    const subjectName = config?.subject || 'General Banking & Economic Awareness';
+    
+    const prompt = buildSubjectPrompt(subjectSlug, subjectName, config, extractedText);
 
     const rawJson = await callGeminiWithRetry(prompt);
     const parsed = safeJsonParse(rawJson);
@@ -333,16 +669,33 @@ Output valid JSON matching this exact schema:
           resolvedCorrect = optionsList[0];
         }
 
+        const fallbackTopic = q.topic || config.targetTopic || (sourceTag === 'Dynamic' 
+          ? (config.secondaryMcqLabel || 'Applied Analytical Problems') 
+          : (config.primaryMcqLabel || 'Core Syllabus Principles'));
+
+        let fallbackExplanation = q.explanation;
+        if (!fallbackExplanation) {
+          if (subjectSlug === 'reasoning') {
+            fallbackExplanation = 'Evaluate the logical arrangement constraints, conditions, and deductions step-by-step to arrive at the solution.';
+          } else if (subjectSlug === 'quant') {
+            fallbackExplanation = 'Apply mathematical formulas, arithmetic relations, or data interpretation steps to calculate the exact solution.';
+          } else if (subjectSlug === 'english') {
+            fallbackExplanation = 'Analyze grammatical structure, syntactic rules, or contextual reading inferences.';
+          } else {
+            fallbackExplanation = 'Refer to the statutory RBI circulars, Master Directions, and core literature for this question.';
+          }
+        }
+
         return {
           id: q.id || `q_mcq_${index + 1}`,
           type: 'MCQ' as const,
           sourceTag,
-          topic: q.topic || config.targetTopic || (sourceTag === 'Dynamic' ? 'Current Regulatory & Policy Affairs' : 'Statutory & Core Principles'),
+          topic: fallbackTopic,
           difficulty: q.difficulty || config.difficulty || 'Hard',
           text,
           options: optionsList,
           correctAnswer: resolvedCorrect,
-          explanation: q.explanation || 'Refer to the statutory RBI circulars, Master Directions, and core economic literature for this question.',
+          explanation: fallbackExplanation,
           maxMarks: 1
         };
       } else {

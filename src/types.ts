@@ -19,6 +19,28 @@ export interface UserProfile {
   updatedAt?: number;
 }
 
+export interface SubjectQuestionPreset {
+  mcqStatic: number;
+  mcqDynamic: number;
+  descStatic: number;
+  descDynamic: number;
+  durationMinutes: number;
+}
+
+export interface SubjectQuestionCategories {
+  primaryMcqLabel: string;
+  primaryMcqSubtext: string;
+  secondaryMcqLabel: string;
+  secondaryMcqSubtext: string;
+  primaryDescLabel?: string;
+  primaryDescSubtext?: string;
+  secondaryDescLabel?: string;
+  secondaryDescSubtext?: string;
+  fullMock: SubjectQuestionPreset;
+  sectional: SubjectQuestionPreset;
+  topicDrill: SubjectQuestionPreset;
+}
+
 export interface Subject {
   id: string;
   slug: string;
@@ -38,6 +60,7 @@ export interface Subject {
   categories: string[]; // e.g. ['Static', 'Dynamic']
   syllabusTopics: string[];
   description: string;
+  questionCategories?: SubjectQuestionCategories;
 }
 
 export interface SubjectNote {

@@ -79,7 +79,22 @@ export function NewTest({ user }: { user: User }) {
     negativeMarkingEnabled: true
   });
 
-  // Load last-used subject config from localStorage if available
+  // Active subject question category descriptors and authentic RBI presets
+  const categoryConfig = selectedSubject.questionCategories || {
+    primaryMcqLabel: 'Core Curriculum Concept MCQs',
+    primaryMcqSubtext: 'Fundamental syllabus theory & core rules',
+    secondaryMcqLabel: 'Applied Analytical MCQs',
+    secondaryMcqSubtext: 'Practical application & scenario-based problems',
+    primaryDescLabel: 'Analytical Theory Essays',
+    primaryDescSubtext: 'Syllabus framework prompts',
+    secondaryDescLabel: 'Practical Case Studies',
+    secondaryDescSubtext: 'Applied real-world scenarios',
+    fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
+    sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 0, durationMinutes: 25 },
+    topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 15 }
+  };
+
+  // Load last-used subject config or initialize with authentic RBI Grade B sectional preset
   useEffect(() => {
     const saved = localStorage.getItem(`rbi_cfg_${selectedSubject.slug}`);
     if (saved) {
@@ -88,16 +103,16 @@ export function NewTest({ user }: { user: User }) {
         setConfig(prev => ({ ...prev, ...parsed }));
       } catch (e) {}
     } else {
-      // Set sensible defaults based on subject questionTypeMix
-      const mix = selectedSubject.questionTypeMix;
-      setConfig(prev => ({
-        ...prev,
-        mcqStatic: mix.mcq ? Math.ceil(mix.defaultMcqCount * 0.6) : 0,
-        mcqDynamic: mix.mcq ? Math.floor(mix.defaultMcqCount * 0.4) : 0,
-        descStatic: mix.descriptive ? Math.ceil(mix.defaultDescCount * 0.5) : 0,
-        descDynamic: mix.descriptive ? Math.floor(mix.defaultDescCount * 0.5) : 0,
+      const preset = categoryConfig.sectional;
+      setConfig({
+        mcqStatic: preset.mcqStatic,
+        mcqDynamic: preset.mcqDynamic,
+        descStatic: preset.descStatic,
+        descDynamic: preset.descDynamic,
+        difficulty: 'Moderate',
+        timerEnabled: true,
         negativeMarkingEnabled: selectedSubject.negativeMarking > 0
-      }));
+      });
     }
   }, [selectedSubject]);
 
@@ -178,9 +193,25 @@ export function NewTest({ user }: { user: User }) {
   const totalCalculatedMarks = (config.mcqStatic + config.mcqDynamic) * 1 +
                                (config.descStatic + config.descDynamic) * 15;
 
-  const estimatedDurationMinutes = examMode === 'Quick 10-min' ? 10 :
-                                   examMode === 'Topic Drill' ? 15 :
-                                   Math.max(10, Math.ceil(((config.mcqStatic + config.mcqDynamic) * 45 + (config.descStatic + config.descDynamic) * 900) / 60));
+  const estimatedDurationMinutes = useMemo(() => {
+    if (examMode === 'Full Mock' && categoryConfig.fullMock?.durationMinutes) {
+      return categoryConfig.fullMock.durationMinutes;
+    }
+    if (examMode === 'Sectional' && categoryConfig.sectional?.durationMinutes) {
+      return categoryConfig.sectional.durationMinutes;
+    }
+    if (examMode === 'Topic Drill' && categoryConfig.topicDrill?.durationMinutes) {
+      return categoryConfig.topicDrill.durationMinutes;
+    }
+    if (examMode === 'Quick 10-min') {
+      return 10;
+    }
+    const totalMcqs = config.mcqStatic + config.mcqDynamic;
+    const totalDesc = config.descStatic + config.descDynamic;
+    const mcqMins = (totalMcqs * 45) / 60;
+    const descMins = (totalDesc * 15 * 60) / 60;
+    return Math.max(5, Math.ceil(mcqMins + descMins));
+  }, [examMode, categoryConfig, config.mcqStatic, config.mcqDynamic, config.descStatic, config.descDynamic]);
 
   // GENERATE EXAM HANDLER
   const handleGenerateExam = async () => {
@@ -307,7 +338,11 @@ export function NewTest({ user }: { user: User }) {
             subject: selectedSubject.name,
             subjectSlug: selectedSubject.slug,
             mode: examMode,
-            targetTopic: selectedTopic
+            targetTopic: selectedTopic,
+            primaryMcqLabel: categoryConfig.primaryMcqLabel,
+            secondaryMcqLabel: categoryConfig.secondaryMcqLabel,
+            primaryDescLabel: categoryConfig.primaryDescLabel,
+            secondaryDescLabel: categoryConfig.secondaryDescLabel
           }
         }),
         signal: abortController.signal
@@ -703,18 +738,40 @@ export function NewTest({ user }: { user: User }) {
               {(['Full Mock', 'Sectional', 'Topic Drill', 'Quick 10-min'] as ExamMode[]).map(mode => (
                 <button
                   key={mode}
+                  type="button"
                   onClick={() => {
                     setExamMode(mode);
-                    if (mode === 'Quick 10-min') {
-                      setConfig(prev => ({ ...prev, mcqStatic: 5, mcqDynamic: 5, descStatic: 0, descDynamic: 0 }));
-                    } else if (mode === 'Full Mock') {
-                      const mix = selectedSubject.questionTypeMix;
+                    if (mode === 'Full Mock' && categoryConfig.fullMock) {
                       setConfig(prev => ({
                         ...prev,
-                        mcqStatic: mix.mcq ? Math.ceil(mix.defaultMcqCount * 0.6) : 0,
-                        mcqDynamic: mix.mcq ? Math.floor(mix.defaultMcqCount * 0.4) : 0,
-                        descStatic: mix.descriptive ? Math.ceil(mix.defaultDescCount * 0.5) : 0,
-                        descDynamic: mix.descriptive ? Math.floor(mix.defaultDescCount * 0.5) : 0
+                        mcqStatic: categoryConfig.fullMock.mcqStatic,
+                        mcqDynamic: categoryConfig.fullMock.mcqDynamic,
+                        descStatic: categoryConfig.fullMock.descStatic,
+                        descDynamic: categoryConfig.fullMock.descDynamic
+                      }));
+                    } else if (mode === 'Sectional' && categoryConfig.sectional) {
+                      setConfig(prev => ({
+                        ...prev,
+                        mcqStatic: categoryConfig.sectional.mcqStatic,
+                        mcqDynamic: categoryConfig.sectional.mcqDynamic,
+                        descStatic: categoryConfig.sectional.descStatic,
+                        descDynamic: categoryConfig.sectional.descDynamic
+                      }));
+                    } else if (mode === 'Topic Drill' && categoryConfig.topicDrill) {
+                      setConfig(prev => ({
+                        ...prev,
+                        mcqStatic: categoryConfig.topicDrill.mcqStatic,
+                        mcqDynamic: categoryConfig.topicDrill.mcqDynamic,
+                        descStatic: categoryConfig.topicDrill.descStatic,
+                        descDynamic: categoryConfig.topicDrill.descDynamic
+                      }));
+                    } else if (mode === 'Quick 10-min') {
+                      setConfig(prev => ({
+                        ...prev,
+                        mcqStatic: selectedSubject.questionTypeMix.mcq ? 5 : 0,
+                        mcqDynamic: selectedSubject.questionTypeMix.mcq ? 5 : 0,
+                        descStatic: 0,
+                        descDynamic: 0
                       }));
                     }
                   }}
@@ -746,13 +803,17 @@ export function NewTest({ user }: { user: User }) {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Static MCQs Number Input */}
+                  {/* Primary / Core Section Number Input */}
                   <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Static Theory MCQs</span>
-                      <span className="text-[10px] text-slate-400">Core concepts & rules</span>
+                    <div className="min-w-0 pr-2">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                        {categoryConfig.primaryMcqLabel}
+                      </span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                        {categoryConfig.primaryMcqSubtext}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqStatic: Math.max(0, config.mcqStatic - 1) })}
@@ -763,17 +824,17 @@ export function NewTest({ user }: { user: User }) {
                       <input
                         type="number"
                         min="0"
-                        max="50"
+                        max="80"
                         value={config.mcqStatic === 0 ? '0' : config.mcqStatic}
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
-                          setConfig({ ...config, mcqStatic: isNaN(val) ? 0 : Math.max(0, Math.min(50, val)) });
+                          setConfig({ ...config, mcqStatic: isNaN(val) ? 0 : Math.max(0, Math.min(80, val)) });
                         }}
                         className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner"
                       />
                       <button
                         type="button"
-                        onClick={() => setConfig({ ...config, mcqStatic: Math.min(50, config.mcqStatic + 1) })}
+                        onClick={() => setConfig({ ...config, mcqStatic: Math.min(80, config.mcqStatic + 1) })}
                         className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
@@ -781,13 +842,17 @@ export function NewTest({ user }: { user: User }) {
                     </div>
                   </div>
 
-                  {/* Dynamic MCQs Number Input */}
+                  {/* Secondary / Advanced Section Number Input */}
                   <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Dynamic Current Affairs MCQs</span>
-                      <span className="text-[10px] text-slate-400">Policy circulars & budget</span>
+                    <div className="min-w-0 pr-2">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                        {categoryConfig.secondaryMcqLabel}
+                      </span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                        {categoryConfig.secondaryMcqSubtext}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqDynamic: Math.max(0, config.mcqDynamic - 1) })}
@@ -798,17 +863,17 @@ export function NewTest({ user }: { user: User }) {
                       <input
                         type="number"
                         min="0"
-                        max="50"
+                        max="80"
                         value={config.mcqDynamic === 0 ? '0' : config.mcqDynamic}
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
-                          setConfig({ ...config, mcqDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(50, val)) });
+                          setConfig({ ...config, mcqDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(80, val)) });
                         }}
                         className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-inner"
                       />
                       <button
                         type="button"
-                        onClick={() => setConfig({ ...config, mcqDynamic: Math.min(50, config.mcqDynamic + 1) })}
+                        onClick={() => setConfig({ ...config, mcqDynamic: Math.min(80, config.mcqDynamic + 1) })}
                         className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
@@ -834,11 +899,15 @@ export function NewTest({ user }: { user: User }) {
                 <div className="space-y-3">
                   {/* Static Descriptive Number Input */}
                   <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Static Analytical Essays</span>
-                      <span className="text-[10px] text-slate-400">Theory & framework prompts</span>
+                    <div className="min-w-0 pr-2">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                        {categoryConfig.primaryDescLabel || 'Static Analytical Essays'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                        {categoryConfig.primaryDescSubtext || 'Theory & framework prompts'}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descStatic: Math.max(0, config.descStatic - 1) })}
@@ -869,11 +938,15 @@ export function NewTest({ user }: { user: User }) {
 
                   {/* Dynamic Descriptive Number Input */}
                   <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Dynamic Policy Questions</span>
-                      <span className="text-[10px] text-slate-400">Macroeconomic reforms</span>
+                    <div className="min-w-0 pr-2">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                        {categoryConfig.secondaryDescLabel || 'Dynamic Policy Questions'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                        {categoryConfig.secondaryDescSubtext || 'Contemporary dilemmas & policy roadmap'}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descDynamic: Math.max(0, config.descDynamic - 1) })}
@@ -904,6 +977,7 @@ export function NewTest({ user }: { user: User }) {
                 </div>
               </div>
             )}
+
 
           </div>
 

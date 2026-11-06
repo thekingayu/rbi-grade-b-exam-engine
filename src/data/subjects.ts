@@ -18,6 +18,15 @@ export const INITIAL_SUBJECTS: Subject[] = [
       defaultMcqCount: 20,
       defaultDescCount: 0,
     },
+    questionCategories: {
+      primaryMcqLabel: 'Static Banking & Financial Awareness',
+      primaryMcqSubtext: 'RBI Act 1934, BR Act 1949, monetary policy tools, banking terms & Static GK',
+      secondaryMcqLabel: 'Dynamic Current Affairs & Circulars',
+      secondaryMcqSubtext: 'Recent 6-month national/intl affairs, Union Budget, Economic Survey & circulars',
+      fullMock: { mcqStatic: 30, mcqDynamic: 50, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
+      sectional: { mcqStatic: 8, mcqDynamic: 12, descStatic: 0, descDynamic: 0, durationMinutes: 12 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 8 }
+    },
     categories: ['Static GK', 'Current Affairs', 'Banking & Financial Awareness', 'RBI Notifications', 'Union Budget & Surveys'],
     syllabusTopics: [
       'Monetary Policy & Inflation Dynamics',
@@ -43,8 +52,17 @@ export const INITIAL_SUBJECTS: Subject[] = [
     questionTypeMix: {
       mcq: true,
       descriptive: false,
-      defaultMcqCount: 15,
+      defaultMcqCount: 20,
       defaultDescCount: 0,
+    },
+    questionCategories: {
+      primaryMcqLabel: 'Core Logic & Analytical Reasoning',
+      primaryMcqSubtext: 'Syllogisms, Input-Output, Blood Relations, Inequalities & Direction Sense',
+      secondaryMcqLabel: 'Puzzles, Seating & Critical Reasoning',
+      secondaryMcqSubtext: 'Floor/flat, circular/linear multi-variable puzzles & Statement-Assumption/Argument',
+      fullMock: { mcqStatic: 30, mcqDynamic: 30, descStatic: 0, descDynamic: 0, durationMinutes: 45 },
+      sectional: { mcqStatic: 10, mcqDynamic: 10, descStatic: 0, descDynamic: 0, durationMinutes: 20 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 12 }
     },
     categories: ['Critical Reasoning', 'Puzzles & Seating', 'Analytical Logic', 'Data Sufficiency'],
     syllabusTopics: [
@@ -73,6 +91,15 @@ export const INITIAL_SUBJECTS: Subject[] = [
       defaultMcqCount: 15,
       defaultDescCount: 0,
     },
+    questionCategories: {
+      primaryMcqLabel: 'Commercial Arithmetic & Algebra',
+      primaryMcqSubtext: 'Profit-loss, SI/CI, time-work, probability, missing/wrong series & quadratic equations',
+      secondaryMcqLabel: 'Data Interpretation & Data Sufficiency',
+      secondaryMcqSubtext: 'Caselets, Tabular, Radar/Missing DI sets & Quantity I vs Quantity II comparisons',
+      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
+      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 0, descDynamic: 0, durationMinutes: 15 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 10 }
+    },
     categories: ['Data Interpretation', 'Arithmetic Systems', 'Algebraic Inequalities', 'Number Series'],
     syllabusTopics: [
       'Caselet & Radar Data Interpretation',
@@ -100,6 +127,15 @@ export const INITIAL_SUBJECTS: Subject[] = [
       defaultMcqCount: 15,
       defaultDescCount: 0,
     },
+    questionCategories: {
+      primaryMcqLabel: 'Grammar, Vocabulary & Cloze Mechanics',
+      primaryMcqSubtext: 'Error detection, phrase replacement, sentence connectors & single/double fillers',
+      secondaryMcqLabel: 'Reading Comprehension & Para Jumbles',
+      secondaryMcqSubtext: 'Financial/economic editorial passage inference & discourse sentence rearrangement',
+      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 0, descDynamic: 0, durationMinutes: 25 },
+      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 0, descDynamic: 0, durationMinutes: 15 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 10 }
+    },
     categories: ['Reading Comprehension', 'Error Detection', 'Sentence Rearrangement', 'Cloze Test'],
     syllabusTopics: [
       'Financial & Macroeconomic Passage Comprehension',
@@ -125,8 +161,21 @@ export const INITIAL_SUBJECTS: Subject[] = [
     questionTypeMix: {
       mcq: true,
       descriptive: true,
-      defaultMcqCount: 10,
+      defaultMcqCount: 15,
       defaultDescCount: 2,
+    },
+    questionCategories: {
+      primaryMcqLabel: 'Static Macroeconomic & Social Theory MCQs',
+      primaryMcqSubtext: 'Growth models, poverty lines, fiscal/monetary transmission & balance of payments',
+      secondaryMcqLabel: 'Dynamic Schemes, Budget & Survey MCQs',
+      secondaryMcqSubtext: 'Government welfare schemes, budget allocations & economic survey findings',
+      primaryDescLabel: 'Theoretical Socio-Economic Essays',
+      primaryDescSubtext: '10-Mark / 400-word conceptual policy evaluation prompts',
+      secondaryDescLabel: 'Applied Policy & Institutional Analysis',
+      secondaryDescSubtext: '15-Mark / 600-word contemporary economic dilemma & roadmap prompts',
+      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 2, descDynamic: 2, durationMinutes: 120 },
+      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 25 }
     },
     categories: ['Static Theory', 'Dynamic Economic Policy', 'Social Infrastructure', 'Sustainable Development'],
     syllabusTopics: [
@@ -155,6 +204,19 @@ export const INITIAL_SUBJECTS: Subject[] = [
       defaultMcqCount: 0,
       defaultDescCount: 3,
     },
+    questionCategories: {
+      primaryMcqLabel: 'Analytical Structure MCQs',
+      primaryMcqSubtext: 'Grammar and coherence mechanics',
+      secondaryMcqLabel: 'Editorial Vocabulary MCQs',
+      secondaryMcqSubtext: 'Formal central banking terminology',
+      primaryDescLabel: 'Official Essay & Speech Précis',
+      primaryDescSubtext: '400-word economic/tech essay + 170-word central banking précis prompt',
+      secondaryDescLabel: 'Business Reading Comprehension',
+      secondaryDescSubtext: 'Descriptive analytical answers based on dense editorial passage',
+      fullMock: { mcqStatic: 0, mcqDynamic: 0, descStatic: 2, descDynamic: 1, durationMinutes: 90 },
+      sectional: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 0, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 30 }
+    },
     categories: ['Essay Writing', 'Précis Writing', 'Reading Comprehension Analysis'],
     syllabusTopics: [
       'Economic Policy Essay (400 words)',
@@ -178,8 +240,21 @@ export const INITIAL_SUBJECTS: Subject[] = [
     questionTypeMix: {
       mcq: true,
       descriptive: true,
-      defaultMcqCount: 10,
+      defaultMcqCount: 15,
       defaultDescCount: 2,
+    },
+    questionCategories: {
+      primaryMcqLabel: 'Financial System, Basel III & Numericals MCQs',
+      primaryMcqSubtext: 'Bond yields, financial ratios, money/capital markets & Basel III regulations',
+      secondaryMcqLabel: 'Management, Leadership & Governance MCQs',
+      secondaryMcqSubtext: 'Motivation theories, leadership models, business ethics & corporate governance',
+      primaryDescLabel: 'Financial Regulation & FinTech Essays',
+      primaryDescSubtext: '10-Mark / 400-word banking supervision & regulatory prompts',
+      secondaryDescLabel: 'Organizational Leadership Case Studies',
+      secondaryDescSubtext: '15-Mark / 600-word management decision dilemma & leadership prompts',
+      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 2, descDynamic: 2, durationMinutes: 120 },
+      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 1, descDynamic: 0, durationMinutes: 25 }
     },
     categories: ['Financial System', 'Financial Markets', 'General Management', 'Corporate Governance'],
     syllabusTopics: [
@@ -209,6 +284,19 @@ export const INITIAL_SUBJECTS: Subject[] = [
       descriptive: true,
       defaultMcqCount: 10,
       defaultDescCount: 1,
+    },
+    questionCategories: {
+      primaryMcqLabel: 'Core Curriculum Concept MCQs',
+      primaryMcqSubtext: 'Fundamental syllabus theory & core rules',
+      secondaryMcqLabel: 'Applied Analytical MCQs',
+      secondaryMcqSubtext: 'Practical application & scenario-based problems',
+      primaryDescLabel: 'Analytical Theory Essays',
+      primaryDescSubtext: 'Syllabus framework prompts',
+      secondaryDescLabel: 'Practical Case Studies',
+      secondaryDescSubtext: 'Applied real-world scenarios',
+      fullMock: { mcqStatic: 15, mcqDynamic: 15, descStatic: 1, descDynamic: 1, durationMinutes: 45 },
+      sectional: { mcqStatic: 8, mcqDynamic: 7, descStatic: 1, descDynamic: 0, durationMinutes: 25 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, durationMinutes: 15 }
     },
     categories: ['General', 'Mixed'],
     syllabusTopics: ['Mixed Curriculum', 'Uncategorized Practice'],
