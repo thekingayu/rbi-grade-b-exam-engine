@@ -658,12 +658,12 @@ export function Profile({ user }: { user: User }) {
         )}
 
         {/* Save CTA and Action Row */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-2">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="submit"
               disabled={!isDirty || saving}
-              className={`inline-flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 shadow-lg ${
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 shadow-lg ${
                 isDirty && !saving
                   ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-indigo-600 hover:from-teal-400 hover:via-cyan-400 hover:to-indigo-500 text-white shadow-teal-500/25 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ring-2 ring-teal-400/40'
                   : 'bg-slate-200/70 dark:bg-white/5 text-slate-400 dark:text-slate-500 border border-slate-300/40 dark:border-white/10 cursor-not-allowed opacity-60 shadow-none'
@@ -688,20 +688,20 @@ export function Profile({ user }: { user: User }) {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleSendPasswordReset}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               <KeyRound className="w-3.5 h-3.5" />
-              <span>{resetSent ? 'Reset Link Sent to Email' : 'Reset Password'}</span>
+              <span>{resetSent ? 'Reset Link Sent' : 'Reset Password'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => auth.signOut()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-rose-500/25 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-rose-500/25 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>

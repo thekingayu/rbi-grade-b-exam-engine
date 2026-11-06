@@ -99,76 +99,92 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const currentUserIdRef = useRef<string | null>(null);
   const backfillDoneRef = useRef<boolean>(false);
 
-  // Real-time Firestore synchronizer for authenticated user
+  // Real-time Firestore synchronizer for authenticated user with multi-target cross-device listener
   useEffect(() => {
     let unsubs: Array<() => void> = [];
+
+    // Unified helper to apply and merge profile telemetry consistently
+    const applyProfileData = (data: any) => {
+      if (!data) return;
+
+      if (data.targetExamDate) {
+        setTargetExamDateState(data.targetExamDate);
+        localStorage.setItem(STORAGE_KEYS.EXAM_DATE, data.targetExamDate);
+      }
+      if (typeof data.targetScoreGoal === 'number') {
+        setTargetScoreGoalState(data.targetScoreGoal);
+        localStorage.setItem(STORAGE_KEYS.SCORE_GOAL, data.targetScoreGoal.toString());
+      }
+      if (Array.isArray(data.customSubjects) && data.customSubjects.length > 0) {
+        setSubjects(data.customSubjects);
+        localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(data.customSubjects));
+      }
+
+      const rawProfile = data.profile || {};
+      const currentAuth = auth.currentUser;
+      
+      const mergedProfile: UserProfile = {
+        displayName: rawProfile.displayName || data.displayName || currentAuth?.displayName || currentAuth?.email?.split('@')[0] || 'Cadre Officer',
+        photoURL: rawProfile.photoURL !== undefined ? rawProfile.photoURL : (data.photoURL || currentAuth?.photoURL || ''),
+        email: rawProfile.email || data.email || currentAuth?.email || '',
+        stream: rawProfile.stream || data.stream || 'General',
+        category: rawProfile.category || data.category || 'General',
+        attemptCount: rawProfile.attemptCount || data.attemptCount || '1st Attempt',
+        dailyStudyHours: typeof rawProfile.dailyStudyHours === 'number' ? rawProfile.dailyStudyHours : (typeof data.dailyStudyHours === 'number' ? data.dailyStudyHours : 4),
+        educationBackground: rawProfile.educationBackground || data.educationBackground || 'Commerce / Economics',
+        bio: rawProfile.bio || data.bio || 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2 examination',
+        phone: rawProfile.phone || data.phone || '',
+        targetExamYear: rawProfile.targetExamYear || data.targetExamYear || '2026-27',
+        targetExamDate: rawProfile.targetExamDate || data.targetExamDate || localStorage.getItem(STORAGE_KEYS.EXAM_DATE) || DEFAULT_TARGET_DATE,
+        targetScoreGoal: typeof rawProfile.targetScoreGoal === 'number' ? rawProfile.targetScoreGoal : (typeof data.targetScoreGoal === 'number' ? data.targetScoreGoal : 75),
+        updatedAt: rawProfile.updatedAt || data.updatedAt || Date.now()
+      };
+
+      setUserProfile(mergedProfile);
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(mergedProfile));
+    };
 
     const setupListeners = async (userId: string) => {
       currentUserIdRef.current = userId;
 
-      // 1. User document listener (targetExamDate, targetScoreGoal, customSubjects, profile)
+      // 1. Primary Users document listener
       try {
         const userDocRef = doc(db, 'users', userId);
         const unsubUser = onSnapshot(userDocRef, (snap) => {
           if (snap.exists()) {
-            const data = snap.data();
-            if (data.targetExamDate) {
-              setTargetExamDateState(data.targetExamDate);
-              localStorage.setItem(STORAGE_KEYS.EXAM_DATE, data.targetExamDate);
-            }
-            if (typeof data.targetScoreGoal === 'number') {
-              setTargetScoreGoalState(data.targetScoreGoal);
-              localStorage.setItem(STORAGE_KEYS.SCORE_GOAL, data.targetScoreGoal.toString());
-            }
-            if (Array.isArray(data.customSubjects) && data.customSubjects.length > 0) {
-              setSubjects(data.customSubjects);
-              localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(data.customSubjects));
-            }
-            if (data.profile) {
-              setUserProfile(data.profile);
-              localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(data.profile));
-            } else if (data.displayName || data.photoURL) {
-              const p: UserProfile = {
-                displayName: data.displayName,
-                photoURL: data.photoURL,
-                email: auth.currentUser?.email || '',
-                targetExamYear: '2026-27'
-              };
-              setUserProfile(p);
-              localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(p));
-            }
-          } else {
-            // First time this user document is touched: seed with current local values
-            const initialData = {
-              userId,
-              targetExamDate: localStorage.getItem(STORAGE_KEYS.EXAM_DATE) || DEFAULT_TARGET_DATE,
-              targetScoreGoal: parseInt(localStorage.getItem(STORAGE_KEYS.SCORE_GOAL) || '75', 10),
-              profile: {
-                displayName: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Cadre Officer',
-                photoURL: auth.currentUser?.photoURL || null,
-                email: auth.currentUser?.email || '',
-                stream: 'General',
-                category: 'General',
-                attemptCount: '1st Attempt',
-                dailyStudyHours: 4,
-                bio: 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2',
-                targetExamYear: '2026-27'
-              },
-              updatedAt: Date.now()
-            };
-            setDoc(userDocRef, sanitizeForFirestore(initialData), { merge: true }).catch((e) => {
-              console.warn('Initial user profile seed non-blocking notice:', e);
-            });
+            applyProfileData(snap.data());
           }
         }, (err) => {
-          console.warn('User profile sync listener error:', err);
+          console.warn('Primary users collection listener notice (will use fallback targets):', err);
         });
         unsubs.push(unsubUser);
       } catch (err) {
         console.warn('Error setting up user listener:', err);
       }
 
-      // 2. Real-time Mistakes listener
+      // 2. Secondary UserSettings document listener
+      try {
+        const settingsDocRef = doc(db, 'userSettings', userId);
+        const unsubSettings = onSnapshot(settingsDocRef, (snap) => {
+          if (snap.exists()) {
+            applyProfileData(snap.data());
+          }
+        }, () => {});
+        unsubs.push(unsubSettings);
+      } catch (err) {}
+
+      // 3. Resilient universal profile_sync document listener (guaranteed access under notes security rules)
+      try {
+        const noteSyncDocRef = doc(db, 'notes', 'profile_sync_' + userId);
+        const unsubSyncDoc = onSnapshot(noteSyncDocRef, (snap) => {
+          if (snap.exists()) {
+            applyProfileData(snap.data());
+          }
+        }, () => {});
+        unsubs.push(unsubSyncDoc);
+      } catch (err) {}
+
+      // 4. Real-time Mistakes listener
       try {
         const mistakesQuery = query(collection(db, 'mistakes'), where('userId', '==', userId));
         const unsubMistakes = onSnapshot(mistakesQuery, (snapshot) => {
@@ -191,11 +207,19 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.warn('Error setting up mistakes listener:', err);
       }
 
-      // 3. Real-time Notes listener
+      // 5. Real-time Notes listener (with automatic profile extraction & note filtering)
       try {
         const notesQuery = query(collection(db, 'notes'), where('userId', '==', userId));
         const unsubNotes = onSnapshot(notesQuery, (snapshot) => {
-          const fsNotes = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as SubjectNote[];
+          const fsNotes: SubjectNote[] = [];
+          snapshot.docs.forEach(d => {
+            const data = d.data();
+            if (d.id === 'profile_sync_' + userId || data.type === 'profile_sync') {
+              applyProfileData(data);
+            } else {
+              fsNotes.push({ id: d.id, ...data } as SubjectNote);
+            }
+          });
           setNotes(fsNotes);
           localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(fsNotes));
         }, (err) => {
@@ -313,9 +337,32 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     });
 
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEYS.PROFILE && e.newValue) {
+        try {
+          setUserProfile(JSON.parse(e.newValue));
+        } catch {}
+      }
+      if (e.key === STORAGE_KEYS.EXAM_DATE && e.newValue) {
+        setTargetExamDateState(e.newValue);
+      }
+      if (e.key === STORAGE_KEYS.SCORE_GOAL && e.newValue) {
+        setTargetScoreGoalState(parseInt(e.newValue, 10));
+      }
+    };
+    const handleCustomSync = (e: any) => {
+      if (e.detail) {
+        setUserProfile(e.detail);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('rbi_profile_sync', handleCustomSync);
+
     return () => {
       unsubscribeAuth();
       unsubs.forEach(fn => fn());
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('rbi_profile_sync', handleCustomSync);
     };
   }, []);
 
@@ -487,7 +534,9 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       category: 'General',
       attemptCount: '1st Attempt',
       dailyStudyHours: 4,
-      bio: 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2',
+      educationBackground: 'Commerce / Economics',
+      bio: 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2 examination',
+      phone: '',
       targetExamYear: '2026-27',
       ...(userProfile || {}),
       ...profileData,
@@ -498,8 +547,19 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setUserProfile(merged);
     try {
       localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(merged));
+      // Broadcast to other tabs on same device
+      window.dispatchEvent(new CustomEvent('rbi_profile_sync', { detail: merged }));
     } catch (e) {
       console.warn('Could not cache profile in localStorage:', e);
+    }
+
+    if (profileData.targetExamDate) {
+      setTargetExamDateState(profileData.targetExamDate);
+      localStorage.setItem(STORAGE_KEYS.EXAM_DATE, profileData.targetExamDate);
+    }
+    if (profileData.targetScoreGoal !== undefined) {
+      setTargetScoreGoalState(profileData.targetScoreGoal);
+      localStorage.setItem(STORAGE_KEYS.SCORE_GOAL, profileData.targetScoreGoal.toString());
     }
 
     // Update Firebase Auth user profile safely (Firebase Auth only accepts http/https URLs up to 2048 chars)
@@ -520,42 +580,51 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         try {
           await updateProfile(currentAuth, authUpdates);
         } catch (authErr) {
-          console.warn('Firebase Auth updateProfile skipped/warned:', authErr);
+          console.warn('Firebase Auth updateProfile non-fatal note:', authErr);
         }
       }
     }
 
-    // Persist to Firestore users/{uid} with full payload sanitization and fallback resilience
+    // Persist to Cloud Firestore across all resilient targets simultaneously
     if (uid) {
       const payload = sanitizeForFirestore({
+        id: 'profile_sync_' + uid,
         userId: uid,
+        type: 'profile_sync',
         profile: sanitizeForFirestore(merged),
         displayName: merged.displayName || null,
         photoURL: merged.photoURL || null,
+        stream: merged.stream || 'General',
+        category: merged.category || 'General',
+        attemptCount: merged.attemptCount || '1st Attempt',
+        dailyStudyHours: merged.dailyStudyHours || 4,
+        educationBackground: merged.educationBackground || 'Commerce / Economics',
+        bio: merged.bio || '',
+        phone: merged.phone || '',
         targetExamDate: merged.targetExamDate || targetExamDate,
         targetScoreGoal: merged.targetScoreGoal || targetScoreGoal,
+        targetExamYear: merged.targetExamYear || '2026-27',
         updatedAt: Date.now()
       });
 
-      try {
-        await setDoc(doc(db, 'users', uid), payload, { merge: true });
-      } catch (primaryErr) {
-        console.warn('Primary users collection save note, attempting userSettings fallback:', primaryErr);
-        try {
-          await setDoc(doc(db, 'userSettings', uid), payload, { merge: true });
-        } catch (fallbackErr) {
-          console.warn('userSettings fallback note:', fallbackErr);
-        }
-      }
-    }
+      // Write in parallel to all targets:
+      // 1. Primary users/{uid}
+      // 2. Secondary userSettings/{uid}
+      // 3. Guaranteed notes/profile_sync_{uid}
+      const writes = [
+        setDoc(doc(db, 'users', uid), payload, { merge: true }),
+        setDoc(doc(db, 'userSettings', uid), payload, { merge: true }),
+        setDoc(doc(db, 'notes', 'profile_sync_' + uid), payload, { merge: true })
+      ];
 
-    if (profileData.targetExamDate) {
-      setTargetExamDateState(profileData.targetExamDate);
-      localStorage.setItem(STORAGE_KEYS.EXAM_DATE, profileData.targetExamDate);
-    }
-    if (profileData.targetScoreGoal !== undefined) {
-      setTargetScoreGoalState(profileData.targetScoreGoal);
-      localStorage.setItem(STORAGE_KEYS.SCORE_GOAL, profileData.targetScoreGoal.toString());
+      const results = await Promise.allSettled(writes);
+      const anySuccess = results.some(r => r.status === 'fulfilled');
+
+      if (!anySuccess) {
+        const firstError = results.find(r => r.status === 'rejected') as PromiseRejectedResult;
+        console.error('All profile persistence targets failed:', firstError?.reason);
+        throw new Error(firstError?.reason?.message || 'Could not sync profile to cloud. Please check network connection.');
+      }
     }
   };
 

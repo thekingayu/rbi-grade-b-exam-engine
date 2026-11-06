@@ -176,41 +176,44 @@ export function Dashboard({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
           {/* Officer Profile Badge */}
           <Link 
             to="/profile"
-            className="group flex items-center gap-3 p-2 pr-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 hover:border-teal-500/40 hover:bg-teal-500/[0.04] dark:hover:bg-slate-850 transition-all duration-200 backdrop-blur-md shadow-xs cursor-pointer"
+            className="group flex items-center justify-between sm:justify-start gap-3 p-2.5 sm:p-2 sm:pr-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 hover:border-teal-500/40 hover:bg-teal-500/[0.04] dark:hover:bg-slate-850 transition-all duration-200 backdrop-blur-md shadow-xs cursor-pointer w-full sm:w-auto"
             title="Open Officer Dossier & Profile Settings"
           >
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-teal-500/30 flex items-center justify-center bg-gradient-to-tr from-teal-500/20 to-indigo-500/20 shrink-0">
-              {photoURL ? (
-                <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-bold text-teal-700 dark:text-teal-300 text-sm">
-                  {displayName.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
-            </div>
-            <div className="text-left min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors">
-                  {displayName}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
-                  {stream}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-teal-500/30 flex items-center justify-center bg-gradient-to-tr from-teal-500/20 to-indigo-500/20 shrink-0">
+                {photoURL ? (
+                  <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-bold text-teal-700 dark:text-teal-300 text-sm">
+                    {displayName.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
+              </div>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors">
+                    {displayName}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                    {stream}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
+                  Officer Dossier <ArrowRight className="w-2.5 h-2.5 opacity-60 group-hover:translate-x-0.5 transition-transform" />
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                Officer Dossier <ArrowRight className="w-2.5 h-2.5 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-              </span>
             </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 sm:hidden shrink-0" />
           </Link>
 
           <Link 
             to="/new" 
-            className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
+            className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3.5 rounded-2xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
           >
             <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shadow-xs shrink-0">
               <Plus className="w-3.5 h-3.5 text-white" />

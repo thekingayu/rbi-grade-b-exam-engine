@@ -252,11 +252,11 @@ export function Layout({ user }: { user: User }) {
               {/* Command Palette Trigger */}
               <button
                 onClick={() => setShowCommandPalette(true)}
-                className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-xs font-mono text-slate-500 dark:text-slate-400 cursor-pointer"
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-xs font-mono text-slate-500 dark:text-slate-400 cursor-pointer"
                 title="Command Palette (Ctrl/Cmd+K)"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>⌘K</span>
+                <span className="hidden sm:inline">⌘K</span>
               </button>
 
               {/* Pomodoro Timer Toggle */}
@@ -333,78 +333,106 @@ export function Layout({ user }: { user: User }) {
           </div>
         </header>
 
-        {/* Sleek Mobile Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/90 dark:bg-[#070B18]/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
-          <Link 
-            to="/" 
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-              location.pathname === '/' ? 'text-teal-600 dark:text-teal-400' : 'text-slate-500'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Center</span>
-          </Link>
+        {/* Sleek, Perfectly-Aligned Symmetrical Mobile Bottom Navigation Bar */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 dark:bg-[#070B18]/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,6px)]">
+          <div className="grid grid-cols-5 items-center h-16 max-w-md mx-auto px-1">
+            {/* 1. Dashboard / Home */}
+            <Link 
+              to="/" 
+              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
+                location.pathname === '/' 
+                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+              }`}
+            >
+              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/' ? 'bg-teal-500/15' : ''}`}>
+                <Compass className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+            </Link>
 
-          <Link 
-            to="/new" 
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-              location.pathname.startsWith('/new') ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Exam</span>
-          </Link>
+            {/* 2. Mistakes */}
+            <Link 
+              to="/mistakes" 
+              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
+                location.pathname === '/mistakes' 
+                  ? 'text-rose-600 dark:text-rose-400 font-extrabold' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+              }`}
+            >
+              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/mistakes' ? 'bg-rose-500/15' : ''}`}>
+                <RotateCcw className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] leading-none tracking-tight">Mistakes</span>
+            </Link>
 
-          <Link 
-            to="/mistakes" 
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-              location.pathname === '/mistakes' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'
-            }`}
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Mistakes</span>
-          </Link>
-
-          <Link 
-            to="/history" 
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-              location.pathname === '/history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Archive</span>
-          </Link>
-
-          <button
-            onClick={() => setShowCommandPalette(true)}
-            className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-500"
-          >
-            <Search className="w-4 h-4" />
-            <span>Search</span>
-          </button>
-
-          <Link 
-            to="/profile" 
-            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold ${
-              location.pathname === '/profile' ? 'text-teal-600 dark:text-teal-400' : 'text-slate-500'
-            }`}
-          >
-            <div className="w-4 h-4 rounded-full overflow-hidden flex items-center justify-center bg-teal-500/20 text-teal-600 dark:text-teal-400 font-bold text-[8px]">
-              {currentPhoto ? (
-                currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
-                  <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{currentPhoto}</span>
-                )
-              ) : (
-                <UserIcon className="w-3 h-3" />
-              )}
+            {/* 3. Center Elevated Action: New Exam + */}
+            <div className="flex flex-col items-center justify-center relative -top-3">
+              <Link 
+                to="/new" 
+                className="group flex flex-col items-center justify-center cursor-pointer focus:outline-none"
+                title="Start New Exam"
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all duration-200 group-hover:scale-105 group-active:scale-95 border-2 border-white dark:border-[#070B18] ${
+                  location.pathname.startsWith('/new')
+                    ? 'bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-600 shadow-teal-500/40 ring-4 ring-teal-500/20'
+                    : 'bg-gradient-to-tr from-teal-500 via-cyan-500 to-indigo-600 shadow-teal-500/30'
+                }`}>
+                  <Plus className="w-6 h-6 stroke-[2.75]" />
+                </div>
+                <span className={`text-[10px] font-bold tracking-tight mt-1 leading-none ${
+                  location.pathname.startsWith('/new') 
+                    ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
+                    : 'text-slate-700 dark:text-slate-300'
+                }`}>
+                  New Exam
+                </span>
+              </Link>
             </div>
-            <span>Profile</span>
-          </Link>
+
+            {/* 4. Archive */}
+            <Link 
+              to="/history" 
+              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
+                location.pathname === '/history' 
+                  ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+              }`}
+            >
+              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/history' ? 'bg-indigo-500/15' : ''}`}>
+                <Clock className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] leading-none tracking-tight">Archive</span>
+            </Link>
+
+            {/* 5. Profile */}
+            <Link 
+              to="/profile" 
+              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
+                location.pathname === '/profile' 
+                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+              }`}
+            >
+              <div className={`p-0.5 rounded-full transition-all ${location.pathname === '/profile' ? 'ring-2 ring-teal-500/40' : ''}`}>
+                <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-[9px]">
+                  {currentPhoto ? (
+                    currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
+                      <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{currentPhoto}</span>
+                    )
+                  ) : (
+                    <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+              </div>
+              <span className="text-[10px] leading-none tracking-tight">Profile</span>
+            </Link>
+          </div>
         </nav>
 
-        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 md:pb-12 w-full relative">
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-28 md:pb-12 w-full relative">
           <AnimatePresence 
             mode="wait" 
             initial={false}

@@ -385,7 +385,7 @@ export function NewTest({ user }: { user: User }) {
         </div>
 
         {/* 3-Step Animated Stepper */}
-        <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs">
+        <div className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2 bg-white/70 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs w-full sm:w-auto overflow-x-auto">
           {[
             { s: 1, label: 'Subject' },
             { s: 2, label: 'Source' },
@@ -397,7 +397,7 @@ export function NewTest({ user }: { user: User }) {
                 if (item.s < step) setStep(item.s);
               }}
               disabled={item.s > step}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 step === item.s 
                   ? 'bg-gradient-to-r from-teal-600 to-indigo-600 text-white shadow-md' 
                   : item.s < step 

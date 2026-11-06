@@ -178,14 +178,14 @@ export function SynthesisOverlay({
             // Intentionally no-op: Only the explicit cross or cancel button can close this window.
           }}
         >
-          {/* Main Dialog Container */}
+          {/* Main Dialog Container with Fixed, Rock-Solid Dimensions */}
           <motion.div
             key="synthesis-modal"
-            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 12 }}
+            exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-            className="relative w-full max-w-lg rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-7 sm:p-9 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden"
+            className="relative w-[92vw] sm:w-[460px] max-w-[460px] h-[500px] min-h-[500px] max-h-[92vh] flex flex-col justify-between rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-6 sm:p-8 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden box-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient Background Canvas (GSAP particle telemetry) */}
@@ -213,103 +213,115 @@ export function SynthesisOverlay({
               <X className="w-4 h-4" />
             </motion.button>
 
-            {/* Central Gyro & Orbital Rings Animation */}
-            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              {/* Outer Counter-Rotating Ring */}
-              <svg
-                ref={orbitalRing2Ref}
-                className="absolute inset-0 w-full h-full text-teal-400/30 dark:text-teal-400/25 pointer-events-none"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="44"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="14 10 32 8"
-                />
-              </svg>
+            {/* Top & Middle Section: Animation & Dynamic Phase Telemetry */}
+            <div className="flex-1 flex flex-col justify-center items-center">
+              {/* Central Gyro & Orbital Rings Animation */}
+              <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center shrink-0">
+                {/* Outer Counter-Rotating Ring */}
+                <svg
+                  ref={orbitalRing2Ref}
+                  className="absolute inset-0 w-full h-full text-teal-400/30 dark:text-teal-400/25 pointer-events-none"
+                  viewBox="0 0 100 100"
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeDasharray="14 10 32 8"
+                  />
+                </svg>
 
-              {/* Inner Rotating Ring */}
-              <svg
-                ref={orbitalRing1Ref}
-                className="absolute inset-0 w-full h-full text-teal-500/60 dark:text-teal-400/50 pointer-events-none"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="36"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeDasharray="22 14 8 18"
-                />
-              </svg>
+                {/* Inner Rotating Ring */}
+                <svg
+                  ref={orbitalRing1Ref}
+                  className="absolute inset-0 w-full h-full text-teal-500/60 dark:text-teal-400/50 pointer-events-none"
+                  viewBox="0 0 100 100"
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="36"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeDasharray="22 14 8 18"
+                  />
+                </svg>
 
-              {/* Central Nucleus with Soft Glow */}
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/35 z-10 border border-teal-300/40">
-                <Cpu className="w-6 h-6 animate-pulse" />
-              </div>
-            </div>
-
-            {/* Soothing, Modern Heading in Google Fonts (Outfit / Plus Jakarta Sans) */}
-            <h3
-              id="synthesis-dialog-title"
-              className="text-2xl sm:text-[26px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug"
-            >
-              Synthesizing Mock Exam
-            </h3>
-
-            {/* Current Stage Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 mt-2.5 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30">
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
-              <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-300">
-                {loadingMessage || PHASES[activePhaseIndex].label}
-              </span>
-            </div>
-
-            {/* Subtitle / Explanatory Copy */}
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed max-w-sm mx-auto font-sans font-normal">
-              {PHASES[activePhaseIndex].sub}
-            </p>
-
-            {/* Subject Cadre Tracker */}
-            <div className="mt-5 p-3 rounded-2xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-left">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
-                    Target Cadre
-                  </p>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 font-sans">
-                    RBI Grade B · {subjectName}
-                  </p>
+                {/* Central Nucleus with Soft Glow */}
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/35 z-10 border border-teal-300/40">
+                  <Cpu className="w-6 h-6 animate-pulse" />
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-md">
-                  Active
-                </span>
+              {/* Fixed-Height Title */}
+              <div className="h-9 flex items-center justify-center shrink-0">
+                <h3
+                  id="synthesis-dialog-title"
+                  className="text-2xl sm:text-[25px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-none"
+                >
+                  Synthesizing Mock Exam
+                </h3>
+              </div>
+
+              {/* Fixed-Height Stage Pill Container */}
+              <div className="h-8 flex items-center justify-center mt-2 shrink-0">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 max-w-[340px]">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping shrink-0" />
+                  <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-300 truncate">
+                    {loadingMessage || PHASES[activePhaseIndex].label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fixed-Height Subtitle Container (prevents box resizing when text length varies) */}
+              <div className="h-12 sm:h-14 flex items-center justify-center mt-1 px-2 w-full shrink-0">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-center font-sans font-normal line-clamp-2 max-w-sm">
+                  {PHASES[activePhaseIndex].sub}
+                </p>
               </div>
             </div>
 
-            {/* Explicit Cancel Button with Rapid Motion Gesture Binding */}
-            <div className="mt-6 pt-2">
-              <motion.button
-                type="button"
-                onClick={onCancel}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="text-xs font-semibold text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 underline underline-offset-4 transition-colors cursor-pointer inline-flex items-center gap-1.5"
-              >
-                <span>Cancel and return to configuration</span>
-              </motion.button>
+            {/* Bottom Anchored Section: Cadre Card and Cancel Action */}
+            <div className="w-full shrink-0 pt-2 space-y-3">
+              {/* Subject Cadre Tracker */}
+              <div className="h-14 p-3 rounded-2xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-left">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold truncate">
+                      Target Cadre
+                    </p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 font-sans truncate">
+                      RBI Grade B · {subjectName}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-md">
+                    Active
+                  </span>
+                </div>
+              </div>
+
+              {/* Explicit Cancel Button with Rapid Motion Gesture Binding */}
+              <div className="h-7 flex items-center justify-center">
+                <motion.button
+                  type="button"
+                  onClick={onCancel}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="text-xs font-semibold text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 underline underline-offset-4 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <span>Cancel and return to configuration</span>
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
