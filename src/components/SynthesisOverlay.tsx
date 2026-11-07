@@ -178,14 +178,14 @@ export function SynthesisOverlay({
             // Intentionally no-op: Only the explicit cross or cancel button can close this window.
           }}
         >
-          {/* Main Dialog Container with Fixed, Rock-Solid Dimensions */}
+          {/* Main Dialog Container with Strictly Fixed, Rigid Dimensions (never resizes on text changes) */}
           <motion.div
             key="synthesis-modal"
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-            className="relative w-[92vw] sm:w-[460px] max-w-[460px] h-[500px] min-h-[500px] max-h-[92vh] flex flex-col justify-between rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-6 sm:p-8 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden box-border"
+            className="relative w-[440px] max-w-[calc(100vw-32px)] h-[510px] min-h-[510px] max-h-[510px] shrink-0 flex flex-col justify-between rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-6 sm:p-8 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden box-border select-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient Background Canvas (GSAP particle telemetry) */}
@@ -214,7 +214,7 @@ export function SynthesisOverlay({
             </motion.button>
 
             {/* Top & Middle Section: Animation & Dynamic Phase Telemetry */}
-            <div className="flex-1 flex flex-col justify-center items-center">
+            <div className="flex-1 flex flex-col justify-center items-center w-full min-h-0 overflow-hidden">
               {/* Central Gyro & Orbital Rings Animation */}
               <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center shrink-0">
                 {/* Outer Counter-Rotating Ring */}
@@ -258,28 +258,28 @@ export function SynthesisOverlay({
               </div>
 
               {/* Fixed-Height Title */}
-              <div className="h-9 flex items-center justify-center shrink-0">
+              <div className="h-9 w-full flex items-center justify-center shrink-0 overflow-hidden">
                 <h3
                   id="synthesis-dialog-title"
-                  className="text-2xl sm:text-[25px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-none"
+                  className="text-2xl sm:text-[25px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate"
                 >
                   Synthesizing Mock Exam
                 </h3>
               </div>
 
-              {/* Fixed-Height Stage Pill Container */}
-              <div className="h-8 flex items-center justify-center mt-2 shrink-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 max-w-[340px]">
+              {/* Fixed-Dimension Stage Pill Container (320px fixed width, 32px fixed height) */}
+              <div className="h-8 w-[320px] max-w-[320px] flex items-center justify-center mt-2 shrink-0 overflow-hidden mx-auto">
+                <div className="w-full flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 overflow-hidden">
                   <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping shrink-0" />
-                  <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-300 truncate">
+                  <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-300 truncate text-center">
                     {loadingMessage || PHASES[activePhaseIndex].label}
                   </span>
                 </div>
               </div>
 
-              {/* Fixed-Height Subtitle Container (prevents box resizing when text length varies) */}
-              <div className="h-12 sm:h-14 flex items-center justify-center mt-1 px-2 w-full shrink-0">
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-center font-sans font-normal line-clamp-2 max-w-sm">
+              {/* Fixed-Dimension Subtitle Container (340px fixed width, 56px fixed height) */}
+              <div className="h-14 w-[340px] max-w-[340px] flex items-center justify-center mt-1 px-1 shrink-0 overflow-hidden mx-auto">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-center font-sans font-normal line-clamp-2">
                   {PHASES[activePhaseIndex].sub}
                 </p>
               </div>

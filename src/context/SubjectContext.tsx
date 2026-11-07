@@ -123,9 +123,28 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const rawProfile = data.profile || {};
       const currentAuth = auth.currentUser;
       
+      // Extract photo candidates
+      const incomingPhoto = 
+        (rawProfile.photoURL && typeof rawProfile.photoURL === 'string' && rawProfile.photoURL.trim() !== '') ? rawProfile.photoURL.trim() :
+        (data.photoURL && typeof data.photoURL === 'string' && data.photoURL.trim() !== '') ? data.photoURL.trim() : null;
+
+      // Retrieve cached photo from localStorage if incoming data has no photo field
+      let cachedPhoto = '';
+      try {
+        const cachedRaw = localStorage.getItem(STORAGE_KEYS.PROFILE);
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          if (parsed && typeof parsed.photoURL === 'string' && parsed.photoURL.trim() !== '') {
+            cachedPhoto = parsed.photoURL.trim();
+          }
+        }
+      } catch (e) {}
+
+      const resolvedPhoto = incomingPhoto || cachedPhoto || currentAuth?.photoURL || '';
+
       const mergedProfile: UserProfile = {
         displayName: rawProfile.displayName || data.displayName || currentAuth?.displayName || currentAuth?.email?.split('@')[0] || 'Cadre Officer',
-        photoURL: rawProfile.photoURL !== undefined ? rawProfile.photoURL : (data.photoURL || currentAuth?.photoURL || ''),
+        photoURL: resolvedPhoto,
         email: rawProfile.email || data.email || currentAuth?.email || '',
         stream: rawProfile.stream || data.stream || 'General',
         category: rawProfile.category || data.category || 'General',
@@ -141,11 +160,33 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       };
 
       setUserProfile(mergedProfile);
-      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(mergedProfile));
+      try {
+        localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(mergedProfile));
+      } catch (e) {}
     };
 
     const setupListeners = async (userId: string) => {
       currentUserIdRef.current = userId;
+
+      // Immediate active fetch to hydrate state on fresh device/mobile login without snapshot wait
+      try {
+        const [userSnap, settingsSnap, syncSnap] = await Promise.allSettled([
+          getDoc(doc(db, 'users', userId)),
+          getDoc(doc(db, 'userSettings', userId)),
+          getDoc(doc(db, 'notes', 'profile_sync_' + userId))
+        ]);
+        if (syncSnap.status === 'fulfilled' && syncSnap.value.exists()) {
+          applyProfileData(syncSnap.value.data());
+        }
+        if (settingsSnap.status === 'fulfilled' && settingsSnap.value.exists()) {
+          applyProfileData(settingsSnap.value.data());
+        }
+        if (userSnap.status === 'fulfilled' && userSnap.value.exists()) {
+          applyProfileData(userSnap.value.data());
+        }
+      } catch (e) {
+        console.warn('Initial direct profile fetch notice:', e);
+      }
 
       // 1. Primary Users document listener
       try {

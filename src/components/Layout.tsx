@@ -89,7 +89,7 @@ export function Layout({ user }: { user: User }) {
           <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
             
             {/* Logo / Brand Name & Subject Switcher Dropdown */}
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
                 <div 
                   className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl p-[1.5px] shadow-lg shrink-0 group-hover:scale-105 transition-transform"
@@ -101,21 +101,21 @@ export function Layout({ user }: { user: User }) {
                     <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
-                <div className="min-w-0 hidden sm:block">
-                  <span className="font-serif text-sm sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1 leading-tight truncate">
+                <div className="hidden sm:block">
+                  <span className="font-serif text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1 leading-tight whitespace-nowrap">
                     RBI Grade B <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">Engine</span>
                   </span>
-                  <div className="flex items-center text-[9px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400 truncate">
+                  <div className="flex items-center text-[9px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     <span>OFFICER CADRE 2026</span>
                   </div>
                 </div>
               </Link>
 
               {/* SUBJECT SWITCHER DROPDOWN */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setShowSubjectMenu(!showSubjectMenu)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer max-w-[160px] sm:max-w-[210px]"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer max-w-[140px] sm:max-w-[190px] shrink-0"
                 >
                   <span 
                     className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
@@ -188,8 +188,8 @@ export function Layout({ user }: { user: User }) {
               </div>
             </div>
             
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 bg-white/70 dark:bg-white/[0.04] p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs">
+            {/* Desktop Navigation (Full on xl, Streamlined on lg to eliminate any screen collision) */}
+            <nav className="hidden xl:flex items-center gap-1 bg-white/70 dark:bg-white/[0.04] p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs shrink-0">
               <Link 
                 to="/" 
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -252,6 +252,46 @@ export function Layout({ user }: { user: User }) {
                     ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Syllabus</span>
+              </Link>
+            </nav>
+
+            {/* Compact Navigation for medium desktops (1024px to 1279px) ensuring ZERO overlap with All Subjects */}
+            <nav className="hidden lg:flex xl:hidden items-center gap-1 bg-white/70 dark:bg-white/[0.04] p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs shrink-0">
+              <Link 
+                to="/" 
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  location.pathname === '/' 
+                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+                title="Dashboard"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </Link>
+              <Link 
+                to="/new" 
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  location.pathname.startsWith('/new') 
+                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+                title="New Exam"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Exam</span>
+              </Link>
+              <Link 
+                to="/syllabus" 
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  location.pathname === '/syllabus' 
+                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+                title="Syllabus"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Syllabus</span>
@@ -377,29 +417,27 @@ export function Layout({ user }: { user: User }) {
               <span className="text-[10px] leading-none tracking-tight">Mistakes</span>
             </Link>
 
-            {/* 3. Center Elevated Action: New Exam + */}
-            <div className="flex flex-col items-center justify-center relative -top-3">
-              <Link 
-                to="/new" 
-                className="group flex flex-col items-center justify-center cursor-pointer focus:outline-none"
-                title="Start New Exam"
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all duration-200 group-hover:scale-105 group-active:scale-95 border-2 border-white dark:border-[#070B18] ${
-                  location.pathname.startsWith('/new')
-                    ? 'bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-600 shadow-teal-500/40 ring-4 ring-teal-500/20'
-                    : 'bg-gradient-to-tr from-teal-500 via-cyan-500 to-indigo-600 shadow-teal-500/30'
-                }`}>
-                  <Plus className="w-6 h-6 stroke-[2.75]" />
-                </div>
-                <span className={`text-[10px] font-bold tracking-tight mt-1 leading-none ${
-                  location.pathname.startsWith('/new') 
-                    ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
-                    : 'text-slate-700 dark:text-slate-300'
-                }`}>
-                  New Exam
-                </span>
-              </Link>
-            </div>
+            {/* 3. Center Elevated Action: New Exam + (Symmetrically Aligned) */}
+            <Link 
+              to="/new" 
+              className="flex flex-col items-center justify-center h-full gap-1 text-center transition-all group cursor-pointer focus:outline-none"
+              title="Start New Exam"
+            >
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md transition-all duration-200 group-hover:scale-105 group-active:scale-95 ${
+                location.pathname.startsWith('/new')
+                  ? 'bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-600 shadow-teal-500/40 ring-2 ring-teal-500/30'
+                  : 'bg-gradient-to-tr from-teal-500 via-cyan-500 to-indigo-600 shadow-teal-500/25'
+              }`}>
+                <Plus className="w-5 h-5 stroke-[2.75]" />
+              </div>
+              <span className={`text-[10px] leading-none tracking-tight ${
+                location.pathname.startsWith('/new') 
+                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
+                  : 'text-slate-700 dark:text-slate-300 font-bold'
+              }`}>
+                New Exam
+              </span>
+            </Link>
 
             {/* 4. Archive */}
             <Link 
