@@ -185,7 +185,7 @@ export function SynthesisOverlay({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-            className="relative w-[440px] max-w-[calc(100vw-32px)] h-[510px] min-h-[510px] max-h-[510px] shrink-0 flex flex-col justify-between rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-6 sm:p-8 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden box-border select-none"
+            className="relative w-[440px] max-w-[calc(100vw-32px)] h-[500px] min-h-[480px] max-h-[92vh] shrink-0 flex flex-col justify-between rounded-3xl bg-white/95 dark:bg-[#070B18]/95 p-5 sm:p-7 text-center border border-teal-500/30 dark:border-teal-500/20 shadow-2xl shadow-teal-500/10 backdrop-blur-3xl overflow-hidden box-border select-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient Background Canvas (GSAP particle telemetry) */}
@@ -216,7 +216,7 @@ export function SynthesisOverlay({
             {/* Top & Middle Section: Animation & Dynamic Phase Telemetry */}
             <div className="flex-1 flex flex-col justify-center items-center w-full min-h-0 overflow-hidden">
               {/* Central Gyro & Orbital Rings Animation */}
-              <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center shrink-0">
+              <div className="relative w-20 h-20 mx-auto mb-3 flex items-center justify-center shrink-0">
                 {/* Outer Counter-Rotating Ring */}
                 <svg
                   ref={orbitalRing2Ref}
@@ -261,14 +261,14 @@ export function SynthesisOverlay({
               <div className="h-9 w-full flex items-center justify-center shrink-0 overflow-hidden">
                 <h3
                   id="synthesis-dialog-title"
-                  className="text-2xl sm:text-[25px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate"
+                  className="text-xl sm:text-[24px] font-sans font-extrabold text-slate-900 dark:text-white tracking-tight leading-none truncate px-2"
                 >
                   Synthesizing Mock Exam
                 </h3>
               </div>
 
-              {/* Fixed-Dimension Stage Pill Container (320px fixed width, 32px fixed height) */}
-              <div className="h-8 w-[320px] max-w-[320px] flex items-center justify-center mt-2 shrink-0 overflow-hidden mx-auto">
+              {/* Responsive Fixed-Dimension Stage Pill Container (fits 320px–440px gracefully) */}
+              <div className="h-8 w-full max-w-[280px] sm:max-w-[320px] flex items-center justify-center mt-2 shrink-0 overflow-hidden mx-auto px-1">
                 <div className="w-full flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 overflow-hidden">
                   <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping shrink-0" />
                   <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-300 truncate text-center">
@@ -277,8 +277,8 @@ export function SynthesisOverlay({
                 </div>
               </div>
 
-              {/* Fixed-Dimension Subtitle Container (340px fixed width, 56px fixed height) */}
-              <div className="h-14 w-[340px] max-w-[340px] flex items-center justify-center mt-1 px-1 shrink-0 overflow-hidden mx-auto">
+              {/* Responsive Fixed-Dimension Subtitle Container */}
+              <div className="h-14 w-full max-w-[300px] sm:max-w-[340px] flex items-center justify-center mt-1 px-2 shrink-0 overflow-hidden mx-auto">
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-center font-sans font-normal line-clamp-2">
                   {PHASES[activePhaseIndex].sub}
                 </p>
@@ -288,12 +288,12 @@ export function SynthesisOverlay({
             {/* Bottom Anchored Section: Cadre Card and Cancel Action */}
             <div className="w-full shrink-0 pt-2 space-y-3">
               {/* Subject Cadre Tracker */}
-              <div className="h-14 p-3 rounded-2xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-left">
-                <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-14 p-2.5 sm:p-3 rounded-2xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-left gap-2">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold truncate">
                       Target Cadre
                     </p>
@@ -304,7 +304,7 @@ export function SynthesisOverlay({
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded-md">
                     Active
                   </span>
                 </div>

@@ -14,6 +14,7 @@ import { useSubject } from '../context/SubjectContext';
 import { Subject, ExamMode } from '../types';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { SynthesisOverlay } from '../components/SynthesisOverlay';
+import { sanitizeForFirestore } from '../utils/firestore';
 
 const getShortFileName = (name: string, max = 20) => {
   if (!name || name.length <= max) return name;
@@ -362,16 +363,16 @@ export function NewTest({ user }: { user: User }) {
         id: q.id || `q_${idx}`,
         subjectId: selectedSubject.id,
         topic: q.topic || selectedTopic || selectedSubject.syllabusTopics[0] || 'Core',
-        difficulty: config.difficulty,
-        isPyq: !!q.isPyq,
-        pyqYear: q.pyqYear || (q.isPyq ? 'RBI Grade B' : undefined),
-        maxMarks: q.type === 'MCQ' ? 1 : (q.maxMarks || 15)
+        difficulty: config.difficulty || 'Moderate',
+        isPyq: Boolean(q.isPyq),
+        pyqYear: q.pyqYear ? String(q.pyqYear) : (q.isPyq ? 'RBI Grade B' : null),
+        maxMarks: q.type === 'MCQ' ? 1 : (Number(q.maxMarks) || 15)
       }));
 
       const durationSeconds = estimatedDurationMinutes * 60;
 
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, 'tests'), {
+      // Deeply sanitize test payload to ensure ZERO undefined values reach Firestore addDoc
+      const testPayload = sanitizeForFirestore({
         userId: user.uid,
         createdAt: Date.now(),
         status: 'setup',
@@ -379,18 +380,20 @@ export function NewTest({ user }: { user: User }) {
         subjectSlug: selectedSubject.slug,
         subjectName: selectedSubject.name,
         mode: examMode,
-        targetTopic: selectedTopic,
+        targetTopic: selectedTopic || 'General Curriculum',
         config: {
           ...config,
           mode: examMode,
-          targetTopic: selectedTopic
+          targetTopic: selectedTopic || 'General Curriculum'
         },
         sourceNoteFileRefs: files.map(f => f.name),
-        extractedNotesText: finalExtractedText.substring(0, 5000), // excerpt
+        extractedNotesText: (finalExtractedText || '').substring(0, 5000), // excerpt
         durationSeconds,
         negativeMarks: config.negativeMarkingEnabled ? selectedSubject.negativeMarking : 0,
         questions: normalizedQuestions
       });
+
+      const docRef = await addDoc(collection(db, 'tests'), testPayload);
 
       navigate(`/exam/${docRef.id}`);
     } catch (err: any) {
@@ -1161,53 +1164,57 @@ export function NewTest({ user }: { user: User }) {
           </div>
 
           {/* Live Summary Card */}
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950 text-white border border-teal-500/30 shadow-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-teal-400">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950 text-white border border-teal-500/30 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-teal-400 font-bold block">
                   EXAMINATION BLUEPRINT SUMMARY
                 </span>
-                <h3 className="text-xl font-serif font-black">{selectedSubject.name}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Mode: {examMode} · Topic: {selectedTopic}</p>
+                <h3 className="text-lg sm:text-xl font-serif font-black truncate">{selectedSubject.name}</h3>
+                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">Mode: {examMode} · Topic: {selectedTopic}</p>
               </div>
 
-              <div className="flex items-center gap-4 text-right">
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Questions</span>
-                  <span className="text-2xl font-serif font-black text-teal-300">{totalQuestions}</span>
+              {/* 3 Metric Pills: Balanced 3-column grid on mobile, right-aligned flex on desktop */}
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-5 text-center sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10 shrink-0">
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Questions</span>
+                  <span className="text-xl sm:text-2xl font-serif font-black text-teal-300">{totalQuestions}</span>
                 </div>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Duration</span>
-                  <span className="text-2xl font-serif font-black text-cyan-300">{estimatedDurationMinutes}m</span>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Duration</span>
+                  <span className="text-xl sm:text-2xl font-serif font-black text-cyan-300">{estimatedDurationMinutes}m</span>
                 </div>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Max Marks</span>
-                  <span className="text-2xl font-serif font-black text-white">{totalCalculatedMarks}</span>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Max Marks</span>
+                  <span className="text-xl sm:text-2xl font-serif font-black text-white">{totalCalculatedMarks}</span>
                 </div>
               </div>
             </div>
 
             {uploadError && (
-              <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{uploadError}</span>
+              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-start sm:items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0 text-rose-300" />
+                <span className="leading-relaxed break-words">{uploadError}</span>
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2">
+            {/* CTAs: Stacked full-width on mobile with primary on top, row on desktop */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setStep(2)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-white/5 sm:bg-transparent hover:bg-white/10 transition-colors text-center cursor-pointer"
               >
                 Back to Sources
               </button>
 
               <button
+                type="button"
                 onClick={handleGenerateExam}
                 disabled={uploading || totalQuestions === 0}
-                className="sketch-tactile-btn px-8 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-teal-500 via-cyan-500 to-indigo-600 hover:from-teal-400 hover:via-cyan-400 hover:to-indigo-500 text-white shadow-xl shadow-teal-500/30 cursor-pointer flex items-center gap-2"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-teal-500 via-cyan-500 to-indigo-600 hover:from-teal-400 hover:via-cyan-400 hover:to-indigo-500 text-white shadow-xl shadow-teal-500/30 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-4 h-4 shrink-0" />
                 <span>Begin Examination</span>
               </button>
             </div>
