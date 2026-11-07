@@ -33,31 +33,41 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    // Initialize Lenis for momentum smooth scrolling without jitter
-    const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.25,
-      infinite: false,
-    });
-
-    lenisRef.current = lenis;
-    window.__lenis = lenis;
-
+    // Initialize Lenis for momentum smooth scrolling without jitter on desktop
+    // touchMultiplier: 0 ensures iOS Safari's native momentum scrolling is never intercepted or locked
+    let lenis: Lenis | null = null;
     let rafId: number;
-    function raf(time: number) {
-      lenis.raf(time);
+
+    try {
+      lenis = new Lenis({
+        duration: 1.15,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 0.95,
+        touchMultiplier: 0,
+        infinite: false,
+      });
+
+      lenisRef.current = lenis;
+      window.__lenis = lenis;
+
+      function raf(time: number) {
+        if (lenis) {
+          lenis.raf(time);
+          rafId = requestAnimationFrame(raf);
+        }
+      }
       rafId = requestAnimationFrame(raf);
+    } catch (err) {
+      console.warn('Lenis smooth scrolling not supported in this browser context:', err);
+      return;
     }
-    rafId = requestAnimationFrame(raf);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      lenis.destroy();
+      if (rafId) cancelAnimationFrame(rafId);
+      if (lenis) lenis.destroy();
       lenisRef.current = null;
       window.__lenis = undefined;
       document.documentElement.classList.remove('lenis', 'lenis-stopped', 'lenis-smooth');

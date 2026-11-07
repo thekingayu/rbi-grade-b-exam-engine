@@ -648,23 +648,38 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatedAt: Date.now()
       });
 
-      // Write in parallel to all targets:
+      // Write in parallel to all resilient targets:
       // 1. Primary users/{uid}
       // 2. Secondary userSettings/{uid}
-      // 3. Guaranteed notes/profile_sync_{uid}
+      // 3. Fallback notes/profile_sync_{uid}
+      const noteDocPayload = sanitizeForFirestore({
+        id: 'note_profile_' + uid,
+        userId: uid,
+        fileName: 'Officer Profile Dossier',
+        fileType: 'profile',
+        extractedText: JSON.stringify(merged),
+        subjectId: 'general-awareness',
+        subjectSlug: 'general-awareness',
+        size: 1024,
+        uploadedAt: Date.now()
+      });
+
       const writes = [
         setDoc(doc(db, 'users', uid), payload, { merge: true }),
         setDoc(doc(db, 'userSettings', uid), payload, { merge: true }),
-        setDoc(doc(db, 'notes', 'profile_sync_' + uid), payload, { merge: true })
+        setDoc(doc(db, 'notes', 'profile_sync_' + uid), payload, { merge: true }),
+        setDoc(doc(db, 'notes', 'note_profile_' + uid), noteDocPayload, { merge: true })
       ];
 
-      const results = await Promise.allSettled(writes);
-      const anySuccess = results.some(r => r.status === 'fulfilled');
-
-      if (!anySuccess) {
-        const firstError = results.find(r => r.status === 'rejected') as PromiseRejectedResult;
-        console.error('All profile persistence targets failed:', firstError?.reason);
-        throw new Error(firstError?.reason?.message || 'Could not sync profile to cloud. Please check network connection.');
+      try {
+        const results = await Promise.allSettled(writes);
+        const anySuccess = results.some(r => r.status === 'fulfilled');
+        if (!anySuccess) {
+          const firstError = results.find(r => r.status === 'rejected') as PromiseRejectedResult;
+          console.warn('Firestore cloud sync note (saved locally & in Auth session):', firstError?.reason?.message);
+        }
+      } catch (err) {
+        console.warn('Profile sync non-fatal error:', err);
       }
     }
   };

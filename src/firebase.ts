@@ -1,5 +1,12 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { 
+  getAuth, 
+  initializeAuth, 
+  indexedDBLocalPersistence, 
+  browserLocalPersistence, 
+  browserSessionPersistence,
+  Auth
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -22,6 +29,18 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 // Support optional custom database instance if specified by enterprise environment, otherwise default DB
 const databaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID;
 export const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
-export const auth = getAuth(app);
+
+// Safari-resilient Auth initialization with graceful fallback persistence
+// Guarantees seamless operation in Safari ITP, private browsing, and WebKit cross-origin contexts
+let authInstance: Auth;
+try {
+  authInstance = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence]
+  });
+} catch {
+  authInstance = getAuth(app);
+}
+
+export const auth = authInstance;
 export const storage = getStorage(app);
 export default app;

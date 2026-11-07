@@ -454,30 +454,18 @@ export function Layout({ user }: { user: User }) {
               <span className="text-[10px] leading-none tracking-tight">Archive</span>
             </Link>
 
-            {/* 5. Profile */}
-            <Link 
-              to="/profile" 
-              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
-                location.pathname === '/profile' 
-                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
-              }`}
+            {/* 5. Sign Out (Replacing duplicate profile link in bottom nav) */}
+            <button 
+              type="button"
+              onClick={() => auth.signOut()}
+              className="flex flex-col items-center justify-center h-full gap-1 text-center transition-all text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium active:scale-95 cursor-pointer focus:outline-none"
+              title="Sign Out of Engine"
             >
-              <div className={`p-0.5 rounded-full transition-all ${location.pathname === '/profile' ? 'ring-2 ring-teal-500/40' : ''}`}>
-                <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-[9px]">
-                  {currentPhoto ? (
-                    currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
-                      <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{currentPhoto}</span>
-                    )
-                  ) : (
-                    <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
+              <div className="p-1 rounded-xl hover:bg-rose-500/10 transition-all text-rose-500 dark:text-rose-400">
+                <LogOut className="w-4 h-4" />
               </div>
-              <span className="text-[10px] leading-none tracking-tight">Profile</span>
-            </Link>
+              <span className="text-[10px] leading-none tracking-tight">Sign Out</span>
+            </button>
           </div>
         </nav>
 
