@@ -73,6 +73,7 @@ export function Login() {
   }, []);
 
   const cleanErrorMessage = (msg: string) => {
+    if (!msg) return 'Authentication failed. Please verify your credentials and try again.';
     if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password') || msg.includes('auth/user-not-found')) {
       return 'Invalid email or password. Please verify your credentials.';
     }
@@ -85,11 +86,21 @@ export function Login() {
     if (msg.includes('auth/popup-closed-by-user')) {
       return 'Google sign-in popup was closed before completing.';
     }
+    if (msg.includes('auth/network-request-failed')) {
+      return 'Network connection failed. Please check your internet connection and verify that firewall or ad-blockers are not blocking Firebase.';
+    }
+    if (msg.includes('auth/too-many-requests')) {
+      return 'Access temporarily blocked due to multiple failed login attempts. Please reset password or wait a few minutes.';
+    }
     if (msg.includes('auth/unauthorized-domain')) {
       const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'rbi-grade-b-exam-engine-1.onrender.com';
       return `Domain not authorized yet. Add "${currentHost}" to Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
     }
-    return msg.replace('Firebase: ', '').replace(/\(auth\/[^)]+\)\.?/, '').trim() || 'Authentication failed. Please retry.';
+    const cleaned = msg.replace(/^Firebase:\s*/i, '').replace(/\(auth\/[^)]+\)\.?/g, '').trim();
+    if (!cleaned || cleaned.toLowerCase() === 'error' || cleaned.toLowerCase() === 'error.') {
+      return 'Authentication failed. Please verify your email and password and try again.';
+    }
+    return cleaned;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,12 +110,13 @@ export function Login() {
     
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, email.trim(), password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
       }
     } catch (err: any) {
-      setError(cleanErrorMessage(err.message || 'Authentication failed'));
+      console.error('Authentication attempt notice:', err);
+      setError(cleanErrorMessage(err?.message || 'Authentication failed'));
     } finally {
       setLoading(false);
     }

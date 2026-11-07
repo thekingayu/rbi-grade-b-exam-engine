@@ -31,7 +31,7 @@ app.use((_req, res, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.googleusercontent.com https://*.firebasestorage.app https://*.run.app",
-      "connect-src 'self' data: blob: https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://*.run.app https://*.onrender.com https://rbi-grade-b-exam-engine.vercel.app ws: wss:",
+      "connect-src 'self' https: data: blob: ws: wss:",
       "frame-src 'self' https://*.firebaseapp.com https://*.google.com",
       "frame-ancestors 'self' https://*.google.com https://*.run.app https://ais-*.run.app https://*.onrender.com https://rbi-grade-b-exam-engine.vercel.app",
       "object-src 'none'",
