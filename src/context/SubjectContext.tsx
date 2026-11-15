@@ -15,7 +15,12 @@ import { updateProfile } from 'firebase/auth';
 import { db, auth } from '../firebase';
 import { Subject, SubjectNote, MistakeEntry, TestAttempt, UserProfile } from '../types';
 import { INITIAL_SUBJECTS } from '../data/subjects';
-import { sanitizeForFirestore } from '../utils/firestore';
+import {
+  sanitizeForFirestore,
+  isSyncDocument,
+  OperationType,
+  buildFirestoreErrorInfo,
+} from '../utils/firestore';
 
 type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 
@@ -90,13 +95,6 @@ const clearLegacyUnscopedCaches = () => {
 const DEFAULT_TARGET_DATE = '2026-09-12';
 const DEFAULT_SCORE_GOAL = 75;
 const DEFAULT_BIO = 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2 examination';
-
-const isSyntheticSyncNote = (id: string, data: any): boolean => {
-  if (!id && !data) return true;
-  if (id.startsWith('profile_sync_') || id.startsWith('note_profile_')) return true;
-  if (data?.type === 'profile_sync' || data?.fileType === 'profile') return true;
-  return false;
-};
 
 export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const initialUid = auth.currentUser?.uid || null;
@@ -270,18 +268,43 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     lastServerFetchAtRef.current = now;
 
     try {
-      const [userSnap, settingsSnap, syncSnap] = await Promise.allSettled([
+      const [
+        userSnap,
+        settingsSnap,
+        noteSyncSnap,
+        testSyncSnap,
+        notesListSnap,
+        testsListSnap
+      ] = await Promise.allSettled([
         fetchDocServerFirst(doc(db, 'users', userId)),
         fetchDocServerFirst(doc(db, 'userSettings', userId)),
-        fetchDocServerFirst(doc(db, 'notes', 'profile_sync_' + userId))
+        fetchDocServerFirst(doc(db, 'notes', 'profile_sync_' + userId)),
+        fetchDocServerFirst(doc(db, 'tests', 'profile_sync_' + userId)),
+        getDocs(query(collection(db, 'notes'), where('userId', '==', userId))),
+        getDocs(query(collection(db, 'tests'), where('userId', '==', userId)))
       ]);
 
       const candidates: Array<{ data: any; ts: number }> = [];
-      [syncSnap, settingsSnap, userSnap].forEach((res) => {
+      const pushCandidate = (d: any) => {
+        if (!d) return;
+        const ts = Number(d?.updatedAt || d?.profile?.updatedAt || 0);
+        candidates.push({ data: d, ts });
+      };
+
+      [testSyncSnap, noteSyncSnap, settingsSnap, userSnap].forEach((res) => {
         if (res.status === 'fulfilled' && res.value.exists()) {
-          const d = res.value.data();
-          const ts = Number(d?.updatedAt || d?.profile?.updatedAt || 0);
-          candidates.push({ data: d, ts });
+          pushCandidate(res.value.data());
+        }
+      });
+
+      [notesListSnap, testsListSnap].forEach((res) => {
+        if (res.status === 'fulfilled') {
+          res.value.docs.forEach((d) => {
+            const data = d.data();
+            if (isSyncDocument(d.id, data)) {
+              pushCandidate(data);
+            }
+          });
         }
       });
 
@@ -451,7 +474,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               const data = d.data();
               if (d.id === 'profile_sync_' + userId || data.type === 'profile_sync') {
                 applyProfileData(data, userId);
-              } else if (!isSyntheticSyncNote(d.id, data)) {
+              } else if (!isSyncDocument(d.id, data)) {
                 fsNotes.push({ id: d.id, ...data } as SubjectNote);
               }
             });
@@ -468,13 +491,35 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.warn('Error setting up notes listener:', err);
       }
 
+      // 5b. Real-time Tests-backed profile_sync listener (works even if users/notes rules are locked)
+      try {
+        const syncTestsQuery = query(collection(db, 'tests'), where('userId', '==', userId));
+        const unsubTestsSync = onSnapshot(
+          syncTestsQuery,
+          (snapshot) => {
+            snapshot.docs.forEach((d) => {
+              const data = d.data();
+              if (d.id === 'profile_sync_' + userId || isSyncDocument(d.id, data)) {
+                applyProfileData(data, userId);
+              }
+            });
+          },
+          () => {}
+        );
+        unsubs.push(unsubTestsSync);
+      } catch {
+        // ignore
+      }
+
       // 6. One-time comprehensive mistake backfill from historical tests
       if (!backfillDoneRef.current) {
         backfillDoneRef.current = true;
         try {
           const testsQuery = query(collection(db, 'tests'), where('userId', '==', userId));
           const testsSnap = await getDocs(testsQuery);
-          const tests = testsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as TestAttempt[];
+          const tests = testsSnap.docs
+            .filter((d) => !isSyncDocument(d.id, d.data()))
+            .map((d) => ({ id: d.id, ...d.data() })) as TestAttempt[];
 
           for (const test of tests) {
             if (test.status !== 'completed' || !Array.isArray(test.questions)) continue;
@@ -651,7 +696,25 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatedAt: nowTs
       };
 
-      const payload = sanitizeForFirestore({
+      // Clean schema payload for strict /users/{uid} security rules
+      const usersDocPayload = sanitizeForFirestore({
+        displayName: baseProfile.displayName || 'Cadre Officer',
+        photoURL: baseProfile.photoURL ?? '',
+        email: baseProfile.email || '',
+        stream: baseProfile.stream || 'General',
+        category: baseProfile.category || 'General',
+        attemptCount: baseProfile.attemptCount || '1st Attempt',
+        dailyStudyHours: baseProfile.dailyStudyHours ?? 4,
+        educationBackground: baseProfile.educationBackground || 'Commerce / Economics',
+        bio: baseProfile.bio ?? '',
+        phone: baseProfile.phone ?? '',
+        targetExamYear: baseProfile.targetExamYear || '2026-27',
+        targetExamDate: nextDate,
+        targetScoreGoal: nextGoal,
+        updatedAt: nowTs
+      });
+
+      const fullSyncPayload = sanitizeForFirestore({
         id: 'profile_sync_' + uid,
         userId: uid,
         type: 'profile_sync',
@@ -674,24 +737,45 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatedAt: nowTs
       });
 
-      const writes = [
-        setDoc(doc(db, 'users', uid), payload, { merge: true }),
-        setDoc(doc(db, 'userSettings', uid), payload, { merge: true }),
-        setDoc(doc(db, 'notes', 'profile_sync_' + uid), payload, { merge: true })
+      // Compatible with Test entity schema as resilient fallback target
+      const testsSyncPayload = sanitizeForFirestore({
+        ...fullSyncPayload,
+        createdAt: 1,
+        status: 'setup',
+        isProfileSync: true,
+        config: {
+          mcqStatic: 0,
+          mcqDynamic: 0,
+          descStatic: 0,
+          descDynamic: 0
+        },
+        durationSeconds: 0,
+        questions: []
+      });
+
+      const writeTargets = [
+        { path: `users/${uid}`, promise: setDoc(doc(db, 'users', uid), usersDocPayload, { merge: true }) },
+        { path: `userSettings/${uid}`, promise: setDoc(doc(db, 'userSettings', uid), fullSyncPayload, { merge: true }) },
+        { path: `notes/profile_sync_${uid}`, promise: setDoc(doc(db, 'notes', 'profile_sync_' + uid), fullSyncPayload, { merge: true }) },
+        { path: `tests/profile_sync_${uid}`, promise: setDoc(doc(db, 'tests', 'profile_sync_' + uid), testsSyncPayload, { merge: true }) }
       ];
 
-      const results = await Promise.allSettled(writes);
+      const results = await Promise.allSettled(writeTargets.map((t) => t.promise));
       const anySuccess = results.some((r) => r.status === 'fulfilled');
 
       if (!anySuccess) {
         setSyncStatus('error');
-        const firstRejected = results.find((r) => r.status === 'rejected') as
-          | PromiseRejectedResult
-          | undefined;
-        throw new Error(
-          firstRejected?.reason?.message ||
-            'Cloud sync failed. Please check your internet connection and permissions.'
+        const firstRejectedIdx = results.findIndex((r) => r.status === 'rejected');
+        const firstRejected = results[firstRejectedIdx] as PromiseRejectedResult | undefined;
+        const failedPath = firstRejectedIdx >= 0 ? writeTargets[firstRejectedIdx].path : `users/${uid}`;
+        const errInfo = buildFirestoreErrorInfo(
+          firstRejected?.reason || 'Missing or insufficient permissions.',
+          OperationType.WRITE,
+          failedPath,
+          auth.currentUser
         );
+        console.error('Firestore Error: ', JSON.stringify(errInfo));
+        throw new Error(JSON.stringify(errInfo));
       }
 
       setLastSyncedAt(nowTs);
@@ -881,6 +965,11 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateUserProfile = async (profileData: Partial<UserProfile>) => {
     const currentAuth = auth.currentUser;
     const uid = currentAuth?.uid || currentUserIdRef.current;
+    const prevProfile = userProfile;
+    const prevDate = targetExamDate;
+    const prevGoal = targetScoreGoal;
+    const prevTs = lastAppliedTsRef.current;
+
     const nowTs = Date.now();
     lastAppliedTsRef.current = nowTs;
 
@@ -901,7 +990,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatedAt: nowTs
     };
 
-    // Update local state and uid-scoped cache immediately
+    // Update local state and uid-scoped cache optimistically
     setUserProfile(merged);
     safeWriteStorage(uid, 'profile', merged);
 
@@ -938,11 +1027,29 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     if (uid) {
-      await persistSyncedState(uid, {
-        profile: merged,
-        targetExamDate: profileData.targetExamDate,
-        targetScoreGoal: profileData.targetScoreGoal
-      });
+      try {
+        await persistSyncedState(uid, {
+          profile: merged,
+          targetExamDate: profileData.targetExamDate,
+          targetScoreGoal: profileData.targetScoreGoal
+        });
+      } catch (err) {
+        // Rollback optimistic local baseline so Profile form preserves unsaved dirty state
+        lastAppliedTsRef.current = prevTs;
+        setUserProfile(prevProfile);
+        if (prevProfile) {
+          safeWriteStorage(uid, 'profile', prevProfile);
+        }
+        if (profileData.targetExamDate !== undefined) {
+          setTargetExamDateState(prevDate);
+          safeWriteStorage(uid, 'exam_date', prevDate);
+        }
+        if (profileData.targetScoreGoal !== undefined) {
+          setTargetScoreGoalState(prevGoal);
+          safeWriteStorage(uid, 'score_goal', prevGoal.toString());
+        }
+        throw err;
+      }
     }
   };
 

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
+import { isSyncDocument } from '../utils/firestore';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import { MotionPage, MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
@@ -43,10 +44,12 @@ export function TestHistory({ user }: { user: User }) {
           where('userId', '==', user.uid)
         );
         const snapshot = await getDocs(q);
-        const fetchedTests = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as TestAttempt[];
+        const fetchedTests = snapshot.docs
+          .filter(d => !isSyncDocument(d.id, d.data()))
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as TestAttempt[];
         
         fetchedTests.sort((a, b) => b.createdAt - a.createdAt);
         setTests(fetchedTests);

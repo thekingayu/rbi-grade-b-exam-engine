@@ -36,3 +36,86 @@ export function sanitizeForFirestore<T>(input: T): T {
   }
   return input;
 }
+
+export function isSyncDocument(id: string, data: any): boolean {
+  if (!id && !data) return true;
+  if (id.startsWith('profile_sync_') || id.startsWith('note_profile_')) return true;
+  if (
+    data?.isProfileSync === true ||
+    data?.type === 'profile_sync' ||
+    data?.fileType === 'profile'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function buildFirestoreErrorInfo(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null,
+  currentUser: {
+    uid?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerData?: Array<{ providerId?: string | null; email?: string | null }>;
+  } | null
+): FirestoreErrorInfo {
+  return {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: currentUser?.uid,
+      email: currentUser?.email,
+      emailVerified: currentUser?.emailVerified,
+      isAnonymous: currentUser?.isAnonymous,
+      tenantId: currentUser?.tenantId,
+      providerInfo:
+        currentUser?.providerData?.map((provider) => ({
+          providerId: provider.providerId,
+          email: provider.email,
+        })) || [],
+    },
+    operationType,
+    path,
+  };
+}
+
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null,
+  currentUser: Parameters<typeof buildFirestoreErrorInfo>[3]
+): never {
+  const errInfo = buildFirestoreErrorInfo(error, operationType, path, currentUser);
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+

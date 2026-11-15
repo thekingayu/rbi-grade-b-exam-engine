@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
+import { isSyncDocument } from '../utils/firestore';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import {
@@ -58,10 +59,12 @@ export function SubjectDashboard({ user }: { user: User }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allTests = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      })) as TestAttempt[];
+      const allTests = snapshot.docs
+        .filter(d => !isSyncDocument(d.id, d.data()))
+        .map(d => ({
+          id: d.id,
+          ...d.data()
+        })) as TestAttempt[];
 
       const scoped = allTests.filter(t => 
         t.subjectId === currentSubject.id || 

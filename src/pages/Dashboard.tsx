@@ -19,6 +19,7 @@ import {
 import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
+import { isSyncDocument } from '../utils/firestore';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 import {
   MotionPage,
@@ -52,10 +53,12 @@ export function Dashboard({ user }: { user: User }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      })) as TestAttempt[];
+      const fetched = snapshot.docs
+        .filter(d => !isSyncDocument(d.id, d.data()))
+        .map(d => ({
+          id: d.id,
+          ...d.data()
+        })) as TestAttempt[];
       
       fetched.sort((a, b) => b.createdAt - a.createdAt);
       setTests(fetched);

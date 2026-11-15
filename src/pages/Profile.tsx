@@ -196,6 +196,19 @@ export function Profile({ user }: { user: User }) {
     };
   }, []);
 
+  const formatSyncErrorMessage = (err: unknown, fallback: string) => {
+    const raw = err instanceof Error ? err.message : typeof err === 'string' ? err : fallback;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.error === 'string') {
+        return parsed.error;
+      }
+    } catch {
+      // plain string message
+    }
+    return raw || fallback;
+  };
+
   const commitPhotoChange = async (nextPhotoURL: string) => {
     setPhotoURL(nextPhotoURL);
     setErrorMsg(null);
@@ -212,7 +225,7 @@ export function Profile({ user }: { user: User }) {
     } catch (err: any) {
       console.error('Error syncing avatar:', err);
       setPhotoSyncState('idle');
-      setErrorMsg(err?.message || 'Could not sync profile picture to cloud. Please try again.');
+      setErrorMsg(formatSyncErrorMessage(err, 'Could not sync profile picture to cloud. Please try again.'));
     }
   };
 
@@ -308,7 +321,7 @@ export function Profile({ user }: { user: User }) {
     try {
       await refreshSync();
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Unable to refresh cloud sync.');
+      setErrorMsg(formatSyncErrorMessage(err, 'Unable to refresh cloud sync.'));
     } finally {
       setRefreshingSync(false);
     }
@@ -339,8 +352,7 @@ export function Profile({ user }: { user: User }) {
       setTimeout(() => setSavedSuccess(false), 3000);
     } catch (err: any) {
       console.error('Error saving profile:', err);
-      const msg = err?.message || (typeof err === 'string' ? err : 'Failed to update profile. Please try again.');
-      setErrorMsg(msg);
+      setErrorMsg(formatSyncErrorMessage(err, 'Failed to update profile. Please try again.'));
     } finally {
       setSaving(false);
     }

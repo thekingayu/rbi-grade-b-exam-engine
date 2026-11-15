@@ -30,31 +30,34 @@ service cloud.firestore {
     }
 
     match /tests/{testId} {
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
-      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(testId) && incoming().userId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(testId) && ((resource == null && testId == 'profile_sync_' + request.auth.uid) || (resource != null && existing().userId == request.auth.uid));
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(testId) && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow delete: if isSignedIn() && isValidId(testId) && existing().userId == request.auth.uid;
 
       match /questions/{questionId} {
-        allow create: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
-        allow read: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
-        allow update: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
-        allow delete: if isSignedIn() && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(testId) && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow read: if isSignedIn() && isValidId(testId) && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(testId) && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(testId) && get(/databases/$(database)/documents/tests/$(testId)).data.userId == request.auth.uid;
       }
     }
 
     match /notes/{noteId} {
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
-      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(noteId) && incoming().userId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(noteId) && ((resource == null && noteId == 'profile_sync_' + request.auth.uid) || (resource != null && existing().userId == request.auth.uid));
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(noteId) && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow delete: if isSignedIn() && isValidId(noteId) && existing().userId == request.auth.uid;
     }
 
     match /mistakes/{mistakeId} {
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow read: if isSignedIn() && existing().userId == request.auth.uid;
-      allow update: if isSignedIn() && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
-      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(mistakeId) && incoming().userId == request.auth.uid;
+      allow get: if isSignedIn() && isValidId(mistakeId) && resource != null && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(mistakeId) && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow delete: if isSignedIn() && isValidId(mistakeId) && existing().userId == request.auth.uid;
     }
   }
 }
