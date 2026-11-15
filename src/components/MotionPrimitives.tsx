@@ -5,29 +5,36 @@ import gsap from 'gsap';
 export const EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 export const EASE_SMOOTH: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
+export const SPRING_BOUNCY = {
+  type: 'spring' as const,
+  stiffness: 320,
+  damping: 16,
+  mass: 0.78,
+};
+
 export const SPRING_BUTTERY = {
   type: 'spring' as const,
-  stiffness: 240,
-  damping: 24,
-  mass: 0.85,
+  stiffness: 250,
+  damping: 18,
+  mass: 0.82,
 };
 
 export const SPRING_SNAPPY = {
   type: 'spring' as const,
-  stiffness: 360,
-  damping: 26,
-  mass: 0.75,
+  stiffness: 420,
+  damping: 19,
+  mass: 0.65,
 };
 
 export const SPRING_TACTILE = {
   type: 'spring' as const,
-  stiffness: 460,
-  damping: 24,
-  mass: 0.6,
+  stiffness: 520,
+  damping: 17,
+  mass: 0.55,
 };
 
 /**
- * Top-level page wrapper: silky GPU compositor entrance, never leaves UI invisible.
+ * Top-level page wrapper: silky GPU bouncy spring entrance, never leaves UI invisible.
  */
 export function MotionPage({
   children,
@@ -39,9 +46,12 @@ export function MotionPage({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.992 }}
+      initial={{ opacity: 0, y: 24, scale: 0.985 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.56, ease: EASE_OUT_EXPO }}
+      transition={{
+        ...SPRING_BUTTERY,
+        opacity: { duration: 0.28, ease: EASE_OUT_EXPO },
+      }}
       className={`will-change-transform ${className}`}
     >
       {children}
@@ -50,8 +60,8 @@ export function MotionPage({
 }
 
 /**
- * Scroll-triggered viewport reveal. Uses amount: 0.05 so tall containers on 320px
- * mobile screens always trigger reliably instead of getting stuck invisible.
+ * Scroll-triggered viewport reveal with gentle bouncy settle. Uses amount: 0.05
+ * so tall containers on mobile screens always trigger reliably.
  */
 export function MotionSection({
   children,
@@ -65,10 +75,14 @@ export function MotionSection({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 34, scale: 0.985 }}
+      initial={{ opacity: 0, y: 28, scale: 0.975 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.05 }}
-      transition={{ duration: 0.65, delay, ease: EASE_OUT_EXPO }}
+      transition={{
+        ...SPRING_BUTTERY,
+        delay,
+        opacity: { duration: 0.34, delay, ease: EASE_OUT_EXPO },
+      }}
       className={`will-change-transform ${className}`}
     >
       {children}
@@ -80,19 +94,22 @@ export const staggerGridVariants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.05,
+      staggerChildren: 0.065,
+      delayChildren: 0.04,
     },
   },
 };
 
 export const staggerItemVariants = {
-  hidden: { opacity: 0, y: 26, scale: 0.96 },
+  hidden: { opacity: 0, y: 24, scale: 0.94 },
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.54, ease: EASE_OUT_EXPO },
+    transition: {
+      ...SPRING_BOUNCY,
+      opacity: { duration: 0.28, ease: EASE_OUT_EXPO },
+    },
   },
 };
 
@@ -129,7 +146,7 @@ export function MotionStaggerItem({
   className?: string;
 }) {
   return (
-    <motion.div variants={staggerItemVariants} className={className}>
+    <motion.div variants={staggerItemVariants} className={`will-change-transform ${className}`}>
       {children}
     </motion.div>
   );
@@ -203,7 +220,7 @@ export function AnimatedNumber({
 }
 
 /**
- * Animated modal overlay + spring content box.
+ * Animated modal overlay + bouncy spring content box.
  */
 export function MotionModal({
   isOpen,
@@ -228,10 +245,13 @@ export function MotionModal({
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 24 }}
+            initial={{ opacity: 0, scale: 0.86, y: 26 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.93, y: 14 }}
-            transition={SPRING_BUTTERY}
+            exit={{ opacity: 0, scale: 0.9, y: 16 }}
+            transition={{
+              ...SPRING_BOUNCY,
+              opacity: { duration: 0.18 },
+            }}
             className={`w-full ${maxWidthClass} will-change-transform`}
             onClick={(e) => e.stopPropagation()}
           >

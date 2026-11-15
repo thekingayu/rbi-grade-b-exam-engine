@@ -27,6 +27,7 @@ import {
   MotionStaggerGrid,
   MotionStaggerItem,
   AnimatedNumber,
+  SPRING_BOUNCY,
   SPRING_SNAPPY
 } from '../components/MotionPrimitives';
 
@@ -179,7 +180,7 @@ export function Dashboard({ user }: { user: User }) {
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto shrink-0">
           {/* Officer Profile Dossier Link */}
-          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+          <motion.div whileHover={{ y: -3, scale: 1.015 }} whileTap={{ scale: 0.965 }} transition={SPRING_BOUNCY}>
             <Link 
               to="/profile"
               className="group flex items-center justify-between sm:justify-start gap-3 px-3 py-2 min-h-[46px] rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-all cursor-pointer w-full sm:w-auto"
@@ -209,7 +210,7 @@ export function Dashboard({ user }: { user: User }) {
           </motion.div>
 
           <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="min-w-0">
+            <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.95 }} transition={SPRING_BOUNCY} className="min-w-0">
               <Link 
                 to="/syllabus" 
                 className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-3 sm:px-5 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0 whitespace-nowrap"
@@ -219,7 +220,7 @@ export function Dashboard({ user }: { user: User }) {
               </Link>
             </motion.div>
 
-            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY} className="min-w-0">
+            <motion.div whileHover={{ y: -3, scale: 1.025 }} whileTap={{ scale: 0.94 }} transition={SPRING_BOUNCY} className="min-w-0">
               <Link 
                 to="/new" 
                 className="inline-flex items-center justify-center gap-1.5 sm:gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] px-3 sm:px-6 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-base cursor-pointer shrink-0 whitespace-nowrap"
@@ -233,7 +234,7 @@ export function Dashboard({ user }: { user: User }) {
       </div>
 
       {/* Soft Lavender Feature Strip */}
-      <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.995 }} transition={SPRING_SNAPPY}>
+      <motion.div whileHover={{ y: -3, scale: 1.006 }} whileTap={{ scale: 0.985 }} transition={SPRING_BOUNCY}>
         <Link
           to="/syllabus"
           className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 rounded-2xl bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] hover:shadow-[5px_5px_0px_#141413] text-[#141413] transition-shadow"
@@ -446,7 +447,8 @@ export function Dashboard({ user }: { user: User }) {
                 return (
                   <motion.div
                     key={test.id}
-                    whileHover={{ x: 2 }}
+                    whileHover={{ x: 4 }}
+                    transition={SPRING_SNAPPY}
                     className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/40 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -520,9 +522,10 @@ function KpiMiniCard({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      transition={SPRING_SNAPPY}
-      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[104px] sm:min-h-[120px] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors"
+      whileHover={{ y: -4, scale: 1.018 }}
+      whileTap={{ scale: 0.965 }}
+      transition={SPRING_BOUNCY}
+      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[104px] sm:min-h-[120px] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors will-change-transform"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] font-bold truncate">

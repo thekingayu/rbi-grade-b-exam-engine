@@ -6,7 +6,7 @@ import { SubjectIcon } from './SubjectIcon';
 import { ReadinessRing } from './ReadinessRing';
 import { ArrowUpRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { EASE_OUT_EXPO, SPRING_BUTTERY, AnimatedNumber } from '../MotionPrimitives';
+import { EASE_OUT_EXPO, SPRING_BOUNCY, AnimatedNumber } from '../MotionPrimitives';
 
 interface SubjectCardProps {
   key?: React.Key;
@@ -81,9 +81,9 @@ export function SubjectCard({ subject, tests }: SubjectCardProps) {
 
   return (
     <motion.div
-      whileHover={{ y: -6 }}
-      whileTap={{ scale: 0.985 }}
-      transition={SPRING_BUTTERY}
+      whileHover={{ y: -7, scale: 1.014 }}
+      whileTap={{ scale: 0.968 }}
+      transition={SPRING_BOUNCY}
       className="h-full will-change-transform"
     >
       <Link

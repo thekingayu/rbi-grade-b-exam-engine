@@ -22,7 +22,7 @@ import { AtmosphericBackground } from './AtmosphericBackground';
 import { useSubject } from '../context/SubjectContext';
 import { CommandPalette } from './CommandPalette';
 import { PomodoroTimer } from './PomodoroTimer';
-import { EqualizerBars, SPRING_SNAPPY, SPRING_TACTILE, EASE_OUT_EXPO } from './MotionPrimitives';
+import { EqualizerBars, SPRING_BOUNCY, SPRING_BUTTERY, SPRING_SNAPPY, SPRING_TACTILE, EASE_OUT_EXPO } from './MotionPrimitives';
 
 export function Layout({ user }: { user: User }) {
   const location = useLocation();
@@ -138,25 +138,27 @@ export function Layout({ user }: { user: User }) {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Clean 3-Zone Editorial Header */}
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC]/92 dark:bg-[#141413]/92 backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-1.5 sm:gap-4">
+          <div className="max-w-7xl mx-auto px-2.5 sm:px-5 xl:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-2 lg:gap-3 xl:gap-5">
             {/* ZONE 1: Brand Lockup & Subject Scope Dropdown */}
-            <div className="flex items-center gap-1.5 sm:gap-4 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink">
               <Link to="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0 group">
-                <span className="font-heading text-xs sm:text-base font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] whitespace-nowrap">
+                <span className="font-heading text-xs sm:text-sm xl:text-base font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] whitespace-nowrap">
                   RBI GRADE B
                 </span>
-                <span className="hidden sm:inline text-[#66665E] dark:text-[#A3A399]">×</span>
-                <span className="hidden sm:inline-flex items-center gap-1.5 font-heading text-sm sm:text-base font-bold text-[#0D47FF] dark:text-[#ECD5FF] whitespace-nowrap">
+                <span className="hidden sm:inline lg:hidden xl:inline text-[#66665E] dark:text-[#A3A399]">×</span>
+                <span className="hidden sm:inline-flex lg:hidden xl:inline-flex items-center gap-1.5 font-heading text-sm xl:text-base font-bold text-[#0D47FF] dark:text-[#ECD5FF] whitespace-nowrap">
                   <BookOpen className="w-4 h-4 transition-transform group-hover:scale-110" />
                   Engine
                 </span>
               </Link>
 
               {/* Subject Switcher Dropdown */}
-              <div className="relative min-w-0">
-                <button
+              <div className="relative min-w-0 max-w-full shrink">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  transition={SPRING_TACTILE}
                   onClick={() => setShowSubjectMenu(!showSubjectMenu)}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[34px] sm:min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer max-w-[96px] sm:max-w-[180px]"
+                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[34px] sm:min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer w-full max-w-[116px] sm:max-w-[170px] lg:max-w-[138px] xl:max-w-[178px] overflow-hidden"
                   aria-expanded={showSubjectMenu}
                   aria-label="Switch subject scope"
                 >
@@ -164,15 +166,15 @@ export function Layout({ user }: { user: User }) {
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: activeColor }}
                   />
-                  <span className="truncate text-[#141413] dark:text-[#FAF8EC]">
+                  <span className="min-w-0 flex-1 truncate text-left text-[#141413] dark:text-[#FAF8EC]">
                     {activeSubject ? activeSubject.name : 'All Subjects'}
                   </span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-[#66665E] dark:text-[#A3A399] shrink-0 ml-auto transition-transform duration-200 ${
+                    className={`w-3.5 h-3.5 text-[#66665E] dark:text-[#A3A399] shrink-0 transition-transform duration-200 ${
                       showSubjectMenu ? 'rotate-180' : ''
                     }`}
                   />
-                </button>
+                </motion.button>
 
                 <AnimatePresence>
                   {showSubjectMenu && (
@@ -182,17 +184,18 @@ export function Layout({ user }: { user: User }) {
                         onClick={() => setShowSubjectMenu(false)}
                       />
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                        initial={{ opacity: 0, scale: 0.9, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96, y: -6 }}
-                        transition={SPRING_SNAPPY}
-                        className="absolute top-full left-0 mt-2 w-64 max-w-[85vw] rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] p-2 z-50 origin-top-left"
+                        exit={{ opacity: 0, scale: 0.92, y: -8 }}
+                        transition={{ ...SPRING_BOUNCY, opacity: { duration: 0.16 } }}
+                        className="absolute top-full left-0 mt-2 w-64 max-w-[85vw] rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] p-2 z-50 origin-top-left will-change-transform"
                       >
                         <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] border-b border-[#E5E1CE] dark:border-[#2E2E2A] mb-1">
                           Curriculum Scope
                         </div>
 
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
                           onClick={() => {
                             setActiveSubject(null);
                             setShowSubjectMenu(false);
@@ -206,7 +209,7 @@ export function Layout({ user }: { user: User }) {
                         >
                           <span className="w-2 h-2 rounded-full bg-[#0D47FF]" />
                           <span>All Subjects (Command Center)</span>
-                        </button>
+                        </motion.button>
 
                         <div className="my-1.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]" />
 
@@ -214,8 +217,9 @@ export function Layout({ user }: { user: User }) {
                           {subjects
                             .filter((s) => s.slug !== 'uncategorized')
                             .map((sub) => (
-                              <button
+                              <motion.button
                                 key={sub.id}
+                                whileTap={{ scale: 0.97 }}
                                 onClick={() => {
                                   setActiveSubject(sub);
                                   setShowSubjectMenu(false);
@@ -237,7 +241,7 @@ export function Layout({ user }: { user: User }) {
                                 <span className="text-[10px] font-mono opacity-65 shrink-0">
                                   {sub.phase}
                                 </span>
-                              </button>
+                              </motion.button>
                             ))}
                         </div>
                       </motion.div>
@@ -248,36 +252,44 @@ export function Layout({ user }: { user: User }) {
             </div>
 
             {/* ZONE 2: Clean Flat Editorial Navigation Links with shared layoutId underline */}
-            <nav className="hidden lg:flex items-center gap-5 xl:gap-7 shrink-0">
+            <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 shrink-0 min-w-0">
               {navItems.map((item) => {
                 const active = isNavActive(item);
                 return (
-                  <Link
+                  <motion.div
                     key={item.path}
-                    to={item.path}
-                    className={`relative py-2 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors ${
-                      active
-                        ? 'text-[#141413] dark:text-[#ECD5FF] font-bold'
-                        : 'text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-white font-semibold'
-                    }`}
+                    whileHover={{ y: -1.5 }}
+                    whileTap={{ scale: 0.96 }}
+                    transition={SPRING_TACTILE}
                   >
-                    <span>{item.label}</span>
-                    {active && (
-                      <motion.span
-                        layoutId="desktop-nav-underline"
-                        transition={SPRING_SNAPPY}
-                        className="absolute bottom-0 inset-x-0 h-[2px] bg-[#0D47FF] dark:bg-[#ECD5FF] rounded-full"
-                      />
-                    )}
-                  </Link>
+                    <Link
+                      to={item.path}
+                      className={`relative py-2 text-[11px] xl:text-xs font-mono uppercase tracking-wide xl:tracking-wider whitespace-nowrap transition-colors block ${
+                        active
+                          ? 'text-[#141413] dark:text-[#ECD5FF] font-bold'
+                          : 'text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-white font-semibold'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {active && (
+                        <motion.span
+                          layoutId="desktop-nav-underline"
+                          transition={SPRING_BOUNCY}
+                          className="absolute bottom-0 inset-x-0 h-[2px] bg-[#0D47FF] dark:bg-[#ECD5FF] rounded-full"
+                        />
+                      )}
+                    </Link>
+                  </motion.div>
                 );
               })}
             </nav>
 
             {/* ZONE 3: Action Utilities & Profile */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 xl:gap-2 shrink-0">
               <motion.button
-                whileTap={{ scale: 0.93 }}
+                whileHover={{ y: -2, scale: 1.05 }}
+                whileTap={{ scale: 0.88 }}
+                transition={SPRING_BOUNCY}
                 onClick={() => setShowCommandPalette(true)}
                 className="flex items-center gap-1.5 px-2 sm:px-2.5 h-8 sm:h-9 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 text-xs font-mono text-[#66665E] dark:text-[#A3A399] cursor-pointer"
                 title="Command Palette (Ctrl/Cmd+K)"
@@ -288,7 +300,9 @@ export function Layout({ user }: { user: User }) {
               </motion.button>
 
               <motion.button
-                whileTap={{ scale: 0.93 }}
+                whileHover={{ y: -2, scale: 1.06 }}
+                whileTap={{ scale: 0.88 }}
+                transition={SPRING_BOUNCY}
                 onClick={() => setShowPomodoro(!showPomodoro)}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center border transition-colors cursor-pointer ${
                   showPomodoro
@@ -302,7 +316,9 @@ export function Layout({ user }: { user: User }) {
               </motion.button>
 
               <motion.button
-                whileTap={{ scale: 0.93, rotate: 15 }}
+                whileHover={{ y: -2, scale: 1.06 }}
+                whileTap={{ scale: 0.86, rotate: 24 }}
+                transition={SPRING_BOUNCY}
                 onClick={() => setDarkMode(!darkMode)}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer"
                 aria-label="Toggle dark mode"
@@ -311,36 +327,40 @@ export function Layout({ user }: { user: User }) {
               </motion.button>
 
               {/* Profile Link */}
-              <Link
-                to="/profile"
-                className={`flex items-center gap-2 pl-1 pr-1 sm:pl-1.5 sm:pr-2.5 h-8 sm:h-9 rounded-lg border transition-colors shrink-0 ${
-                  location.pathname === '/profile'
-                    ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
-                    : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
-                }`}
-                title="Officer Dossier & Lanyard Pass"
-              >
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
-                  {currentPhoto ? (
-                    currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
-                      <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />
+              <motion.div whileHover={{ y: -2, scale: 1.03 }} whileTap={{ scale: 0.92 }} transition={SPRING_BOUNCY}>
+                <Link
+                  to="/profile"
+                  className={`flex items-center gap-2 pl-1 pr-1 xl:pl-1.5 xl:pr-2.5 h-8 sm:h-9 rounded-lg border transition-colors shrink-0 ${
+                    location.pathname === '/profile'
+                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
+                      : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
+                  }`}
+                  title="Officer Dossier & Lanyard Pass"
+                >
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                    {currentPhoto ? (
+                      currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
+                        <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm leading-none">{currentPhoto}</span>
+                      )
                     ) : (
-                      <span className="text-sm leading-none">{currentPhoto}</span>
-                    )
-                  ) : (
-                    <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <span className="hidden lg:inline text-xs font-bold truncate max-w-[90px]">
-                  {currentDisplayName.split(' ')[0]}
-                </span>
-              </Link>
+                      <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <span className="hidden xl:inline text-xs font-bold truncate max-w-[88px]">
+                    {currentDisplayName.split(' ')[0]}
+                  </span>
+                </Link>
+              </motion.div>
 
-              {/* Sign Out (Desktop) */}
+              {/* Sign Out (Desktop / Tablet) */}
               <motion.button
-                whileTap={{ scale: 0.94 }}
+                whileHover={{ y: -2, scale: 1.05 }}
+                whileTap={{ scale: 0.9 }}
+                transition={SPRING_BOUNCY}
                 onClick={() => signOut(auth)}
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg text-xs font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#F3F0E0] dark:bg-[#1C1C1A] hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-[#E5E1CE] dark:border-[#2E2E2A] transition-colors cursor-pointer shrink-0"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2 xl:px-2.5 h-8 sm:h-9 rounded-lg text-xs font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#F3F0E0] dark:bg-[#1C1C1A] hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-[#E5E1CE] dark:border-[#2E2E2A] transition-colors cursor-pointer shrink-0"
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -374,7 +394,7 @@ export function Layout({ user }: { user: User }) {
               {location.pathname === '/' && (
                 <motion.span
                   layoutId="mobile-nav-pill"
-                  transition={SPRING_SNAPPY}
+                  transition={SPRING_BOUNCY}
                   className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
                 />
               )}
@@ -393,7 +413,7 @@ export function Layout({ user }: { user: User }) {
               {location.pathname === '/mistakes' && (
                 <motion.span
                   layoutId="mobile-nav-pill"
-                  transition={SPRING_SNAPPY}
+                  transition={SPRING_BOUNCY}
                   className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
                 />
               )}
@@ -407,8 +427,8 @@ export function Layout({ user }: { user: User }) {
               title="Start New Exam"
             >
               <motion.div
-                whileTap={{ scale: 0.9 }}
-                transition={SPRING_TACTILE}
+                whileTap={{ scale: 0.84, y: -3 }}
+                transition={SPRING_BOUNCY}
                 className="w-9 h-9 rounded-xl bg-[#0D47FF] border-[1.5px] border-[#141413] dark:border-[#FAF8EC] text-white flex items-center justify-center shadow-[2px_2px_0px_#141413] dark:shadow-[2px_2px_0px_#ECD5FF]"
               >
                 <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -435,7 +455,7 @@ export function Layout({ user }: { user: User }) {
               {location.pathname === '/history' && (
                 <motion.span
                   layoutId="mobile-nav-pill"
-                  transition={SPRING_SNAPPY}
+                  transition={SPRING_BOUNCY}
                   className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
                 />
               )}
@@ -444,7 +464,8 @@ export function Layout({ user }: { user: User }) {
             </Link>
 
             <motion.button
-              whileTap={{ scale: 0.93 }}
+              whileTap={{ scale: 0.86, y: -2 }}
+              transition={SPRING_BOUNCY}
               type="button"
               onClick={() => signOut(auth)}
               className="flex flex-col items-center justify-center h-full gap-1 text-center text-[#66665E] dark:text-[#A3A399] hover:text-rose-600 dark:hover:text-rose-400 font-medium cursor-pointer"
@@ -460,10 +481,10 @@ export function Layout({ user }: { user: User }) {
         <AnimatePresence>
           {!isNewExamRoute && (
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              initial={{ opacity: 0, y: 28, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.96 }}
-              transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+              exit={{ opacity: 0, y: 22, scale: 0.92 }}
+              transition={{ ...SPRING_BOUNCY, opacity: { duration: 0.22 } }}
               className="hidden lg:flex fixed bottom-5 left-1/2 -translate-x-1/2 z-40 items-center gap-4 pl-5 pr-2 py-2 rounded-full bg-[#141413] text-[#FAF8EC] border border-[#2E2E2A] dark:border-[#FAF8EC]/30 shadow-2xl"
             >
               <div className="flex items-center gap-2.5">
@@ -478,7 +499,7 @@ export function Layout({ user }: { user: User }) {
                 </div>
               </div>
 
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.94 }} transition={SPRING_BOUNCY}>
                 <Link
                   to="/new"
                   className="px-4 py-2 rounded-full bg-[#ECD5FF] hover:bg-[#E1BEFF] text-[#141413] text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
@@ -505,10 +526,13 @@ export function Layout({ user }: { user: User }) {
           >
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 18, scale: 0.992 }}
+              initial={{ opacity: 0, y: 20, scale: 0.985 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.36, ease: EASE_OUT_EXPO }}
+              exit={{ opacity: 0, y: -12, scale: 0.99 }}
+              transition={{
+                ...SPRING_BUTTERY,
+                opacity: { duration: 0.22, ease: EASE_OUT_EXPO },
+              }}
               className="w-full flex-1 will-change-transform"
             >
               {currentOutlet}

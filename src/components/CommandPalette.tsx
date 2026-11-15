@@ -15,7 +15,7 @@ import {
   User as UserIcon
 } from 'lucide-react';
 import { SubjectIcon } from './dashboard/SubjectIcon';
-import { SPRING_SNAPPY } from './MotionPrimitives';
+import { SPRING_BOUNCY, SPRING_SNAPPY } from './MotionPrimitives';
 
 export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const navigate = useNavigate();
@@ -73,11 +73,11 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
           aria-label="Command palette quick navigation"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: -12 }}
+            initial={{ opacity: 0, scale: 0.88, y: -18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -8 }}
-            transition={SPRING_SNAPPY}
-            className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/80 shadow-[5px_5px_0px_#141413] dark:shadow-[5px_5px_0px_#ECD5FF] overflow-hidden my-auto sm:my-0"
+            exit={{ opacity: 0, scale: 0.92, y: -10 }}
+            transition={{ ...SPRING_BOUNCY, opacity: { duration: 0.16 } }}
+            className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/80 shadow-[5px_5px_0px_#141413] dark:shadow-[5px_5px_0px_#ECD5FF] overflow-hidden my-auto sm:my-0 will-change-transform"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#141413] shrink-0">
@@ -111,7 +111,9 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
                     return (
                       <motion.button
                         key={idx}
-                        whileHover={{ x: 2 }}
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={SPRING_SNAPPY}
                         onClick={() => handleSelect(item.path)}
                         className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#ECD5FF] hover:text-[#141413] text-left text-xs font-semibold text-[#141413] dark:text-[#FAF8EC] transition-colors cursor-pointer"
                       >
@@ -134,7 +136,9 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
                   {filteredSubjects.map((s) => (
                     <motion.button
                       key={s.id}
-                      whileHover={{ x: 2 }}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={SPRING_SNAPPY}
                       onClick={() => handleSelect(`/subject/${s.slug}`)}
                       className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFFFFF] dark:hover:bg-[#242421] border border-transparent hover:border-[#E5E1CE] dark:hover:border-[#2E2E2A] text-left text-xs font-semibold transition-colors cursor-pointer"
                     >

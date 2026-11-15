@@ -299,11 +299,11 @@ export function Exam({ user }: { user: User }) {
             <AnimatePresence mode="wait">
               <motion.div
                 key={`q-panel-${currentIndex}`}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.16, ease: EASE_OUT_EXPO }}
-                className="space-y-5"
+                initial={{ opacity: 0, x: 18, scale: 0.99 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -14, scale: 0.99 }}
+                transition={{ ...SPRING_SNAPPY, opacity: { duration: 0.14 } }}
+                className="space-y-5 will-change-transform"
               >
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
@@ -344,7 +344,8 @@ export function Exam({ user }: { user: User }) {
                         return (
                           <motion.label
                             key={i}
-                            whileTap={{ scale: 0.99 }}
+                            whileHover={{ x: 3 }}
+                            whileTap={{ scale: 0.975 }}
                             transition={SPRING_SNAPPY}
                             onClick={() => handleAnswerChange(opt)}
                             className={clsx(
