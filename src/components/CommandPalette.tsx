@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSubject } from '../context/SubjectContext';
@@ -21,6 +21,8 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const navigate = useNavigate();
   const { subjects } = useSubject();
   const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,7 +35,25 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen) setQuery('');
+    if (!isOpen) return;
+    setQuery('');
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.__lenis?.stop();
+
+    const rafId = requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      document.body.style.overflow = prevOverflow;
+      window.__lenis?.start();
+    };
   }, [isOpen]);
 
   const quickLinks = [
@@ -62,33 +82,35 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          data-lenis-prevent
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
-          className="fixed inset-0 z-[99999] flex items-start justify-center pt-8 sm:pt-20 p-3 sm:p-4 bg-[#141413]/75 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-[99999] flex items-start justify-center pt-10 sm:pt-20 p-3 sm:p-4 bg-[#141413]/75 backdrop-blur-sm overflow-hidden overscroll-contain"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
           aria-label="Command palette quick navigation"
         >
           <motion.div
+            data-lenis-prevent
             initial={{ opacity: 0, scale: 0.88, y: -18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -10 }}
             transition={{ ...SPRING_BOUNCY, opacity: { duration: 0.16 } }}
-            className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/80 shadow-[5px_5px_0px_#141413] dark:shadow-[5px_5px_0px_#ECD5FF] overflow-hidden my-auto sm:my-0 will-change-transform"
+            className="w-full max-w-xl max-h-[82vh] sm:max-h-[78vh] flex flex-col rounded-2xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/80 shadow-[5px_5px_0px_#141413] dark:shadow-[5px_5px_0px_#ECD5FF] overflow-hidden will-change-transform"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#141413] shrink-0">
               <Search className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
               <input
+                ref={inputRef}
                 type="text"
                 placeholder="Search subject, syllabus topic, or route..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#66665E] focus:outline-none"
-                autoFocus
               />
               <button
                 type="button"
@@ -100,7 +122,12 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
               </button>
             </div>
 
-            <div className="max-h-96 overflow-y-auto p-3 space-y-4">
+            <div
+              ref={scrollContainerRef}
+              data-lenis-prevent
+              className="flex-auto min-h-0 max-h-[65vh] sm:max-h-[420px] overflow-y-auto overscroll-contain touch-pan-y p-3 space-y-4"
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] px-2 block mb-1.5">
                   Navigation

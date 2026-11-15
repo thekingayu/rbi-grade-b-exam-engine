@@ -48,6 +48,25 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
         wheelMultiplier: 0.92,
         touchMultiplier: 0,
         infinite: false,
+        allowNestedScroll: true,
+        prevent: (node) => {
+          if (!(node instanceof Element)) return false;
+          if (node.closest('[data-lenis-prevent], [role="dialog"], [aria-modal="true"]')) {
+            return true;
+          }
+          let el: Element | null = node;
+          while (el && el !== document.body && el !== document.documentElement) {
+            const overflowY = window.getComputedStyle(el).overflowY;
+            if (
+              (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+              el.scrollHeight > el.clientHeight + 1
+            ) {
+              return true;
+            }
+            el = el.parentElement;
+          }
+          return false;
+        },
       });
 
       lenisRef.current = lenis;
@@ -80,7 +99,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   // Handle route transitions smoothly
   useEffect(() => {
     if (!lenisRef.current || isExam) return;
-    lenisRef.current.scrollTo(0, { immediate: true });
+    lenisRef.current.scrollTo(0, { immediate: true, force: true });
   }, [location.pathname, isExam]);
 
   return <>{children}</>;

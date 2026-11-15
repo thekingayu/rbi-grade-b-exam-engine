@@ -213,7 +213,11 @@ export function Layout({ user }: { user: User }) {
 
                         <div className="my-1.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]" />
 
-                        <div className="max-h-60 overflow-y-auto space-y-0.5">
+                        <div
+                          data-lenis-prevent
+                          onWheel={(e) => e.stopPropagation()}
+                          className="max-h-60 overflow-y-auto overscroll-contain touch-pan-y space-y-0.5"
+                        >
                           {subjects
                             .filter((s) => s.slug !== 'uncategorized')
                             .map((sub) => (
