@@ -332,12 +332,18 @@ export function Layout({ user }: { user: User }) {
                   to="/profile"
                   className={`flex items-center gap-2 pl-1 pr-1 xl:pl-1.5 xl:pr-2.5 h-8 sm:h-9 rounded-lg border transition-colors shrink-0 ${
                     location.pathname === '/profile'
-                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
-                      : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
+                      ? 'bg-[#0D47FF] border-[#141413] dark:border-[#FAF8EC]/60 text-white shadow-[2px_2px_0px_#141413] dark:shadow-[2px_2px_0px_#FFD426]'
+                      : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] hover:border-[#0D47FF] dark:hover:border-[#0D47FF]'
                   }`}
                   title="Officer Dossier & Lanyard Pass"
                 >
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                  <div
+                    className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 ${
+                      location.pathname === '/profile'
+                        ? 'bg-[#141413] text-white ring-1 ring-white/35'
+                        : 'bg-[#0D47FF] text-white'
+                    }`}
+                  >
                     {currentPhoto ? (
                       currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
                         <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />

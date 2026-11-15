@@ -31,6 +31,7 @@ import {
 } from '../components/SignatureGraphics';
 import {
   EASE_OUT_EXPO,
+  SPRING_BOUNCY,
   SPRING_SNAPPY,
   SPRING_BUTTERY,
   AnimatedNumber,
@@ -158,67 +159,101 @@ export function Login() {
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] font-sans overflow-x-clip">
       {/* 1. CLEAN 3-ZONE TOP NAVIGATION BAR */}
-      <header className="w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-2 sm:gap-4">
+      <header className="sticky top-0 z-50 w-full bg-[#141413]/95 backdrop-blur-md text-[#FAF8EC] border-b border-[#2E2E2A]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-2 sm:gap-4">
           {/* Zone 1: Dual Brand Wordmark */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
-            <span className="font-heading font-black text-sm sm:text-lg tracking-tight text-white whitespace-nowrap">
+          <button
+            type="button"
+            onClick={() => scrollToSection('portal-stage')}
+            className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0 cursor-pointer group text-left"
+          >
+            <span className="font-heading font-black text-xs sm:text-base lg:text-lg tracking-tight text-white whitespace-nowrap">
               RBI GRADE B
             </span>
-            <span className="hidden xs:inline sm:inline text-[#A3A399] text-sm">×</span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 font-heading font-bold text-base sm:text-lg text-[#ECD5FF] whitespace-nowrap">
-              <BookOpen className="w-4 h-4 text-[#ECD5FF]" />
-              Engine
+            <span className="hidden sm:inline-flex md:hidden lg:inline-flex items-center gap-1.5 text-[#A3A399] text-sm">
+              <span>×</span>
+              <span className="inline-flex items-center gap-1.5 font-heading font-bold text-base lg:text-lg text-[#ECD5FF] whitespace-nowrap">
+                <BookOpen className="w-4 h-4 text-[#ECD5FF] transition-transform group-hover:scale-110" />
+                Engine
+              </span>
             </span>
-          </div>
+          </button>
 
           {/* Zone 2: Minimal Text Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-widest text-[#A3A399]">
-            <button onClick={() => scrollToSection('rounds-section')} className="hover:text-white transition-colors cursor-pointer">
+          <nav className="hidden md:flex items-center gap-5 lg:gap-8 text-[11px] lg:text-xs font-mono uppercase tracking-wider lg:tracking-widest text-[#A3A399] shrink-0">
+            <motion.button
+              type="button"
+              whileHover={{ y: -1.5, color: '#FFFFFF' }}
+              whileTap={{ scale: 0.95 }}
+              transition={SPRING_BOUNCY}
+              onClick={() => scrollToSection('rounds-section')}
+              className="hover:text-white transition-colors cursor-pointer whitespace-nowrap py-1.5"
+            >
               Rounds
-            </button>
-            <button onClick={() => scrollToSection('benchmarks-section')} className="hover:text-white transition-colors cursor-pointer">
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ y: -1.5, color: '#FFFFFF' }}
+              whileTap={{ scale: 0.95 }}
+              transition={SPRING_BOUNCY}
+              onClick={() => scrollToSection('benchmarks-section')}
+              className="hover:text-white transition-colors cursor-pointer whitespace-nowrap py-1.5"
+            >
               Benchmarks
-            </button>
-            <button onClick={() => scrollToSection('portal-stage')} className="hover:text-white transition-colors cursor-pointer">
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ y: -1.5, color: '#FFFFFF' }}
+              whileTap={{ scale: 0.95 }}
+              transition={SPRING_BOUNCY}
+              onClick={() => scrollToSection('portal-stage')}
+              className="hover:text-white transition-colors cursor-pointer whitespace-nowrap py-1.5"
+            >
               Officer Pass
-            </button>
+            </motion.button>
           </nav>
 
           {/* Zone 3: Theme Switcher + Auth Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <motion.button
-              whileTap={{ scale: 0.92 }}
+              whileHover={{ y: -1.5, scale: 1.06 }}
+              whileTap={{ scale: 0.88, rotate: 20 }}
+              transition={SPRING_BOUNCY}
+              type="button"
               onClick={() => setIsDark(!isDark)}
-              className="p-2 rounded-lg border border-[#2E2E2A] text-[#A3A399] hover:text-white hover:border-[#FAF8EC]/40 transition-colors cursor-pointer"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#2E2E2A] text-[#A3A399] hover:text-white hover:border-[#FAF8EC]/40 transition-colors cursor-pointer flex items-center justify-center shrink-0"
               aria-label="Toggle theme"
               title="Toggle Cream / Dark Canvas below"
             >
               {isDark ? <Sun className="w-4 h-4 text-[#FFD426]" /> : <Moon className="w-4 h-4" />}
             </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              transition={SPRING_SNAPPY}
               type="button"
               onClick={() => {
                 setIsLogin(true);
                 setError('');
                 scrollToSection('portal-stage');
               }}
-              className="text-xs sm:text-sm font-semibold text-[#FAF8EC] hover:text-[#ECD5FF] transition-colors px-2 py-1.5 cursor-pointer whitespace-nowrap"
+              className="text-xs sm:text-sm font-semibold text-[#FAF8EC] hover:text-white hover:bg-white/10 rounded-lg transition-colors px-2 sm:px-3 py-1.5 cursor-pointer whitespace-nowrap"
             >
               Log in
-            </button>
+            </motion.button>
 
             <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ y: -2, scale: 1.03 }}
+              whileTap={{ scale: 0.94 }}
+              transition={SPRING_BOUNCY}
               type="button"
               onClick={() => {
                 setIsLogin(false);
                 setError('');
                 scrollToSection('portal-stage');
               }}
-              className="px-3 sm:px-4 py-2 rounded-lg bg-[#0D47FF] hover:bg-[#1954FF] text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer whitespace-nowrap"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#0D47FF] hover:bg-[#1954FF] text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer whitespace-nowrap shadow-[2px_2px_0px_#000000]"
             >
               Start free
             </motion.button>
@@ -227,7 +262,7 @@ export function Login() {
       </header>
 
       {/* 2. SIGNATURE DARK EDITORIAL AUTH STAGE + HANGING LAVENDER LANYARD PASS */}
-      <section id="portal-stage" className="w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
+      <section id="portal-stage" className="scroll-mt-20 w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-4 pb-10 sm:pt-6 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* LEFT COLUMN: Editorial Headline + Form */}
@@ -458,7 +493,7 @@ export function Login() {
       {/* 3. STATION SIGNBOARDS: THREE-STAGE EXAMINATION ARCHITECTURE */}
       <section
         id="rounds-section"
-        className="w-full bg-[#FAF8EC] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] py-10 sm:py-20 border-b border-[#E5E1CE] dark:border-[#2E2E2A]"
+        className="scroll-mt-20 w-full bg-[#FAF8EC] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] py-10 sm:py-20 border-b border-[#E5E1CE] dark:border-[#2E2E2A]"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 sm:space-y-12">
           <motion.div
@@ -581,7 +616,7 @@ export function Login() {
       {/* 5. HIGHLIGHTED BENCHMARK CARDS + SOFT LAVENDER CALLOUT STRIP */}
       <section
         id="benchmarks-section"
-        className="w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-14 space-y-4 sm:space-y-5"
+        className="scroll-mt-20 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-14 space-y-4 sm:space-y-5"
       >
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -605,9 +640,9 @@ export function Login() {
           {/* Card 1 */}
           <MotionStaggerItem className="h-full">
             <motion.div
-              whileHover={{ y: -6 }}
-              whileTap={{ scale: 0.99 }}
-              transition={SPRING_BUTTERY}
+              whileHover={{ y: -7, scale: 1.015 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_BOUNCY}
               className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
             >
               <div className="flex items-start justify-between gap-3">
@@ -630,9 +665,9 @@ export function Login() {
           {/* Card 2 */}
           <MotionStaggerItem className="h-full">
             <motion.div
-              whileHover={{ y: -6 }}
-              whileTap={{ scale: 0.99 }}
-              transition={SPRING_BUTTERY}
+              whileHover={{ y: -7, scale: 1.015 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_BOUNCY}
               className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
             >
               <div className="flex items-start justify-between gap-3">
@@ -655,9 +690,9 @@ export function Login() {
           {/* Card 3 */}
           <MotionStaggerItem className="h-full">
             <motion.div
-              whileHover={{ y: -6 }}
-              whileTap={{ scale: 0.99 }}
-              transition={SPRING_BUTTERY}
+              whileHover={{ y: -7, scale: 1.015 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_BOUNCY}
               className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
             >
               <div className="flex items-start justify-between gap-3">
