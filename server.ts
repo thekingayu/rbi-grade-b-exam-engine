@@ -138,6 +138,81 @@ function safeJsonParse(text: string): any {
   }
 }
 
+function getDifficultyDirective(difficulty: string, subjectSlug: string): string {
+  const normalized = (difficulty || 'Hard').toLowerCase();
+
+  if (normalized === 'easy') {
+    return `
+DIFFICULTY CALIBRATION — FOUNDATIONAL RBI GRADE B:
+- Focus on clear conceptual verification and core statutory rules without ambiguous trick phrasing.
+- Still maintain strict 5-option RBI formatting and accurate explanations.`;
+  }
+
+  if (normalized === 'moderate') {
+    return `
+DIFFICULTY CALIBRATION — OFFICIAL RBI GRADE B STANDARD:
+- Match standard RBI Grade B Phase I & Phase II exam complexity: multi-concept MCQs, 2-step numericals, standard 2-variable puzzles, and realistic near-miss distractors.
+- Avoid trivial direct-definition questions.`;
+  }
+
+  let subjectExtremeSpecs = '';
+  if (subjectSlug === 'reasoning') {
+    subjectExtremeSpecs = `
+- EXTREME REASONING MANDATE (IBPS PO MAINS / RBI GRADE B TOUGHEST SHIFT CALIBRE):
+  * Puzzles & Seating: Build dense 3-variable or 4-variable arrangements (e.g., 8-10 people across floors/flats WITH a vacant flat/floor OR uncertain-number linear/circular seating facing both inward & outward WITH blood relation links & designation/bank constraints & negative conditions). Single-variable 4-line puzzles are STRICTLY FORBIDDEN.
+  * Machine Input-Output: Multi-step dual-condition alphanumeric shifting/rearrangement where word vowel/consonant rules + prime/composite number transforms apply simultaneously across 4-5 steps.
+  * Syllogisms & Critical Reasoning: Use Reverse Syllogisms (find which set of 4-5 statements guarantees 3 complex conclusions) OR multi-clause "Only a few" + "Can never be" + "Possibility" traps. In Critical Reasoning, avoid obvious moral/common-sense choices—test subtle implicit assumptions, necessary conditions, paradox resolution, and causal weakening.
+  * Coded Inequalities & Blood Relations: Multi-symbol chains with coded brackets and 3-generation lineage traps.`;
+  } else if (subjectSlug === 'quant') {
+    subjectExtremeSpecs = `
+- EXTREME QUANTITATIVE MANDATE (CAT 99%ILE / RBI PHASE 1 TOUGHEST SHIFT CALIBRE):
+  * Data Interpretation & Caselets: Use MISSING-VALUE tables, double pie/bar logic, or variable-embedded (X, Y, Z) Caselet DI requiring solving quadratic/simultaneous equations first before computing CAGR, weighted averages, or conditional ratios.
+  * Arithmetic & Algebra: Combine multiple concepts per problem (e.g., dishonest dealer + successive markup/discount + partnership with time-varying capital + CI with variable rate per year, or Boat/Stream + Time-Speed-Distance relative motion).
+  * Quadratics / Series / Comparisons: Include equations with fractional/surd/cubic terms, wrong-number series combining alternating prime/cube/factorial differences, 3-statement Data Sufficiency (checking Statement I, II, III sufficiency combinations rigorously), and Quantity I vs Quantity II vs Quantity III requiring exact multi-step algebra.`;
+  } else if (subjectSlug === 'english') {
+    subjectExtremeSpecs = `
+- EXTREME ENGLISH MANDATE (GMAT 750+ / RBI GRADE B HARDEST SHIFT CALIBRE):
+  * Reading Comprehension: Dense central-banking/monetary-economics editorial excerpts (The Economist / BIS / RBI Bulletin style) testing nuanced authorial tone shifts, implicit paradoxes, primary logical flaw, strengthen/weaken inference, and subtle contextual phrasing.
+  * Grammar & Syntax: Multi-clause sentences testing subjunctive mood, inverted conditionals, dangling/misplaced modifiers, parallelism across nested clauses, and genuine "No Error" traps—no simple subject-verb typos.
+  * Para-Jumbles & Fillers: 6-sentence coherent academic/financial paragraph reconstruction and triple-blank / double-sentence contextual fillers using high-register C2/economic vocabulary where multiple options share similar surface meanings.`;
+  } else if (subjectSlug === 'general-awareness') {
+    subjectExtremeSpecs = `
+- EXTREME GENERAL AWARENESS MANDATE (UPSC PRELIMS + RBI GRADE B PHASE 1 TOUGHEST SHIFT CALIBRE):
+  * BANNED: Never ask single-fact recall like "Where is the headquarters of..." or "What is the full form of...".
+  * MANDATORY FORMATS: At least 80% of questions MUST use:
+    (a) Multi-statement synthesis ("Consider Statements I, II, III and IV..."),
+    (b) UPSC/RBI 2023-2025 Pair-Counting ("How many of the statements/pairs given above is/are CORRECT? Only one / Only two / Only three / All four / None") so candidates CANNOT solve by eliminating one option,
+    (c) Exact statutory traps (specific Section numbers & sub-clauses of RBI Act 1934, BR Act 1949, DICGC Act, FEMA 1999, PMLA, subtle 25/50 bps or percentage threshold differences, swapped regulator/committee jurisdiction).
+  * Dynamic 2024–2026 Current Affairs: Test second-order details of RBI Master Directions, MPC corridor triggers, PCA Risk Threshold 1/2/3 ratios, Union Budget/Economic Survey fiscal glidepath/capex figures, and global central-bank/BIS frameworks—not superficial headlines.`;
+  } else if (subjectSlug === 'esi') {
+    subjectExtremeSpecs = `
+- EXTREME ESI MANDATE (RBI GRADE B PHASE 2 + INDIAN ECONOMIC SERVICE CALIBRE):
+  * MCQs: Test multi-statement theoretical & empirical synthesis—e.g. combining Solow-Swan steady-state dynamics, Gini/Lorenz/MPI methodology traps, National Income accounting identity edge cases, BoP Capital vs Current Account sub-components, and intricate scheme exclusions/funding splits (Centre:State ratio, beneficiary caps, sunset clauses) in Union Budget & Economic Survey 2024–2026.
+  * Use Pair-Counting ("Only one / Only two / Only three / All four / None") and "Which of the above statements are INCORRECT?" traps regularly.
+  * Descriptive: Craft policy trade-off dilemmas (e.g., fiscal consolidation vs public capex multiplier under sticky food inflation and sovereign debt dynamics) demanding quantitative anchors and counter-arguments.`;
+  } else if (subjectSlug === 'fm') {
+    subjectExtremeSpecs = `
+- EXTREME FINANCE & MANAGEMENT MANDATE (CFA LEVEL II + RBI GRADE B PHASE 2 CALIBRE):
+  * Chained Financial Numericals: Require 2–4 chained formulas per numerical MCQ (e.g. DuPont 5-factor ROE decomposition, WACC with tax-shield & market-value debt weights, Bond price sensitivity using Modified Duration + Convexity, YTM approximation, Levered vs Unlevered Beta using Hamada equation, DSCR with tax-adjusted preference dividends, Basel III CET-1 + CCB + Countercyclical + D-SIB capital surcharge exact rupee calculations).
+  * Governance & Organizational Behavior: Test subtle intersections (e.g., differentiating Herzberg's motivators vs Alderfer's ERG regression-frustration vs Vroom's Expectancy Valence/Instrumentality, or Kotak Committee vs Kumar Mangalam Birla / SEBI LODR independent director & audit committee quorum traps) in realistic caselet form.
+  * Descriptive: Construct boardroom regulatory/risk-governance crises requiring Basel/RBI supervisory mechanics and structural change-management execution.`;
+  } else if (subjectSlug === 'english-writing') {
+    subjectExtremeSpecs = `
+- EXTREME WRITING MANDATE:
+  * Essay topics must pose sharp macroeconomic/central-banking paradoxes (e.g., AI-driven productivity vs monetary policy transmission lags, or CBDC programmability vs privacy & commercial bank disintermediation).
+  * Précis source passages must be dense, multi-layered institutional speeches requiring exact abstraction without losing nuance.`;
+  }
+
+  return `
+DIFFICULTY CALIBRATION — MAXIMUM / EXTREME HARD MODE (ABSOLUTE PEAK RIGOR):
+YOU MUST PUSH QUESTION DIFFICULTY TO THE FULLEST POSSIBLE EXTENT. "Hard" here means EXTREMELY HARD — top 0.1% difficulty matching the hardest shift ever set by IBPS/RBI/UPSC/CAT.
+STRICT ANTI-SOFTBALL RULES:
+1. ZERO trivial, single-fact, or one-step questions. Every question must require AT LEAST 2–3 distinct reasoning steps, nested exclusions, multi-statement cross-verification, or chained formulas.
+2. ADVERSARIAL DISTRACTOR DESIGN: Every single incorrect option among the 5 options must represent a plausible, realistic mistake (a forgotten tax adjustment, a wrong RBI Act section, a swapped committee threshold, an off-by-one constraint in a puzzle, or a subtle sign reversal).
+3. AVOID LAZY SHORTCUT OPTIONS: Do NOT pad Option 5 with "All of the above" or "Both (A) and (B)" unless rigorously justified; craft 5 genuinely competing analytical distractors or use UPSC-style "Only one / Only two / Only three / All four / None" pair-counting where partial elimination fails.
+4. NEGATIVE & EXCEPTION TRAPS: Regularly test subtle regulatory exceptions, boundary conditions ("except", "incorrect", "necessary vs sufficient"), and multi-layer numerical traps.${subjectExtremeSpecs}`;
+}
+
 function buildSubjectPrompt(subjectSlug: string, subjectName: string, config: any, extractedText: string): string {
   const pyqCount = typeof config.pyqCount === 'number' ? config.pyqCount : 0;
   const totalMcqs = (config.mcqStatic || 0) + (config.mcqDynamic || 0) + pyqCount;
@@ -153,6 +228,7 @@ function buildSubjectPrompt(subjectSlug: string, subjectName: string, config: an
   const topicFocus = config.targetTopic ? `SPECIFIC TOPIC FOCUS: "${config.targetTopic}"` : '';
   const examMode = config.mode || 'Sectional';
   const difficulty = config.difficulty || 'Hard';
+  const difficultyDirective = getDifficultyDirective(difficulty, subjectSlug);
 
   let subjectSpecificRules = '';
   let jsonSchemaExample = '';
@@ -167,8 +243,8 @@ QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
   Topics: Reverse Syllogisms & Syllogisms ("Only a few", "Can never be"), Machine Input-Output with multi-step alphanumeric shifting/reversal, Coded Inequalities (@, #, $, %, &), Coded Blood Relations with 3-generation lineage, Direction & Distance with angular degree shifts.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics: Multi-variable Floor/Flat Puzzles (8 persons on 4 floors, 2 flats, banks/cities/colors), Linear/Circular/Square Seating arrangements (inward/outward facing), Critical & Evaluative Reasoning (Statement-Assumption, Statement-Course of Action, Strong/Weak Arguments, Inferences).
-${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 1 Reasoning papers (2018–2025) matching the selected topic or puzzle patterns. Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, 2021, etc.).` : ''}
+  Topics: Multi-variable Floor/Flat Puzzles (8–10 persons, 4–5 floors, 2 flats, vacant flat/floor traps, banks/cities/colors), Linear/Circular/Square seating arrangements (uncertain number, inward/outward facing), Critical & Evaluative Reasoning (Statement-Assumption, Inference, Course of Action, Weakening/Strengthening).
+${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 1 Reasoning papers (2018–2025) matching the selected topic or hardest puzzle patterns. Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, 2021, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every MCQ MUST have EXACTLY 5 distinct options.
@@ -220,9 +296,9 @@ This is a pure examination of advanced quantitative ability, commercial arithmet
 
 QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics: Commercial Mathematics (SI/CI with mixed compounding, Profit-Loss with successive markups and dishonest weights, Time-Speed-Distance, Time & Work), Quadratic Equations & Algebraic Comparisons (Equation I: ax² + bx + c = 0 vs Equation II: dy² + ey + f = 0), Missing & Wrong Number Series, Probability & Combinatorics.
+  Topics: Multi-concept Commercial Mathematics (SI/CI with mixed variable compounding, Dishonest weights + successive markups, Partnership with changing capital, Time-Speed-Distance & Time-Work), Quadratic/Cubic Algebraic Comparisons, Wrong & Missing Number Series with nested prime/cube/factorial patterns, Conditional Probability & Combinatorics.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics: Caselet Data Interpretation, Tabular & Radar DI Sets testing CAGR and proportional variance, Quantity I vs Quantity II comparisons, Data Sufficiency.
+  Topics: Missing-Value Tabular & Variable-Embedded Caselet Data Interpretation testing CAGR and proportional variance, Quantity I vs Quantity II vs Quantity III comparisons, 3-Statement Data Sufficiency.
 ${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Quantitative Aptitude papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
@@ -274,9 +350,9 @@ CRITICAL RULE: Advanced verbal acuity, grammatical syntax, vocabulary in context
 
 QUESTION DISTRIBUTION:
 - CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics: Error Detection (subjunctive mood, parallelism, inverted conditionals), Phrase Replacement, Sentence Connectors & Starters, High-register Double Fillers & Cloze Mechanics.
+  Topics: Complex Error Detection (subjunctive mood, parallelism, misplaced modifiers, inverted conditionals), Phrase Replacement, Sentence Connectors & Starters, High-register Triple/Double Fillers & Cloze Mechanics.
 - CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics: Reading Comprehension on macroeconomic/central banking themes with inferential questions, Para Jumbles (5-6 sentence coherent sequencing).
+  Topics: Dense Reading Comprehension on macroeconomic/central banking themes with inferential/flaw/assumption questions, 6-sentence coherent Para Jumbles.
 ${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B English Language papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 STRICT FORMAT REQUIREMENTS:
@@ -337,7 +413,7 @@ ${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authenti
 
 STRICT FORMAT REQUIREMENTS:
 - Every single MCQ MUST have EXACTLY 5 distinct options.
-- Utilize authentic multi-statement formats (Statement I, II, III) and Assertion-Reason pairs.`;
+- Utilize authentic multi-statement formats (Statements I, II, III, IV), UPSC-style pair-counting ("How many of the statements/pairs given above is/are correct?"), and subtle statutory/numerical traps.`;
 
     jsonSchemaExample = `{
   "questions": [
@@ -346,16 +422,16 @@ STRICT FORMAT REQUIREMENTS:
       "sourceTag": "Static",
       "isPyq": false,
       "topic": "${config.targetTopic || 'Statutory Banking & Monetary Policy'}",
-      "text": "Consider the following statements regarding the Standing Deposit Facility (SDF) introduced by the Reserve Bank of India:\\n\\nI. The SDF allows the RBI to absorb liquidity from commercial banks without providing collateral in return.\\nII. The SDF rate serves as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. The RBI was empowered to introduce the SDF through an amendment to Section 17 of the RBI Act, 1934.\\n\\nWhich of the statements given above is/are correct?",
+      "text": "Consider the following statements regarding the Standing Deposit Facility (SDF) introduced by the Reserve Bank of India:\\n\\nI. The SDF allows the RBI to absorb liquidity from commercial banks without providing collateral in return.\\nII. The SDF rate serves as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. The RBI was empowered to introduce the SDF through an amendment to Section 17 of the RBI Act, 1934.\\nIV. Balances parked under SDF are eligible for Statutory Liquidity Ratio (SLR) maintenance.\\n\\nHow many of the statements given above is/are CORRECT?",
       "options": [
-        "Only I and II",
-        "Only II and III",
-        "Only I and III",
-        "All I, II and III",
-        "None of the above"
+        "Only one statement",
+        "Only two statements",
+        "Only three statements",
+        "All four statements",
+        "None of the statements"
       ],
-      "correctAnswer": "All I, II and III",
-      "explanation": "All three statements are correct: (I) SDF is uncollateralized liquidity absorption; (II) it replaced fixed-rate reverse repo as the LAF corridor floor (25 bps below the policy repo rate); (III) Section 17 of the RBI Act was amended in 2018 to empower the RBI to introduce SDF.",
+      "correctAnswer": "Only three statements",
+      "explanation": "Statements I, II, and III are correct: SDF is uncollateralized, sets the LAF floor, and derives statutory backing from the 2018 amendment to Section 17 of the RBI Act, 1934. Statement IV is INCORRECT: Balances under SDF are NOT eligible for SLR (though they count towards CRR/liquidity buffers as specified, they are distinct from SLR securities).",
       "maxMarks": 1
     },
     {
@@ -405,14 +481,14 @@ Provide a 4-pillar marking rubric and structured model answer with headings.`;
       "topic": "${config.targetTopic || 'Macroeconomic Theory & National Income'}",
       "text": "Which of the following macroeconomic indicators correctly captures the 'Net Domestic Product at Factor Cost' (NDP_FC)?",
       "options": [
-        "GDP at Market Prices - Depreciation - Net Indirect Taxes",
+        "GDP at Market Prices - Depreciation - Indirect Taxes + Subsidies",
         "GNP at Market Prices - Depreciation + Net Indirect Taxes",
         "GDP at Factor Cost + Net Factor Income from Abroad",
-        "NDP at Market Prices + Subsidies - Indirect Taxes",
-        "Both (A) and (D) are correct formulations"
+        "NDP at Market Prices + Indirect Taxes - Subsidies",
+        "GNP at Factor Cost + Depreciation - Net Factor Income from Abroad"
       ],
-      "correctAnswer": "Both (A) and (D) are correct formulations",
-      "explanation": "NDP_FC = GDP_MP - Depreciation - Net Indirect Taxes (where NIT = Indirect Taxes - Subsidies). Equivalently, NDP_FC = NDP_MP - NIT = NDP_MP - Indirect Taxes + Subsidies. Hence both (A) and (D) represent valid formulations.",
+      "correctAnswer": "GDP at Market Prices - Depreciation - Indirect Taxes + Subsidies",
+      "explanation": "NDP_FC = GDP_MP - Depreciation - Net Indirect Taxes (where NIT = Indirect Taxes - Subsidies). Subtracting (Indirect Taxes - Subsidies) gives GDP_MP - Depreciation - Indirect Taxes + Subsidies.",
       "maxMarks": 1
     },
     {
@@ -444,7 +520,7 @@ MANDATORY RULES FOR BOTH STATIC & DYNAMIC QUESTIONS:
   You MUST strictly anchor to RECENT DEVELOPMENTS in Indian financial markets, latest RBI regulatory frameworks (2024–2026 circulars, dynamic risk weights, digital lending guidelines, FinTech sandbox cohorts, Central Bank Digital Currency e-Rupee rollout), contemporary corporate governance dilemmas, and leadership change in public/private institutions.
 - FOR STATIC QUESTIONS ("${primaryMcqLabel}"):
   Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  You MUST base these questions directly on the archetypes, depth, and traps found in authentic RBI Grade B FM Previous Year Questions (PYQs). Include rigorous numerical calculations (Yield to Maturity, Modified Duration, WACC, DuPont ROE decomposition, Debt Service Coverage Ratio, Beta), Basel III capital adequacy ratios (CET-1, CCB, Countercyclical buffer), corporate governance committee recommendations (Kumar Mangalam Birla, Naresh Chandra, Narayana Murthy, Uday Kotak), and classical motivation/leadership models (Maslow, Herzberg, Vroom, Alderfer, Blake-Mouton). The difficulty level must match or EXCEED the hardest RBI Grade B PYQs.
+  You MUST base these questions directly on the archetypes, depth, and traps found in authentic RBI Grade B FM Previous Year Questions (PYQs). Include rigorous multi-step numerical calculations (Yield to Maturity, Modified Duration, WACC, DuPont ROE decomposition, Debt Service Coverage Ratio, Levered Beta), Basel III capital adequacy ratios (CET-1, CCB, Countercyclical buffer, D-SIB), corporate governance committee recommendations (Kumar Mangalam Birla, Naresh Chandra, Narayana Murthy, Uday Kotak), and classical motivation/leadership models (Maslow, Herzberg, Vroom, Alderfer, Blake-Mouton). The difficulty level must match or EXCEED the hardest RBI Grade B PYQs.
 ${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Phase 2 FM papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
 
 DESCRIPTIVE QUESTIONS:
@@ -458,16 +534,16 @@ DESCRIPTIVE QUESTIONS:
       "sourceTag": "Static",
       "isPyq": false,
       "topic": "${config.targetTopic || 'Corporate Finance & Basel III'}",
-      "text": "A commercial bank in India reports Risk-Weighted Assets (RWAs) of Rs. 100,000 crore. Under RBI Basel III guidelines, what is the minimum Common Equity Tier 1 (CET-1) capital including the Capital Conservation Buffer (CCB) required to be maintained by this bank?",
+      "text": "A commercial bank classified as a Domestic Systemically Important Bank (D-SIB) in Bucket 3 reports Risk-Weighted Assets (RWAs) of Rs. 100,000 crore. Under RBI Basel III guidelines (with Countercyclical Capital Buffer at 0%), what is the minimum Common Equity Tier 1 (CET-1) capital including the Capital Conservation Buffer (CCB) and D-SIB surcharge required to be maintained?",
       "options": [
         "Rs. 5,500 crore",
-        "Rs. 7,000 crore",
         "Rs. 8,000 crore",
-        "Rs. 9,000 crore",
+        "Rs. 8,400 crore",
+        "Rs. 8,600 crore",
         "Rs. 11,500 crore"
       ],
-      "correctAnswer": "Rs. 8,000 crore",
-      "explanation": "Under RBI regulations, minimum CET-1 is 5.5% of RWAs and the CCB is 2.5% of RWAs (which must be met entirely with CET-1). Total CET-1 requirement = 5.5% + 2.5% = 8.0% of Rs. 100,000 crore = Rs. 8,000 crore.",
+      "correctAnswer": "Rs. 8,400 crore",
+      "explanation": "Under RBI Basel III norms, minimum CET-1 = 5.5%, CCB = 2.5% (must be met with CET-1), and D-SIB Bucket 3 surcharge = 0.40% (must also be met via CET-1). Total CET-1 requirement = 5.5% + 2.5% + 0.40% = 8.40% of Rs. 100,000 crore = Rs. 8,400 crore.",
       "maxMarks": 1
     },
     {
@@ -541,7 +617,7 @@ Every MCQ must have EXACTLY 5 distinct options.`;
       "isPyq": false,
       "topic": "${config.targetTopic || 'Core Concept Assessment'}",
       "text": "Which of the following principles forms the bedrock of the regulatory framework under discussion?",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "None of the above"],
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"],
       "correctAnswer": "Option 1",
       "explanation": "Detailed theoretical and empirical explanation.",
       "maxMarks": 1
@@ -551,22 +627,23 @@ Every MCQ must have EXACTLY 5 distinct options.`;
   }
 
   return `You are the Chief Examiner and Principal Paper Setter on the Services Selection Board for the Reserve Bank of India (RBI Grade B - Officers in Grade 'B' Direct Recruitment).
-You must construct an exceptionally rigorous, high-difficulty mock examination that matches and exceeds the authentic difficulty level of the actual RBI Grade B examination.
+You must construct an exceptionally rigorous mock examination that matches the exact difficulty configuration requested.
 
 SUBJECT: "${subjectName}"
 ${topicFocus}
 EXAM MODE: "${examMode}"
-DIFFICULTY: "${difficulty}"
+DIFFICULTY LEVEL: "${difficulty}"
 TARGET MCQ COUNT: ${totalMcqs} (${mcq1Count} in "${primaryMcqLabel}", ${mcq2Count} in "${secondaryMcqLabel}"${pyqCount > 0 ? `, ${pyqCount} Authentic PYQs` : ''})
 TARGET DESCRIPTIVE COUNT: ${totalDescs} (${desc1Count} in "${primaryDescLabel}", ${desc2Count} in "${secondaryDescLabel}")
+
+${difficultyDirective}
 
 ${subjectSpecificRules}
 
 MANDATORY EXAMINATION STANDARDS:
 1. STRICT 5-OPTION RULE: EVERY single MCQ MUST HAVE EXACTLY 5 DISTINCT OPTIONS (Option 1 to Option 5). Never output only 4 options.
-2. DIFFICULTY BENCHMARK: AVOID simplistic, trivial one-liner factual trivia. Every question must test deep conceptual mastery, statutory accuracy, multi-layered analytical deduction, or exact calculations.
-3. DISTRACTOR INTEGRITY: Distractors (incorrect options) must be realistic, tricky, and designed to trap candidates with superficial knowledge.
-4. QUESTION COUNT ENFORCEMENT:
+2. DIFFICULTY & TRAP INTEGRITY: Respect the calibrated difficulty directive strictly. Distractors must be realistic, nuanced, and designed to trap superficial knowledge.
+3. QUESTION COUNT ENFORCEMENT:
    - Output EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static" and "isPyq": false.
    - Output EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic" and "isPyq": false.
    ${pyqCount > 0 ? `- Output EXACTLY ${pyqCount} Authentic PYQs with "isPyq": true, "pyqYear": "RBI Grade B [Year]", and "sourceTag": "Static".` : ''}

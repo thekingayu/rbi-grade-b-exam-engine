@@ -39,7 +39,7 @@ interface SyllabusSection {
   keyReports?: string[];
 }
 
-const SYLLABUS_SECTIONS: SyllabusSection[] = [
+export const SYLLABUS_SECTIONS: SyllabusSection[] = [
   // PART A - PHASE 1
   {
     code: 'A1',

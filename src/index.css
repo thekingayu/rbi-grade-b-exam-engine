@@ -17,6 +17,7 @@
 }
 
 :root {
+  color-scheme: light;
   --bg-canvas: #FAF8EC;
   --bg-surface: #FFFFFF;
   --bg-surface-alt: #F3F0E0;
@@ -29,12 +30,23 @@
 }
 
 .dark {
+  color-scheme: dark;
   --bg-canvas: #141413;
   --bg-surface: #1C1C1A;
   --bg-surface-alt: #242421;
   --text-ink: #FAF8EC;
   --text-muted: #A3A399;
   --border-hairline: #2E2E2A;
+}
+
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
 }
 
 body {

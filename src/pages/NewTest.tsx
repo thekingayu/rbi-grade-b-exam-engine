@@ -87,7 +87,7 @@ export function NewTest({ user }: { user: User }) {
     descStatic: 1,
     descDynamic: 1,
     pyqCount: 2,
-    difficulty: 'Moderate' as 'Easy' | 'Moderate' | 'Hard',
+    difficulty: 'Hard' as 'Easy' | 'Moderate' | 'Hard',
     timerEnabled: true,
     negativeMarkingEnabled: true
   });
@@ -123,7 +123,7 @@ export function NewTest({ user }: { user: User }) {
         descStatic: preset.descStatic,
         descDynamic: preset.descDynamic,
         pyqCount: preset.pyqCount ?? 2,
-        difficulty: 'Moderate',
+        difficulty: 'Hard',
         timerEnabled: true,
         negativeMarkingEnabled: selectedSubject.negativeMarking > 0
       });
@@ -1189,24 +1189,41 @@ export function NewTest({ user }: { user: User }) {
             
             {/* Difficulty */}
             <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
-                Standard Benchmark
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                  Standard Benchmark
+                </span>
+                {config.difficulty === 'Hard' && (
+                  <span className="text-[9px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                    Extreme Rigor
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-1.5">
                 {(['Easy', 'Moderate', 'Hard'] as const).map(diff => (
                   <button
                     key={diff}
+                    type="button"
                     onClick={() => setConfig({ ...config, difficulty: diff })}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
                       config.difficulty === diff
-                        ? 'bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#ECD5FF]'
+                        ? diff === 'Hard'
+                          ? 'bg-[#141413] dark:bg-[#FFD426] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#FFD426]'
+                          : 'bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#ECD5FF]'
                         : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#40403B] dark:text-[#A3A399] border-[#E5E1CE] dark:border-[#2E2E2A]'
                     }`}
                   >
-                    {diff}
+                    {diff === 'Hard' ? 'Hard (Extreme)' : diff}
                   </button>
                 ))}
               </div>
+              <p className="text-[10px] leading-snug text-[#66665E] dark:text-[#A3A399]">
+                {config.difficulty === 'Hard'
+                  ? 'Maximum RBI Grade B calibre · multi-statement traps, chained numericals & 3-variable puzzles.'
+                  : config.difficulty === 'Moderate'
+                    ? 'Official RBI Phase I & II standard · multi-concept items.'
+                    : 'Foundational drill · core rule & concept check.'}
+              </p>
             </div>
 
             {/* Timer Toggle */}

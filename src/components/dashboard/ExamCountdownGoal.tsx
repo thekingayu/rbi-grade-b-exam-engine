@@ -106,7 +106,7 @@ export function ExamCountdownGoal({ currentAvgScore }: { currentAvgScore: number
                   type="date"
                   value={tempDate}
                   onChange={(e) => setTempDate(e.target.value)}
-                  className="text-xs font-mono px-2.5 py-2 min-h-[38px] rounded-lg border-[1.5px] border-[#141413]/30 dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF]"
+                  className="text-xs font-mono px-2.5 py-2 min-h-[38px] rounded-lg border-[1.5px] border-[#141413]/30 dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] dark:[color-scheme:dark] focus:outline-none focus:border-[#0D47FF]"
                 />
               </div>
 
