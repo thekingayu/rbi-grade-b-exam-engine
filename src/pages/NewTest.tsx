@@ -15,6 +15,16 @@ import { Subject, ExamMode } from '../types';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { SynthesisOverlay } from '../components/SynthesisOverlay';
 import { sanitizeForFirestore } from '../utils/firestore';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  MotionPage,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  AnimatedNumber,
+  SPRING_SNAPPY,
+  SPRING_TACTILE,
+  EASE_OUT_EXPO,
+} from '../components/MotionPrimitives';
 
 const getShortFileName = (name: string, max = 20) => {
   if (!name || name.length <= max) return name;
@@ -405,128 +415,167 @@ export function NewTest({ user }: { user: User }) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pt-2 pb-16 relative z-10 animate-in fade-in duration-500">
+    <MotionPage className="max-w-5xl mx-auto space-y-6 pt-2 pb-16 relative z-10">
       
       {/* Top Breadcrumb & Step Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400 mb-1">
-            <Link to="/" className="hover:text-teal-600 dark:hover:text-teal-400 flex items-center gap-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#66665E] dark:text-[#A3A399] mb-1">
+            <Link to="/" className="hover:text-[#141413] dark:hover:text-[#FAF8EC] flex items-center gap-1 font-bold">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-bold text-slate-900 dark:text-white uppercase">
+            <span className="font-bold text-[#141413] dark:text-[#FAF8EC] uppercase tabular-nums">
               Step {step} of 3
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-black text-slate-900 dark:text-white">
-            {step === 1 && "Choose Examination Subject"}
-            {step === 2 && `Provide Source Material · ${selectedSubject.name}`}
-            {step === 3 && `Configure & Launch · ${selectedSubject.name}`}
-          </h1>
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={`step-heading-${step}-${selectedSubject.id}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+              className="text-xl sm:text-3xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] leading-tight"
+            >
+              {step === 1 && "Choose Examination Subject"}
+              {step === 2 && `Provide Source Material · ${selectedSubject.name}`}
+              {step === 3 && `Configure & Launch · ${selectedSubject.name}`}
+            </motion.h1>
+          </AnimatePresence>
         </div>
 
-        {/* 3-Step Animated Stepper */}
-        <div className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2 bg-white/70 dark:bg-white/[0.04] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs w-full sm:w-auto overflow-x-auto">
+        {/* 3-Step Editorial Stepper */}
+        <div className="flex items-center justify-between sm:justify-start gap-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] p-1.5 rounded-2xl border border-[#E5E1CE] dark:border-[#2E2E2A] w-full sm:w-auto overflow-x-auto no-scrollbar shrink-0">
           {[
             { s: 1, label: 'Subject' },
             { s: 2, label: 'Source' },
             { s: 3, label: 'Settings' }
-          ].map(item => (
-            <button
-              key={item.s}
-              onClick={() => {
-                if (item.s < step) setStep(item.s);
-              }}
-              disabled={item.s > step}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                step === item.s 
-                  ? 'bg-gradient-to-r from-teal-600 to-indigo-600 text-white shadow-md' 
-                  : item.s < step 
-                    ? 'text-teal-600 dark:text-teal-400 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer'
-                    : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
-              }`}
-            >
-              <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
-                {item.s < step ? <Check className="w-3 h-3 text-current" /> : item.s}
-              </span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+          ].map(item => {
+            const isCurrent = step === item.s;
+            return (
+              <button
+                key={item.s}
+                type="button"
+                onClick={() => {
+                  if (item.s < step) setStep(item.s);
+                }}
+                disabled={item.s > step}
+                className={`relative flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors shrink-0 z-10 min-h-[38px] ${
+                  isCurrent
+                    ? 'text-white'
+                    : item.s < step
+                      ? 'text-[#0D47FF] dark:text-[#ECD5FF] hover:bg-[#FAF8EC] dark:hover:bg-[#141413] cursor-pointer'
+                      : 'text-[#8E8E85] dark:text-[#66665E] cursor-not-allowed'
+                }`}
+              >
+                {isCurrent && (
+                  <motion.span
+                    layoutId="wizard-step-pill"
+                    transition={SPRING_SNAPPY}
+                    className="absolute inset-0 rounded-xl bg-[#0D47FF] border border-[#141413] -z-10"
+                  />
+                )}
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                  isCurrent ? 'bg-white/20 text-white' : 'bg-[#F3F0E0] dark:bg-[#242421]'
+                }`}>
+                  {item.s < step ? <Check className="w-3 h-3 text-current" /> : item.s}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      <AnimatePresence mode="wait">
       {/* STEP 1: CHOOSE SUBJECT */}
       {step === 1 && (
-        <div className="space-y-6">
+        <motion.div
+          key="wizard-step-1"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
           
           {/* Search bar */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#66665E] dark:text-[#A3A399] absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by subject, chapter, or phase (e.g. 'General Awareness', 'Monetary Policy', 'ESI')..."
               value={subjectSearch}
               onChange={(e) => setSubjectSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/80 dark:bg-[#070B19]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:border-teal-500 shadow-sm transition-all"
+              className="w-full min-h-[46px] pl-11 pr-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#8E8E85] text-sm focus:outline-none focus:border-[#0D47FF] transition-colors"
             />
           </div>
 
           {/* Phase 1 Subjects */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
-              <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC]">
                 Phase 1 Preliminary Examinations
               </h2>
+              <span className="font-mono text-[10px] font-bold uppercase text-[#66665E] dark:text-[#A3A399]">4 Subjects</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {phase1List.map(s => (
-                <SubjectPickerCard
-                  key={s.id}
-                  subject={s}
-                  isSelected={selectedSubject.id === s.id}
-                  notesCount={notes.filter(n => n.subjectId === s.id).length}
-                  onSelect={() => {
-                    setSelectedSubject(s);
-                    setStep(2);
-                  }}
-                />
+                <MotionStaggerItem key={s.id}>
+                  <SubjectPickerCard
+                    subject={s}
+                    isSelected={selectedSubject.id === s.id}
+                    notesCount={notes.filter(n => n.subjectId === s.id).length}
+                    onSelect={() => {
+                      setSelectedSubject(s);
+                      setStep(2);
+                    }}
+                  />
+                </MotionStaggerItem>
               ))}
-            </div>
+            </MotionStaggerGrid>
           </div>
 
           {/* Phase 2 Subjects */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-              <h2 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC]">
                 Phase 2 Main Examinations
               </h2>
+              <span className="font-mono text-[10px] font-bold uppercase text-[#66665E] dark:text-[#A3A399]">3 Papers</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {phase2List.map(s => (
-                <SubjectPickerCard
-                  key={s.id}
-                  subject={s}
-                  isSelected={selectedSubject.id === s.id}
-                  notesCount={notes.filter(n => n.subjectId === s.id).length}
-                  onSelect={() => {
-                    setSelectedSubject(s);
-                    setStep(2);
-                  }}
-                />
+                <MotionStaggerItem key={s.id}>
+                  <SubjectPickerCard
+                    subject={s}
+                    isSelected={selectedSubject.id === s.id}
+                    notesCount={notes.filter(n => n.subjectId === s.id).length}
+                    onSelect={() => {
+                      setSelectedSubject(s);
+                      setStep(2);
+                    }}
+                  />
+                </MotionStaggerItem>
               ))}
-            </div>
+            </MotionStaggerGrid>
           </div>
 
-        </div>
+        </motion.div>
       )}
 
       {/* STEP 2: CHOOSE SOURCE / UPLOAD NOTES */}
       {step === 2 && (
-        <div className="space-y-6">
+        <motion.div
+          key="wizard-step-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
           
           {/* Source Selector Tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -539,21 +588,29 @@ export function NewTest({ user }: { user: User }) {
               const TabIcon = tab.icon;
               const isCurrent = sourceMode === tab.id;
               return (
-                <button
+                <motion.button
                   key={tab.id}
+                  type="button"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={SPRING_SNAPPY}
                   onClick={() => setSourceMode(tab.id as any)}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[95px] ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-colors cursor-pointer flex flex-col justify-between min-h-[96px] ${
                     isCurrent
-                      ? 'bg-teal-500/10 dark:bg-teal-500/20 border-teal-500/50 shadow-md shadow-teal-500/10 text-teal-900 dark:text-teal-200'
-                      : 'bg-white/70 dark:bg-[#070B19]/80 border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      ? 'bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] text-[#141413]'
+                      : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#55554F] dark:text-[#A3A399] hover:border-[#141413] dark:hover:border-[#ECD5FF]'
                   }`}
                 >
-                  <TabIcon className={`w-5 h-5 ${isCurrent ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400'}`} />
+                  <TabIcon className={`w-5 h-5 ${isCurrent ? 'text-[#141413]' : 'text-[#66665E] dark:text-[#A3A399]'}`} />
                   <div>
-                    <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{tab.label}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{tab.desc}</p>
+                    <p className={`font-bold text-xs sm:text-sm ${isCurrent ? 'text-[#141413]' : 'text-[#141413] dark:text-[#FAF8EC]'}`}>
+                      {tab.label}
+                    </p>
+                    <p className={`text-[10px] mt-0.5 ${isCurrent ? 'text-[#141413]/75' : 'text-[#66665E] dark:text-[#A3A399]'}`}>
+                      {tab.desc}
+                    </p>
                   </div>
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -563,7 +620,7 @@ export function NewTest({ user }: { user: User }) {
             <div className="space-y-4">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-teal-500/30 dark:border-teal-500/20 hover:border-teal-500 rounded-3xl p-8 sm:p-12 text-center bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl transition-all cursor-pointer group"
+                className="border-2 border-dashed border-[#141413]/35 dark:border-[#ECD5FF]/35 hover:border-[#0D47FF] rounded-3xl p-8 sm:p-12 text-center bg-[#FFFFFF] dark:bg-[#1C1C1A] transition-colors cursor-pointer group"
               >
                 <input
                   ref={fileInputRef}
@@ -573,43 +630,42 @@ export function NewTest({ user }: { user: User }) {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
+                <div className="w-16 h-16 rounded-2xl bg-[#ECD5FF] text-[#141413] border-[1.5px] border-[#141413] flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                   <UploadCloud className="w-8 h-8" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-slate-900 dark:text-white">
+                <h3 className="font-heading font-bold text-lg text-[#141413] dark:text-[#FAF8EC]">
                   Drop your study notes or images here or click to browse
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1 max-w-md mx-auto">
                   Supports PDF, DOCX, TXT, MD, and Images (PNG, JPG, JPEG, WEBP up to 200MB).
                 </p>
               </div>
 
-              {/* Uploaded File Chips */}
               {files.length > 0 && (
                 <div className="space-y-2">
-                  <span className="text-xs font-mono uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
                     Uploaded Files ({files.length})
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {files.map((file, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-md"
+                        className="flex items-center justify-between p-3 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                          <FileText className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
                           <div className="min-w-0">
-                            <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                            <p className="font-bold text-xs text-[#141413] dark:text-[#FAF8EC] truncate">
                               {file.name}
                             </p>
-                            <span className="text-[10px] font-mono text-slate-400">
+                            <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                               {(file.size / 1024 / 1024).toFixed(2)} MB
                             </span>
                           </div>
                         </div>
                         <button
                           onClick={() => removeFile(i)}
-                          className="p-1 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                          className="p-1 rounded-lg hover:bg-rose-500/10 text-[#66665E] hover:text-rose-500 transition-colors cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -625,9 +681,9 @@ export function NewTest({ user }: { user: User }) {
           {sourceMode === 'existing_notes' && (
             <div className="space-y-3">
               {currentSubjectNotes.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.02]">
-                  <p className="font-bold text-sm text-slate-800 dark:text-slate-200">No notes in {selectedSubject.name} repository yet.</p>
-                  <p className="text-xs text-slate-500 mt-1">Switch to 'Upload Document' to add your first PDF or circular.</p>
+                <div className="p-8 text-center rounded-2xl border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#1C1C1A]">
+                  <p className="font-bold text-sm text-[#141413] dark:text-[#FAF8EC]">No notes in {selectedSubject.name} repository yet.</p>
+                  <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1">Switch to 'Upload Document' to add your first PDF or circular.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -643,16 +699,20 @@ export function NewTest({ user }: { user: User }) {
                         }}
                         className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isChecked
-                            ? 'bg-teal-500/10 dark:bg-teal-500/20 border-teal-500 text-teal-900 dark:text-teal-100'
-                            : 'bg-white/70 dark:bg-white/[0.03] border-slate-200/80 dark:border-white/10'
+                            ? 'bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413]'
+                            : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A]'
                         }`}
                       >
                         <div className="min-w-0">
-                          <p className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">{n.fileName}</p>
-                          <p className="text-[10px] font-mono text-slate-400 mt-0.5">{(n.size / 1024).toFixed(1)} KB</p>
+                          <p className={`font-bold text-xs sm:text-sm truncate ${isChecked ? 'text-[#141413]' : 'text-[#141413] dark:text-[#FAF8EC]'}`}>
+                            {n.fileName}
+                          </p>
+                          <p className={`text-[10px] font-mono mt-0.5 ${isChecked ? 'text-[#141413]/70' : 'text-[#66665E] dark:text-[#A3A399]'}`}>
+                            {(n.size / 1024).toFixed(1)} KB
+                          </p>
                         </div>
                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
-                          isChecked ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-300 dark:border-white/20'
+                          isChecked ? 'bg-[#0D47FF] text-white border-[#141413]' : 'border-[#E5E1CE] dark:border-[#2E2E2A]'
                         }`}>
                           {isChecked && <Check className="w-3.5 h-3.5" />}
                         </div>
@@ -667,7 +727,7 @@ export function NewTest({ user }: { user: User }) {
           {/* Source 3: Topic Drill Only */}
           {sourceMode === 'topic_only' && (
             <div className="space-y-3">
-              <label className="text-xs font-mono uppercase tracking-wider text-slate-500 block">
+              <label className="text-xs font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
                 Choose Syllabus Chapter to Drill
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -679,12 +739,12 @@ export function NewTest({ user }: { user: User }) {
                       onClick={() => setSelectedTopic(t)}
                       className={`p-3.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all flex items-center justify-between ${
                         isSelected
-                          ? 'bg-teal-500/15 dark:bg-teal-500/20 border-teal-500 text-teal-900 dark:text-teal-200'
-                          : 'bg-white/70 dark:bg-white/[0.03] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300'
+                          ? 'bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413]'
+                          : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC]'
                       }`}
                     >
                       <span>{t}</span>
-                      {isSelected && <Check className="w-4 h-4 text-teal-600" />}
+                      {isSelected && <Check className="w-4 h-4 text-[#0D47FF]" />}
                     </div>
                   );
                 })}
@@ -694,16 +754,16 @@ export function NewTest({ user }: { user: User }) {
 
           {/* Source 4: Retry Mistakes */}
           {sourceMode === 'mistakes' && (
-            <div className="p-6 rounded-2xl bg-white/70 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 space-y-3">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/25 flex items-center justify-center shrink-0">
                   <RotateCcw className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  <h3 className="font-bold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Retry {currentSubjectMistakes.length} Saved Mistakes
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
                     Questions you answered incorrectly or skipped in previous {selectedSubject.name} attempts.
                   </p>
                 </div>
@@ -712,41 +772,56 @@ export function NewTest({ user }: { user: User }) {
           )}
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-white/10">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
             <button
+              type="button"
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer flex items-center gap-2"
+              className="min-h-[42px] px-5 py-2.5 rounded-xl text-xs font-bold text-[#55554F] dark:text-[#A3A399] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] cursor-pointer flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Subject</span>
             </button>
 
-            <button
+            <motion.button
+              type="button"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_SNAPPY}
               onClick={() => setStep(3)}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white shadow-md cursor-pointer flex items-center gap-2"
+              className="min-h-[44px] px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] cursor-pointer flex items-center justify-center gap-2"
             >
               <span>Next: Configure Exam</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
-        </div>
+        </motion.div>
       )}
 
       {/* STEP 3: CONFIGURE & LAUNCH */}
       {step === 3 && (
-        <div className="space-y-6">
+        <motion.div
+          key="wizard-step-3"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
           
           {/* Exam Mode Selector */}
           <div>
-            <label className="text-xs font-mono uppercase tracking-wider text-slate-500 block mb-2">
+            <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block mb-2">
               Examination Mode
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {(['Full Mock', 'Sectional', 'Topic Drill', 'Quick 10-min'] as ExamMode[]).map(mode => (
-                <button
+                <motion.button
                   key={mode}
                   type="button"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={SPRING_SNAPPY}
                   onClick={() => {
                     setExamMode(mode);
                     if (mode === 'Full Mock' && categoryConfig.fullMock) {
@@ -787,51 +862,51 @@ export function NewTest({ user }: { user: User }) {
                       }));
                     }
                   }}
-                  className={`p-3.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
+                  className={`min-h-[44px] p-3.5 rounded-xl border-[1.5px] text-xs font-bold transition-colors cursor-pointer text-center ${
                     examMode === mode
-                      ? 'bg-teal-500/15 dark:bg-teal-500/20 border-teal-500 text-teal-800 dark:text-teal-200 shadow-xs'
-                      : 'bg-white/70 dark:bg-white/[0.03] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300'
+                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#0D47FF]'
+                      : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#40403B] dark:text-[#D5D5C8] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
                   }`}
                 >
                   {mode}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
 
           {/* Dual-Track RBI Grade B Blueprint Callout for GA, ESI, and FM */}
           {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-indigo-500/10 border border-amber-500/30 dark:border-amber-500/25 backdrop-blur-md space-y-2.5 shadow-sm">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#ECD5FF]/35 dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/50 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF]/20 space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-                  <h4 className="font-serif font-black text-sm sm:text-base text-slate-900 dark:text-white">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FFD426] border border-[#141413]" />
+                  <h4 className="font-heading font-extrabold text-sm sm:text-base text-[#141413] dark:text-[#FAF8EC]">
                     RBI Grade B Dual-Track Architecture: Static PYQs & Dynamic Recent Events
                   </h4>
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-500/30">
+                <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-[#FFD426] text-[#141413] font-bold border border-[#141413]">
                   Cadre Benchmarking Active
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-                In <strong>{selectedSubject.name}</strong>, questions are divided into two distinct tracks:
+              <p className="text-xs sm:text-sm text-[#40403B] dark:text-[#A3A399] leading-relaxed">
+                In <strong className="text-[#141413] dark:text-[#FAF8EC]">{selectedSubject.name}</strong>, questions are divided into two distinct tracks:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
-                <div className="p-3 rounded-xl bg-white/60 dark:bg-black/20 border border-amber-500/25 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
-                    <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                <div className="p-3 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border border-[#FFD426] dark:border-[#FFD426]/60 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-[#141413] dark:text-[#FFD426]">
+                    <BookOpen className="w-3.5 h-3.5 text-[#141413] dark:text-[#FFD426]" />
                     <span>Track 1: Static Theory & PYQs</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                  <p className="text-[#40403B] dark:text-[#A3A399] text-[11px] leading-relaxed">
                     Statutory acts (RBI Act 1934, BR Act 1949, FEMA), formulas, historical models & authentic PYQ archetypes. Rigor equal to or harder than actual RBI Grade B papers.
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/60 dark:bg-black/20 border border-teal-500/25 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-teal-800 dark:text-teal-300">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-500" />
+                <div className="p-3 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border border-[#0D47FF] dark:border-[#ECD5FF]/60 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0D47FF] dark:text-[#ECD5FF]" />
                     <span>Track 2: Dynamic Recent Events (2024–2026)</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                  <p className="text-[#40403B] dark:text-[#A3A399] text-[11px] leading-relaxed">
                     AI strictly searches recent events (last 6-8 months), 2024–2026 RBI Master Directions, Union Budget allocations, and Economic Survey analysis.
                   </p>
                 </div>
@@ -844,12 +919,12 @@ export function NewTest({ user }: { user: User }) {
             
             {/* MCQs */}
             {selectedSubject.questionTypeMix.mcq && (
-              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
-                  <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
+              <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+                  <span className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Multiple Choice Questions
                   </span>
-                  <span className="text-xs font-mono text-teal-600 dark:text-teal-400 font-bold px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20">
+                  <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#ECD5FF] border border-[#141413] tabular-nums">
                     Total MCQ: {config.mcqStatic + config.mcqDynamic} Qs
                   </span>
                 </div>
@@ -859,14 +934,14 @@ export function NewTest({ user }: { user: User }) {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 pr-2 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#FFD426]/30 text-[#141413] dark:text-[#FFD426] border border-[#141413]/30 dark:border-[#FFD426]/40">
                           Track 1 · Static PYQ Archetype
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
                         {categoryConfig.primaryMcqLabel}
                       </span>
-                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
                         {categoryConfig.primaryMcqSubtext}
                       </span>
                     </div>
@@ -874,7 +949,7 @@ export function NewTest({ user }: { user: User }) {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqStatic: Math.max(0, config.mcqStatic - 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         -
                       </button>
@@ -887,12 +962,12 @@ export function NewTest({ user }: { user: User }) {
                           const val = parseInt(e.target.value, 10);
                           setConfig({ ...config, mcqStatic: isNaN(val) ? 0 : Math.max(0, Math.min(80, val)) });
                         }}
-                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner"
+                        className="w-16 h-9 text-center font-mono font-bold text-sm tabular-nums bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-lg text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                       />
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqStatic: Math.min(80, config.mcqStatic + 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
                       </button>
@@ -900,17 +975,17 @@ export function NewTest({ user }: { user: User }) {
                   </div>
 
                   {/* Secondary / Advanced Section Number Input */}
-                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
                     <div className="min-w-0 pr-2 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-teal-500/15 text-teal-800 dark:text-teal-300 border border-teal-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#ECD5FF]/60 dark:bg-[#ECD5FF]/15 text-[#141413] dark:text-[#ECD5FF] border border-[#141413]/25 dark:border-[#ECD5FF]/30">
                           Track 2 · Dynamic Recent Events (2024–2026)
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
                         {categoryConfig.secondaryMcqLabel}
                       </span>
-                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
                         {categoryConfig.secondaryMcqSubtext}
                       </span>
                     </div>
@@ -918,7 +993,7 @@ export function NewTest({ user }: { user: User }) {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqDynamic: Math.max(0, config.mcqDynamic - 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         -
                       </button>
@@ -931,12 +1006,12 @@ export function NewTest({ user }: { user: User }) {
                           const val = parseInt(e.target.value, 10);
                           setConfig({ ...config, mcqDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(80, val)) });
                         }}
-                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-inner"
+                        className="w-16 h-9 text-center font-mono font-bold text-sm tabular-nums bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-lg text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                       />
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqDynamic: Math.min(80, config.mcqDynamic + 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
                       </button>
@@ -948,12 +1023,12 @@ export function NewTest({ user }: { user: User }) {
 
             {/* Descriptive */}
             {selectedSubject.questionTypeMix.descriptive && (
-              <div className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
-                  <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
+              <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+                  <span className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Phase 2 Analytical Descriptive
                   </span>
-                  <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                  <span className="text-xs font-mono text-[#FFFFFF] font-bold px-2.5 py-1 rounded-md bg-[#0D47FF] border border-[#141413] tabular-nums">
                     Total Desc: {config.descStatic + config.descDynamic} Qs
                   </span>
                 </div>
@@ -963,14 +1038,14 @@ export function NewTest({ user }: { user: User }) {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 pr-2 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#FFD426]/30 text-[#141413] dark:text-[#FFD426] border border-[#141413]/30 dark:border-[#FFD426]/40">
                           Track 1 · Static Theory (10 Marks / 400w)
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
                         {categoryConfig.primaryDescLabel || 'Static Analytical Essays'}
                       </span>
-                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
                         {categoryConfig.primaryDescSubtext || 'Theory & framework prompts'}
                       </span>
                     </div>
@@ -978,7 +1053,7 @@ export function NewTest({ user }: { user: User }) {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descStatic: Math.max(0, config.descStatic - 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         -
                       </button>
@@ -991,12 +1066,12 @@ export function NewTest({ user }: { user: User }) {
                           const val = parseInt(e.target.value, 10);
                           setConfig({ ...config, descStatic: isNaN(val) ? 0 : Math.max(0, Math.min(10, val)) });
                         }}
-                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                        className="w-16 h-9 text-center font-mono font-bold text-sm tabular-nums bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-lg text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                       />
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descStatic: Math.min(10, config.descStatic + 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
                       </button>
@@ -1004,17 +1079,17 @@ export function NewTest({ user }: { user: User }) {
                   </div>
 
                   {/* Dynamic Descriptive Number Input */}
-                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
                     <div className="min-w-0 pr-2 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-purple-500/15 text-purple-800 dark:text-purple-300 border border-purple-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#ECD5FF]/60 dark:bg-[#ECD5FF]/15 text-[#141413] dark:text-[#ECD5FF] border border-[#141413]/25 dark:border-[#ECD5FF]/30">
                           Track 2 · Dynamic Dilemma (15 Marks / 600w)
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
                         {categoryConfig.secondaryDescLabel || 'Dynamic Policy Questions'}
                       </span>
-                      <span className="text-[10px] text-slate-400 line-clamp-1">
+                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
                         {categoryConfig.secondaryDescSubtext || 'Contemporary dilemmas & policy roadmap'}
                       </span>
                     </div>
@@ -1022,7 +1097,7 @@ export function NewTest({ user }: { user: User }) {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descDynamic: Math.max(0, config.descDynamic - 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         -
                       </button>
@@ -1035,12 +1110,12 @@ export function NewTest({ user }: { user: User }) {
                           const val = parseInt(e.target.value, 10);
                           setConfig({ ...config, descDynamic: isNaN(val) ? 0 : Math.max(0, Math.min(10, val)) });
                         }}
-                        className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-inner"
+                        className="w-16 h-9 text-center font-mono font-bold text-sm tabular-nums bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-lg text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                       />
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descDynamic: Math.min(10, config.descDynamic + 1) })}
-                        className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                       >
                         +
                       </button>
@@ -1049,30 +1124,31 @@ export function NewTest({ user }: { user: User }) {
                 </div>
               </div>
             )}
+
             {/* Authentic Previous Year Questions (PYQ) Section */}
-            <div className={`p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-4 shadow-sm ${
+            <div className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4 ${
               selectedSubject.questionTypeMix.descriptive ? 'sm:col-span-2' : ''
             }`}>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="font-serif font-bold text-sm text-slate-900 dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Authentic Previous Year Questions (PYQs)
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 font-bold">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FFD426] border border-[#E5E1CE] dark:border-[#2E2E2A] font-bold">
                     Official Papers 2018–2025
                   </span>
                 </div>
-                <span className="text-xs font-mono text-amber-600 dark:text-amber-400 font-bold px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#FFD426] border border-[#141413] tabular-nums">
                   Total PYQ: {config.pyqCount || 0} Qs
                 </span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 pr-2">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                  <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
                     Exact Previous Year Questions (PYQ)
                   </span>
-                  <span className="text-[10px] text-slate-400 line-clamp-1">
+                  <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
                     Authentic questions asked in official RBI Grade B matching syllabus / notes with exact past difficulty
                   </span>
                 </div>
@@ -1080,7 +1156,7 @@ export function NewTest({ user }: { user: User }) {
                   <button
                     type="button"
                     onClick={() => setConfig({ ...config, pyqCount: Math.max(0, (config.pyqCount || 0) - 1) })}
-                    className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                   >
                     -
                   </button>
@@ -1093,12 +1169,12 @@ export function NewTest({ user }: { user: User }) {
                       const val = parseInt(e.target.value, 10);
                       setConfig({ ...config, pyqCount: isNaN(val) ? 0 : Math.max(0, Math.min(30, val)) });
                     }}
-                    className="w-16 h-9 text-center font-mono font-bold text-sm bg-white dark:bg-white/5 border border-slate-300 dark:border-white/15 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+                    className="w-16 h-9 text-center font-mono font-bold text-sm tabular-nums bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-lg text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                   />
                   <button
                     type="button"
                     onClick={() => setConfig({ ...config, pyqCount: Math.min(30, (config.pyqCount || 0) + 1) })}
-                    className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-white/20 cursor-pointer flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-bold hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer flex items-center justify-center transition-colors"
                   >
                     +
                   </button>
@@ -1112,8 +1188,8 @@ export function NewTest({ user }: { user: User }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             
             {/* Difficulty */}
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-slate-500 block">
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
                 Standard Benchmark
               </span>
               <div className="flex items-center gap-1.5">
@@ -1121,10 +1197,10 @@ export function NewTest({ user }: { user: User }) {
                   <button
                     key={diff}
                     onClick={() => setConfig({ ...config, difficulty: diff })}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
                       config.difficulty === diff
-                        ? 'bg-teal-600 text-white'
-                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                        ? 'bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#ECD5FF]'
+                        : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#40403B] dark:text-[#A3A399] border-[#E5E1CE] dark:border-[#2E2E2A]'
                     }`}
                   >
                     {diff}
@@ -1134,94 +1210,104 @@ export function NewTest({ user }: { user: User }) {
             </div>
 
             {/* Timer Toggle */}
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">Enforce Exam Timer</span>
-                <span className="text-[10px] text-slate-500">Simulate official clock</span>
+                <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">Enforce Exam Timer</span>
+                <span className="text-[10px] text-[#66665E] dark:text-[#A3A399]">Simulate official clock</span>
               </div>
               <input
                 type="checkbox"
                 checked={config.timerEnabled}
                 onChange={(e) => setConfig({ ...config, timerEnabled: e.target.checked })}
-                className="w-4 h-4 accent-teal-600 cursor-pointer"
+                className="w-4 h-4 accent-[#0D47FF] cursor-pointer"
               />
             </div>
 
             {/* Negative Marking Toggle */}
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">Negative Marking</span>
-                <span className="text-[10px] text-slate-500">-{selectedSubject.negativeMarking} per wrong MCQ</span>
+                <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">Negative Marking</span>
+                <span className="text-[10px] text-[#66665E] dark:text-[#A3A399]">-{selectedSubject.negativeMarking} per wrong MCQ</span>
               </div>
               <input
                 type="checkbox"
                 checked={config.negativeMarkingEnabled}
                 onChange={(e) => setConfig({ ...config, negativeMarkingEnabled: e.target.checked })}
-                className="w-4 h-4 accent-teal-600 cursor-pointer"
+                className="w-4 h-4 accent-[#0D47FF] cursor-pointer"
               />
             </div>
 
           </div>
 
           {/* Live Summary Card */}
-          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950 text-white border border-teal-500/30 shadow-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="p-5 sm:p-7 rounded-2xl bg-[#141413] text-[#FAF8EC] border-[2px] border-[#141413] dark:border-[#ECD5FF] shadow-[6px_6px_0px_#0D47FF] dark:shadow-[6px_6px_0px_#ECD5FF]/35 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/15 pb-4">
               <div className="min-w-0">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-teal-400 font-bold block">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#FFD426] font-bold block">
                   EXAMINATION BLUEPRINT SUMMARY
                 </span>
-                <h3 className="text-lg sm:text-xl font-serif font-black truncate">{selectedSubject.name}</h3>
-                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">Mode: {examMode} · Topic: {selectedTopic}</p>
+                <h3 className="text-lg sm:text-xl font-heading font-extrabold truncate text-[#FAF8EC]">{selectedSubject.name}</h3>
+                <p className="text-xs text-[#A3A399] mt-0.5 line-clamp-2">Mode: {examMode} · Topic: {selectedTopic}</p>
               </div>
 
-              {/* 3 Metric Pills: Balanced 3-column grid on mobile, right-aligned flex on desktop */}
-              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-5 text-center sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10 shrink-0">
-                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Questions</span>
-                  <span className="text-xl sm:text-2xl font-serif font-black text-teal-300">{totalQuestions}</span>
+              {/* 3 Metric Pills */}
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-5 text-center sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-white/15 shrink-0">
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block tracking-wider">Questions</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#ECD5FF]">
+                    <AnimatedNumber value={totalQuestions} duration={0.45} />
+                  </span>
                 </div>
-                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Duration</span>
-                  <span className="text-xl sm:text-2xl font-serif font-black text-cyan-300">{estimatedDurationMinutes}m</span>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block tracking-wider">Duration</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#FFD426]">
+                    <AnimatedNumber value={estimatedDurationMinutes} suffix="m" duration={0.45} />
+                  </span>
                 </div>
-                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/5">
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Max Marks</span>
-                  <span className="text-xl sm:text-2xl font-serif font-black text-white">{totalCalculatedMarks}</span>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block tracking-wider">Max Marks</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#FAF8EC]">
+                    <AnimatedNumber value={totalCalculatedMarks} duration={0.45} />
+                  </span>
                 </div>
               </div>
             </div>
 
             {uploadError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-start sm:items-center gap-2.5">
+              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-400/50 text-rose-200 text-xs flex items-start sm:items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0 text-rose-300" />
                 <span className="leading-relaxed break-words">{uploadError}</span>
               </div>
             )}
 
-            {/* CTAs: Stacked full-width on mobile with primary on top, row on desktop */}
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+            {/* CTAs */}
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-white/5 sm:bg-transparent hover:bg-white/10 transition-colors text-center cursor-pointer"
+                className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl text-xs font-bold text-[#A3A399] hover:text-[#FAF8EC] bg-white/5 sm:bg-transparent hover:bg-white/10 transition-colors text-center cursor-pointer"
               >
                 Back to Sources
               </button>
 
-              <button
+              <motion.button
                 type="button"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={SPRING_SNAPPY}
                 onClick={handleGenerateExam}
                 disabled={uploading || totalQuestions === 0}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-teal-500 via-cyan-500 to-indigo-600 hover:from-teal-400 hover:via-cyan-400 hover:to-indigo-500 text-white shadow-xl shadow-teal-500/30 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-h-[46px] px-8 py-3.5 rounded-xl font-bold text-sm bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#FAF8EC] shadow-[3px_3px_0px_#ECD5FF] transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Sparkles className="w-4 h-4 shrink-0" />
                 <span>Begin Examination</span>
-              </button>
+              </motion.button>
             </div>
           </div>
 
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* IMMERSIVE FULL-PAGE PROCESSING OVERLAY (RENDERED DIRECTLY INTO DOCUMENT.BODY VIA PORTAL) */}
       {createPortal(
@@ -1234,7 +1320,7 @@ export function NewTest({ user }: { user: User }) {
         document.body
       )}
 
-    </div>
+    </MotionPage>
   );
 }
 
@@ -1251,60 +1337,67 @@ function SubjectPickerCard({
   onSelect: () => void;
 }) {
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.985 }}
+      transition={SPRING_SNAPPY}
       onClick={onSelect}
-      className={`p-5 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[160px] group ${
+      className={`p-5 rounded-2xl transition-colors cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[160px] group ${
         isSelected
-          ? 'bg-white dark:bg-[#070B19] shadow-xl border-teal-500 ring-2 ring-teal-500/30'
-          : 'bg-white/70 dark:bg-[#070B19]/70 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:-translate-y-1'
+          ? 'ink-card-featured bg-[#FFFFFF] dark:bg-[#1C1C1A]'
+          : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] hover:shadow-[4px_4px_0px_#141413] dark:hover:shadow-[4px_4px_0px_#ECD5FF]'
       }`}
     >
-      <div 
+      <div
         className="absolute top-0 left-0 right-0 h-1"
         style={{ backgroundColor: subject.accentColor }}
       />
 
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[#141413]/15 dark:border-[#2E2E2A]"
             style={{
               backgroundColor: `color-mix(in srgb, ${subject.accentColor} 14%, transparent)`,
-              borderColor: `color-mix(in srgb, ${subject.accentColor} 30%, transparent)`,
               color: subject.accentColor
             }}
           >
             <SubjectIcon name={subject.icon} className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">
+          <div className="min-w-0">
+            <span className="text-[9px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
               {subject.phase}
             </span>
-            <h3 className="font-serif font-black text-base text-slate-900 dark:text-white line-clamp-1">
+            <h3 className="font-heading font-extrabold text-base text-[#141413] dark:text-[#FAF8EC] line-clamp-1">
               {subject.name}
             </h3>
           </div>
         </div>
 
         {isSelected && (
-          <div className="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={SPRING_TACTILE}
+            className="w-6 h-6 rounded-full bg-[#0D47FF] text-white border border-[#141413] flex items-center justify-center shrink-0"
+          >
             <Check className="w-3.5 h-3.5" />
-          </div>
+          </motion.div>
         )}
       </div>
 
-      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed mb-3">
+      <p className="text-xs text-[#40403B] dark:text-[#A3A399] line-clamp-2 leading-relaxed mb-3">
         {subject.description}
       </p>
 
-      <div className="flex items-center justify-between text-[10px] font-mono pt-2 border-t border-slate-100 dark:border-white/5 text-slate-500">
+      <div className="flex items-center justify-between text-[10px] font-mono pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] tabular-nums">
         <span>{subject.totalMarks} Marks · {subject.durationMinutes}m</span>
         {notesCount > 0 && (
-          <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold">
+          <span className="px-2 py-0.5 rounded-md bg-[#ECD5FF] text-[#141413] font-bold border border-[#141413]">
             {notesCount} Notes
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

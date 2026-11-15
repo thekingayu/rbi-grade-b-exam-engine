@@ -1,25 +1,31 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
-import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { TestAttempt, Subject } from '../types';
+import { TestAttempt } from '../types';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
-import { ReadinessRing } from '../components/dashboard/ReadinessRing';
-import { 
-  ArrowLeft, Plus, TrendingUp, Trophy, Clock, CheckCircle2, 
-  Target, AlertTriangle, BookOpen, FileText, Trash2, Sparkles,
-  ArrowRight, Filter, ChevronRight, UploadCloud, RotateCcw
+import {
+  ArrowLeft, Plus, TrendingUp, CheckCircle2,
+  Target, BookOpen, FileText, Trash2,
+  ArrowRight, ChevronRight, UploadCloud, RotateCcw
 } from 'lucide-react';
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+import {
+  LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { format, formatDistanceToNow } from 'date-fns';
-import { Divider } from 'sketchbook-ui';
+import { format } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import { motion } from 'motion/react';
+import {
+  MotionPage,
+  MotionSection,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  SPRING_SNAPPY,
+} from '../components/MotionPrimitives';
 
 export function SubjectDashboard({ user }: { user: User }) {
   const { slug } = useParams<{ slug: string }>();
@@ -273,65 +279,55 @@ export function SubjectDashboard({ user }: { user: User }) {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
+    <MotionPage className="space-y-8 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
       
       {/* 1. Breadcrumb & Back Link */}
-      <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
-        <Link to="/" className="hover:text-teal-600 dark:hover:text-teal-400 flex items-center gap-1 transition-colors">
+      <div className="flex items-center gap-2 text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
+        <Link to="/" className="hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] flex items-center gap-1 transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Dashboard</span>
         </Link>
-        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-        <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+        <ChevronRight className="w-3.5 h-3.5" />
+        <span className="font-bold text-[#141413] dark:text-[#FAF8EC] uppercase tracking-wider truncate">
           {currentSubject.name}
         </span>
       </div>
 
-      {/* 2. Subject Banner Header with Dynamic Color Glow */}
-      <div 
-        className="relative bg-white/75 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 border shadow-xl overflow-hidden"
-        style={{
-          borderColor: `color-mix(in srgb, ${currentSubject.accentColor} 30%, transparent)`
-        }}
-      >
-        <div 
+      {/* 2. Subject Banner Header */}
+      <div className="ink-card-featured rounded-3xl p-5 sm:p-8 bg-[#FAF8EC] dark:bg-[#1C1C1A] relative overflow-hidden">
+        <div
           className="absolute top-0 left-0 right-0 h-1.5"
           style={{ backgroundColor: currentSubject.accentColor }}
         />
-        <div 
-          className="absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none"
-          style={{ backgroundColor: currentSubject.accentColor }}
-        />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start gap-4 sm:gap-5">
-            <div 
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 border shadow-lg"
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10 pt-1">
+          <div className="flex items-start gap-3.5 sm:gap-5 min-w-0">
+            <div
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 border-[1.5px] border-[#141413]/20 dark:border-[#2E2E2A]"
               style={{
                 backgroundColor: `color-mix(in srgb, ${currentSubject.accentColor} 15%, transparent)`,
-                borderColor: `color-mix(in srgb, ${currentSubject.accentColor} 35%, transparent)`,
                 color: currentSubject.accentColor
               }}
             >
-              <SubjectIcon name={currentSubject.icon} className="w-7 h-7 sm:w-8 sm:h-8" />
+              <SubjectIcon name={currentSubject.icon} className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
 
-            <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-md border border-[#141413]/25 dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#141413] text-[#141413] dark:text-[#ECD5FF]">
                   {currentSubject.phase}
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] tabular-nums">
                   {currentSubject.totalMarks} Marks · {currentSubject.durationMinutes} Minutes · -{currentSubject.negativeMarking} Neg Marking
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30">
-                  🎯 {daysRemaining}d to Exam ({targetExamDate})
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#141413] px-2.5 py-0.5 rounded-md bg-[#FFD426] border border-[#141413] tabular-nums">
+                  {daysRemaining}d to Exam ({targetExamDate})
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl sm:text-4xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] tracking-tight">
                 {currentSubject.name}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#40403B] dark:text-[#A3A399] mt-1.5 max-w-2xl leading-relaxed">
                 {currentSubject.description}
               </p>
             </div>
@@ -339,70 +335,69 @@ export function SubjectDashboard({ user }: { user: User }) {
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <Link
-              to={`/syllabus`}
-              className="sketch-tactile-btn inline-flex items-center justify-center gap-2 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-white/10 px-5 py-3.5 sm:py-4 rounded-2xl font-bold transition-all shadow-xs backdrop-blur-xl text-xs sm:text-sm cursor-pointer"
+              to="/syllabus"
+              className="min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#FFFFFF] dark:bg-[#141413] hover:bg-[#ECD5FF] hover:text-[#141413] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/60 px-5 py-3 rounded-xl font-bold transition-colors text-xs sm:text-sm cursor-pointer"
             >
-              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <BookOpen className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
               <span>Syllabus & PDF</span>
             </Link>
 
-            <button
+            <motion.button
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_SNAPPY}
               onClick={() => navigate(`/new?subject=${currentSubject.slug}`)}
-              className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold shadow-xl transition-all cursor-pointer"
-              style={{
-                backgroundColor: currentSubject.accentColor,
-                boxShadow: `0 10px 25px -5px ${currentSubject.accentColor}66`
-              }}
+              className="min-h-[46px] inline-flex items-center justify-center gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] px-6 py-3 rounded-xl font-bold text-xs sm:text-sm transition-colors cursor-pointer"
             >
-              <Plus className="w-5 h-5 text-white" />
+              <Plus className="w-4 h-4 text-white shrink-0" />
               <span>Start Exam in {currentSubject.name}</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
 
       {/* 3. Scoped KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <KpiSubjectCard title="Tests Taken" value={testsTaken.toString()} sub="Completed mocks" />
-        <KpiSubjectCard title="Average Score" value={testsTaken > 0 ? `${avgScore}%` : '—'} sub="Overall accuracy" />
-        <KpiSubjectCard title="Best Score" value={testsTaken > 0 ? `${bestScore}%` : '—'} sub="Highest attempt" />
-        <KpiSubjectCard title="Momentum" value={momentum} sub="Last vs previous" />
-        <KpiSubjectCard title="Avg Time Used" value={testsTaken > 0 ? `${avgTimePct}%` : '—'} sub="Pacing efficiency" />
-        <KpiSubjectCard title="Saved Mistakes" value={subjectMistakes.length.toString()} sub="For spaced review" />
-      </div>
+      <MotionStaggerGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <MotionStaggerItem><KpiSubjectCard title="Tests Taken" value={testsTaken.toString()} sub="Completed mocks" /></MotionStaggerItem>
+        <MotionStaggerItem><KpiSubjectCard title="Average Score" value={testsTaken > 0 ? `${avgScore}%` : '—'} sub="Overall accuracy" /></MotionStaggerItem>
+        <MotionStaggerItem><KpiSubjectCard title="Best Score" value={testsTaken > 0 ? `${bestScore}%` : '—'} sub="Highest attempt" /></MotionStaggerItem>
+        <MotionStaggerItem><KpiSubjectCard title="Momentum" value={momentum} sub="Last vs previous" /></MotionStaggerItem>
+        <MotionStaggerItem><KpiSubjectCard title="Avg Time Used" value={testsTaken > 0 ? `${avgTimePct}%` : '—'} sub="Pacing efficiency" /></MotionStaggerItem>
+        <MotionStaggerItem><KpiSubjectCard title="Saved Mistakes" value={subjectMistakes.length.toString()} sub="For spaced review" /></MotionStaggerItem>
+      </MotionStaggerGrid>
 
       {/* 4. Subject Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+      <MotionSection className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
         {/* Score Trend */}
-        <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" style={{ color: currentSubject.accentColor }} />
                 <span>Score Trajectory ({currentSubject.name})</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Score % across attempts in this paper</p>
+              <p className="text-xs text-[#66665E] dark:text-[#A3A399]">Score % across attempts in this paper</p>
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
             {scoreTrendData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs font-mono text-slate-400">
+              <div className="h-full flex items-center justify-center text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
                 No completed tests for {currentSubject.name} yet.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={scoreTrendData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
+                  <XAxis dataKey="name" stroke="#66665E" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#66665E" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="p-3 rounded-xl bg-slate-900/90 text-white backdrop-blur-md border border-white/10 shadow-xl text-xs space-y-1">
+                          <div className="p-3 rounded-xl bg-[#141413] text-[#FAF8EC] border border-[#ECD5FF] shadow-lg text-xs space-y-1">
                             <p className="font-bold">{payload[0].payload.name}</p>
-                            <p className="font-mono text-sm font-black">{payload[0].payload.score}% Score</p>
+                            <p className="font-mono text-sm font-black text-[#FFD426]">{payload[0].payload.score}% Score</p>
                           </div>
                         );
                       }
@@ -414,7 +409,7 @@ export function SubjectDashboard({ user }: { user: User }) {
                     dataKey="score"
                     stroke={currentSubject.accentColor}
                     strokeWidth={3.5}
-                    dot={{ r: 4, fill: '#fff', stroke: currentSubject.accentColor, strokeWidth: 2.5 }}
+                    dot={{ r: 4, fill: '#FAF8EC', stroke: currentSubject.accentColor, strokeWidth: 2.5 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -423,34 +418,34 @@ export function SubjectDashboard({ user }: { user: User }) {
         </div>
 
         {/* Topic Accuracy Bar */}
-        <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
                 <Target className="w-4 h-4" style={{ color: currentSubject.accentColor }} />
                 <span>Accuracy by Topic</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Mastery breakdown per syllabus chapter</p>
+              <p className="text-xs text-[#66665E] dark:text-[#A3A399]">Mastery breakdown per syllabus chapter</p>
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
             {topicChartData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs font-mono text-slate-400">
+              <div className="h-full flex items-center justify-center text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
                 Attempt questions to reveal topic mastery breakdown.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topicChartData} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" horizontal={false} />
-                  <XAxis type="number" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
-                  <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} width={110} />
+                  <XAxis type="number" stroke="#66665E" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
+                  <YAxis dataKey="name" type="category" stroke="#66665E" fontSize={10} tickLine={false} axisLine={false} width={110} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="p-3 rounded-xl bg-slate-900/90 text-white backdrop-blur-md border border-white/10 shadow-xl text-xs space-y-1">
+                          <div className="p-3 rounded-xl bg-[#141413] text-[#FAF8EC] border border-[#ECD5FF] shadow-lg text-xs space-y-1">
                             <p className="font-bold">{payload[0].payload.name}</p>
-                            <p className="font-mono text-sm font-black">{payload[0].payload.accuracy}% Accuracy</p>
+                            <p className="font-mono text-sm font-black text-[#ECD5FF]">{payload[0].payload.accuracy}% Accuracy</p>
                           </div>
                         );
                       }
@@ -464,30 +459,30 @@ export function SubjectDashboard({ user }: { user: User }) {
           </div>
         </div>
 
-      </div>
+      </MotionSection>
 
       {/* 5. Topic Mastery Table */}
-      <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl">
-        <div className="p-5 sm:p-6 border-b border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <MotionSection className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
               <BookOpen className="w-4 h-4" style={{ color: currentSubject.accentColor }} />
               <span>Topic Mastery Matrix</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
               Benchmark per chapter with quick launch practice drills
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">Weak &lt; 40%</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">Improving 40-70%</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">Strong &gt; 70%</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30">Weak &lt; 40%</span>
+            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-[#FFD426] text-[#141413] border border-[#141413]">Improving 40-70%</span>
+            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">Strong &gt; 70%</span>
           </div>
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           <table className="w-full min-w-[620px] text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-white/[0.02] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider border-b border-slate-200/60 dark:border-white/5">
+            <thead className="bg-[#FAF8EC] dark:bg-[#141413] text-[#66665E] dark:text-[#A3A399] font-mono uppercase tracking-wider border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
               <tr>
                 <th className="py-3 px-4 sm:px-6">Syllabus Topic</th>
                 <th className="py-3 px-4">Attempts</th>
@@ -497,19 +492,19 @@ export function SubjectDashboard({ user }: { user: User }) {
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/60 dark:divide-white/5 font-medium">
+            <tbody className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A] font-medium">
               {topicList.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
-                  <td className="py-3.5 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white">
+                <tr key={idx} className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50 transition-colors">
+                  <td className="py-3.5 px-4 sm:px-6 font-bold text-[#141413] dark:text-[#FAF8EC]">
                     {item.topic}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
+                  <td className="py-3.5 px-4 font-mono text-[#66665E] dark:text-[#A3A399] tabular-nums">
                     {item.attempts}
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                  <td className="py-3.5 px-4 font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
                     {item.attempts > 0 ? `${item.accuracy}%` : '—'}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-slate-500">
+                  <td className="py-3.5 px-4 font-mono text-[#66665E] dark:text-[#A3A399] tabular-nums">
                     {item.attempts > 0 ? `${item.avgTime}s` : '—'}
                   </td>
                   <td className="py-3.5 px-4">
@@ -518,7 +513,7 @@ export function SubjectDashboard({ user }: { user: User }) {
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => navigate(`/new?subject=${currentSubject.slug}&topic=${encodeURIComponent(item.topic)}`)}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/20 cursor-pointer inline-flex items-center gap-1 transition-all"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border border-[#141413] cursor-pointer inline-flex items-center gap-1 transition-colors"
                     >
                       <span>Drill Topic</span>
                       <ArrowRight className="w-3 h-3" />
@@ -529,21 +524,21 @@ export function SubjectDashboard({ user }: { user: User }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </MotionSection>
 
       {/* 6. Subject Notes & Mistake Notebook Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+      <MotionSection className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
         {/* Subject Notes Panel */}
-        <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
                   <span>Subject Notes Repository</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
                   Notes cataloged for {currentSubject.name}
                 </p>
               </div>
@@ -559,7 +554,7 @@ export function SubjectDashboard({ user }: { user: User }) {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingNote}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-500 cursor-pointer flex items-center gap-1.5 transition-all shadow-xs"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer flex items-center gap-1.5 transition-all"
                 >
                   <UploadCloud className="w-3.5 h-3.5" />
                   <span>{isUploadingNote ? 'Uploading...' : 'Add Note'}</span>
@@ -568,39 +563,40 @@ export function SubjectDashboard({ user }: { user: User }) {
             </div>
 
             {noteError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-700 dark:text-red-300 flex items-center justify-between">
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-700 dark:text-rose-300 flex items-center justify-between">
                 <span>{noteError}</span>
                 <button onClick={() => setNoteError(null)} className="font-bold ml-2 cursor-pointer">✕</button>
               </div>
             )}
 
             {subjectNotes.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
-                <FileText className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">No notes uploaded for {currentSubject.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Upload PDF, TXT or DOCX to generate instant focused exams.</p>
+              <div className="p-8 text-center border-2 border-dashed border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl">
+                <FileText className="w-8 h-8 text-[#66665E] dark:text-[#A3A399] mx-auto mb-2" />
+                <p className="font-bold text-sm text-[#141413] dark:text-[#FAF8EC]">No notes uploaded for {currentSubject.name}</p>
+                <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1">Upload PDF, TXT or DOCX to generate instant focused exams.</p>
               </div>
             ) : (
               <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
                 {subjectNotes.map(note => (
-                  <div key={note.id} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{note.fileName}</p>
-                      <p className="text-[10px] font-mono text-slate-400">
+                  <div key={note.id} className="p-3 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-xs text-[#141413] dark:text-[#FAF8EC] truncate">{note.fileName}</p>
+                      <p className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                         {(note.size / 1024).toFixed(1)} KB · {format(note.uploadedAt, 'MMM d, yyyy')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => navigate(`/new?subject=${currentSubject.slug}&noteId=${note.id}`)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/20 cursor-pointer"
+                        className="min-h-[32px] px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border border-[#141413] cursor-pointer transition-colors"
                       >
                         Generate Exam
                       </button>
                       <button
                         onClick={() => deleteNote(note.id)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#66665E] hover:text-rose-600 transition-colors cursor-pointer"
                         title="Delete note"
+                        aria-label="Delete note"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -613,22 +609,22 @@ export function SubjectDashboard({ user }: { user: User }) {
         </div>
 
         {/* Mistake Notebook Mini Widget */}
-        <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
                   <RotateCcw className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   <span>Mistake Notebook ({currentSubject.name})</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
                   Leitner spaced repetition for flawed answers
                 </p>
               </div>
 
               <Link
                 to="/mistakes"
-                className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#0D47FF] dark:text-[#ECD5FF] hover:underline flex items-center gap-1"
               >
                 <span>All Mistakes</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -636,22 +632,22 @@ export function SubjectDashboard({ user }: { user: User }) {
             </div>
 
             {subjectMistakes.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
-                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Zero active mistakes logged!</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Incorrect exam answers automatically appear here for review.</p>
+              <div className="p-8 text-center border-2 border-dashed border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl">
+                <CheckCircle2 className="w-8 h-8 text-[#0D47FF] dark:text-[#ECD5FF] mx-auto mb-2" />
+                <p className="font-bold text-sm text-[#141413] dark:text-[#FAF8EC]">Zero active mistakes logged!</p>
+                <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1">Incorrect exam answers automatically appear here for review.</p>
               </div>
             ) : (
               <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
                 {subjectMistakes.slice(0, 4).map(m => (
-                  <div key={m.id} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex items-center justify-between gap-3">
+                  <div key={m.id} className="p-3 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20 mr-2">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FFD426] text-[#141413] border border-[#141413] mr-2">
                         Box {m.leitnerBox}
                       </span>
-                      <span className="font-semibold text-xs text-slate-900 dark:text-white line-clamp-1">{m.text}</span>
+                      <span className="font-bold text-xs text-[#141413] dark:text-[#FAF8EC] line-clamp-1">{m.text}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                    <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] shrink-0">
                       {m.topic}
                     </span>
                   </div>
@@ -663,7 +659,7 @@ export function SubjectDashboard({ user }: { user: User }) {
           {subjectMistakes.length > 0 && (
             <button
               onClick={() => navigate(`/new?subject=${currentSubject.slug}&retryMistakes=true`)}
-              className="mt-4 w-full py-2.5 rounded-xl font-bold text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all"
+              className="mt-4 w-full py-2.5 rounded-xl font-bold text-xs bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center justify-center gap-2 cursor-pointer transition-all"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Retry {subjectMistakes.length} Mistakes in {currentSubject.name}</span>
@@ -671,26 +667,26 @@ export function SubjectDashboard({ user }: { user: User }) {
           )}
         </div>
 
-      </div>
+      </MotionSection>
 
       {/* 7. Scoped Test History */}
-      <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl">
-        <div className="p-5 sm:p-6 border-b border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <MotionSection className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+            <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC]">
               {currentSubject.name} Test History
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
               Filtered archive of attempts logged in this subject
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-500">Filter:</span>
+            <span className="text-xs font-mono font-bold text-[#66665E] dark:text-[#A3A399] uppercase">Filter:</span>
             <select
               value={filterScoreRange}
               onChange={(e) => setFilterScoreRange(e.target.value)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="min-h-[36px] text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] cursor-pointer"
             >
               <option value="all">All Scores</option>
               <option value="high">Score &gt;= 70%</option>
@@ -700,9 +696,9 @@ export function SubjectDashboard({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="divide-y divide-slate-200/60 dark:divide-white/5">
+        <div className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A]">
           {filteredTests.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
+            <div className="p-8 text-center text-xs text-[#66665E] dark:text-[#A3A399]">
               No matching tests found.
             </div>
           ) : (
@@ -710,23 +706,23 @@ export function SubjectDashboard({ user }: { user: User }) {
               const maxMarks = test.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
               const pct = Math.round(((test.totalScore || 0) / maxMarks) * 100);
               return (
-                <div key={test.id} className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                <div key={test.id} className="p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 sm:gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50 transition-colors">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-[#141413] dark:text-[#FAF8EC] text-sm">
                       Exam Attempt · {format(test.createdAt, 'MMM d, yyyy · h:mm a')}
                     </h4>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    <p className="text-xs text-[#66665E] dark:text-[#A3A399] font-mono mt-0.5">
                       {test.questions?.length} Questions · Mode: {test.mode || 'Standard'}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className="text-lg font-serif font-black text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <span className="text-lg font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
                       {pct}%
                     </span>
                     <Link
                       to={`/results/${test.id}`}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 transition-colors"
+                      className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
                     >
                       View Report
                     </Link>
@@ -736,39 +732,43 @@ export function SubjectDashboard({ user }: { user: User }) {
             })
           )}
         </div>
-      </div>
+      </MotionSection>
 
-    </div>
+    </MotionPage>
   );
 }
 
 function KpiSubjectCard({ title, value, sub }: { title: string; value: string; sub: string }) {
   return (
-    <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[100px] shadow-sm">
-      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold truncate">
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={SPRING_SNAPPY}
+      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] rounded-2xl p-4 flex flex-col justify-between min-h-[100px] transition-colors"
+    >
+      <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] font-bold truncate">
         {title}
       </span>
       <div>
-        <p className="text-2xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
+        <p className="text-2xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] tracking-tight tabular-nums">
           {value}
         </p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+        <p className="text-[10px] text-[#66665E] dark:text-[#A3A399] truncate mt-0.5">
           {sub}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function StatusChip({ status }: { status: 'Weak' | 'Improving' | 'Strong' | 'Unattempted' }) {
   if (status === 'Strong') {
-    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Strong</span>;
+    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">Strong</span>;
   }
   if (status === 'Improving') {
-    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25">Improving</span>;
+    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#FFD426] text-[#141413] border border-[#141413]">Improving</span>;
   }
   if (status === 'Weak') {
-    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25">Weak</span>;
+    return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">Weak</span>;
   }
-  return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-400 border border-slate-200 dark:border-white/10">Unattempted</span>;
+  return <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] border border-[#E5E1CE] dark:border-[#2E2E2A]">Unattempted</span>;
 }

@@ -4,14 +4,21 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, Link } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Loader2, Sparkles, Award, BarChart3, FileText, CheckCircle2, TrendingUp, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Sparkles, Award, BarChart3, FileText, CheckCircle2, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
-import { Divider } from 'sketchbook-ui';
 import { FuturisticSpinner, FuturisticProgressBar } from '../components/FuturisticLoader';
 import { getSubjectBySlug } from '../data/subjects';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  MotionPage,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  AnimatedNumber,
+  SPRING_SNAPPY,
+  EASE_OUT_EXPO,
+} from '../components/MotionPrimitives';
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
@@ -155,24 +162,21 @@ export function Results({ user }: { user: User }) {
   if (loading || evaluating) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 px-4">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-3xl bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-[0_0_30px_rgba(13,148,136,0.25)]">
-            <FuturisticSpinner size="xl" color="teal" />
-          </div>
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 opacity-25 blur-lg animate-pulse pointer-events-none" />
+        <div className="w-20 h-20 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] flex items-center justify-center text-[#0D47FF] dark:text-[#ECD5FF]">
+          <FuturisticSpinner size="xl" color="cobalt" />
         </div>
-        <div className="text-center space-y-3 max-w-md w-full">
-          <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white">
+        <div className="text-center space-y-3 max-w-md w-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-6">
+          <h3 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
             {evaluating ? 'Grading & Storing Descriptive Rubrics' : 'Loading Results...'}
           </h3>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+          <p className="text-sm font-medium text-[#5C5A52] dark:text-[#A8A396]">
             {evalProgress.message}
           </p>
           {evaluating && (
-            <div className="w-full mt-4">
+            <div className="w-full pt-2">
               <FuturisticProgressBar 
                 progress={evalProgress.percent}
-                color="teal"
+                color="cobalt"
                 height={7}
                 label="SYNCHRONIZING BENCHMARK MARKS"
               />
@@ -185,15 +189,17 @@ export function Results({ user }: { user: User }) {
 
   if (!test) {
     return (
-      <div className="max-w-md mx-auto text-center py-16 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-3xl border border-slate-200/80 dark:border-white/10 p-8 shadow-2xl">
-        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Test Not Found</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-6">The requested test record could not be loaded.</p>
+      <div className="max-w-md mx-auto text-center py-14 bg-[#FFFFFF] dark:bg-[#1C1C1A] rounded-2xl border-[1.5px] border-[#141413] dark:border-[#FAF8EC] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] p-8 mt-8">
+        <div className="w-12 h-12 rounded-xl bg-[#FFD426] border-[1.5px] border-[#141413] flex items-center justify-center mx-auto mb-4 text-[#141413]">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">Test Not Found</h2>
+        <p className="text-sm text-[#5C5A52] dark:text-[#A8A396] mt-1 mb-6">The requested test record could not be loaded.</p>
         <Link 
           to="/history" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white font-bold text-sm shadow-md shadow-teal-600/20 hover:opacity-95 transition-opacity"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0D47FF] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] font-bold text-sm hover:bg-[#0B3CD9] transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Historical Examination Archive
+          <ArrowLeft className="w-4 h-4" /> Back to Examination Archive
         </Link>
       </div>
     );
@@ -225,12 +231,6 @@ export function Results({ user }: { user: User }) {
   const correctMCQs = mcqQuestions.filter(q => isQuestionAttempted(q) && isQuestionCorrect(q)).length;
   const incorrectMCQs = mcqQuestions.filter(q => isQuestionAttempted(q) && !isQuestionCorrect(q)).length;
   const unattemptedMCQs = mcqQuestions.filter(q => !isQuestionAttempted(q)).length;
-  
-  const pieData = [
-    { name: 'Correct', value: correctMCQs, color: '#10b981' }, // emerald-500
-    { name: 'Incorrect', value: incorrectMCQs, color: '#ef4444' }, // red-500
-    { name: 'Unattempted', value: unattemptedMCQs, color: '#f59e0b' } // amber-500
-  ];
 
   const tabs = [
     { id: 'summary', label: 'Summary', icon: BarChart3 },
@@ -240,47 +240,47 @@ export function Results({ user }: { user: User }) {
   ] as const;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <MotionPage className="max-w-5xl mx-auto space-y-6 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2.5">
             <Link 
               to="/history" 
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:bg-white/90 dark:hover:bg-white/10 transition-all shadow-xs hover:shadow-sm group cursor-pointer text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] rounded-xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors group text-[#141413] dark:text-[#FAF8EC] font-semibold text-xs sm:text-sm"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:-translate-x-1 transition-transform cursor-pointer" />
-              <span className="cursor-pointer font-semibold">Back to Historical Examination Archive</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-[#0D47FF] dark:text-[#ECD5FF] group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Examination Archive</span>
             </Link>
             <Link 
               to="/" 
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/40 dark:bg-white/5 hover:bg-white/70 dark:hover:bg-white/10 rounded-xl border border-slate-200/60 dark:border-white/10 text-slate-600 dark:text-slate-300 font-medium text-xs sm:text-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#FAF8EC] dark:bg-[#141413] hover:bg-[#ECD5FF]/40 dark:hover:bg-[#2E2E2A] rounded-xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#5C5A52] dark:text-[#A8A396] hover:text-[#141413] dark:hover:text-[#FAF8EC] font-semibold text-xs sm:text-sm transition-colors"
             >
               <span>Dashboard</span>
             </Link>
           </div>
           
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40 backdrop-blur-md mb-2">
-              <Award className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-teal-200 tracking-wider uppercase">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECD5FF] border-[1.5px] border-[#141413] mb-2">
+              <Award className="w-3.5 h-3.5 text-[#141413]" />
+              <span className="text-[11px] font-mono font-bold text-[#141413] tracking-wider uppercase">
                 EXAM EVALUATION & PERFORMANCE REPORT
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white">
-              Exam <span className="bg-gradient-to-r from-teal-600 via-cyan-500 to-indigo-600 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">Results</span>
+            <h1 className="text-2xl sm:text-4xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] tracking-tight">
+              Exam <span className="font-editorial-italic text-[#0D47FF] dark:text-[#ECD5FF]">Results</span>
             </h1>
-            <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mt-1">
-              Review your comprehensive performance analytics, answer keys, and AI rubrics.
+            <p className="text-[#5C5A52] dark:text-[#A8A396] text-xs sm:text-sm mt-1">
+              Review your comprehensive performance analytics, answer keys, and evaluation rubrics.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Main Container with Futuristic Glass Tabs */}
-      <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-[0_0_40px_-15px_rgba(0,0,0,0.8)]">
-        {/* Futuristic Navigation Bar */}
-        <div className="flex overflow-x-auto border-b border-slate-200/80 dark:border-white/10 p-2 sm:p-2.5 gap-1.5 bg-slate-100/50 dark:bg-black/20">
+      {/* Main Container with Editorial Tabs */}
+      <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden shadow-xs">
+        {/* Navigation Bar */}
+        <div className="flex overflow-x-auto no-scrollbar border-b border-[#E5E1CE] dark:border-[#2E2E2A] p-2 sm:p-2.5 gap-1.5 bg-[#FAF8EC] dark:bg-[#141413]">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -289,22 +289,37 @@ export function Results({ user }: { user: User }) {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={clsx(
-                  'flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer',
-                  isActive 
-                    ? 'bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white shadow-lg shadow-teal-600/25 dark:shadow-[0_0_20px_rgba(13,148,136,0.3)]' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5'
+                  'relative flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer z-10 min-h-[40px]',
+                  isActive
+                    ? 'text-[#141413]'
+                    : 'text-[#5C5A52] dark:text-[#A8A396] hover:text-[#141413] dark:hover:text-[#FAF8EC] hover:bg-[#FFFFFF] dark:hover:bg-[#1C1C1A]'
                 )}
               >
-                <Icon className={clsx("w-4 h-4", isActive ? "text-white" : "text-slate-500 dark:text-slate-400")} />
+                {isActive && (
+                  <motion.span
+                    layoutId="results-active-tab"
+                    transition={SPRING_SNAPPY}
+                    className="absolute inset-0 rounded-xl bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] dark:shadow-[2px_2px_0px_#FAF8EC] -z-10"
+                  />
+                )}
+                <Icon className={clsx("w-4 h-4 shrink-0", isActive ? "text-[#141413]" : "text-[#5C5A52] dark:text-[#A8A396]")} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="p-5 sm:p-8">
+        <div className="p-4 sm:p-8">
+          <AnimatePresence mode="wait">
           {activeTab === 'summary' && (
-            <div className="space-y-6">
+            <motion.div
+              key="tab-summary"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+              className="space-y-6"
+            >
               {(() => {
                 const mcqStaticQs = mcqQuestions.filter(q => q.sourceTag === 'Static');
                 const mcqDynamicQs = mcqQuestions.filter(q => q.sourceTag === 'Dynamic');
@@ -341,148 +356,193 @@ export function Results({ user }: { user: User }) {
                   : 0;
 
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {/* Card 1: Overall Score - Radiant Teal Lighted */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-teal-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(13,148,136,0.15)] flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-3">
-                          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Total Score
-                          </span>
-                          <div className="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25 shadow-[0_0_10px_rgba(13,148,136,0.2)] flex items-center justify-center shrink-0">
-                            <Award className="w-4 h-4" />
+                  <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                    {/* Card 1: Overall Score */}
+                    <MotionStaggerItem>
+                      <div className="h-full bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#FAF8EC] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <span className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] uppercase tracking-wider">
+                              Total Score
+                            </span>
+                            <div className="w-8 h-8 rounded-lg bg-[#0D47FF] text-white border border-[#141413] flex items-center justify-center shrink-0">
+                              <Award className="w-4 h-4" />
+                            </div>
+                          </div>
+                          <div className="flex items-baseline gap-1.5 mt-1 tabular-nums">
+                            <span className="text-4xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+                              <AnimatedNumber value={test.totalScore || 0} decimals={1} />
+                            </span>
+                            <span className="text-lg font-mono text-[#5C5A52] dark:text-[#A8A396]">
+                              / {getMax(test.questions)}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-baseline gap-1.5 mt-1">
-                          <span className="text-4xl font-serif font-black text-slate-900 dark:text-white">
-                            {test.totalScore?.toFixed(1) || 0}
-                          </span>
-                          <span className="text-lg font-mono text-slate-400 dark:text-slate-500">
-                            / {getMax(test.questions)}
+                        <div className="mt-4 pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between">
+                          <span className="text-xs font-semibold text-[#5C5A52] dark:text-[#A8A396]">Aggregate Accuracy</span>
+                          <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#FFD426] text-[#141413] border border-[#141413] tabular-nums">
+                            <AnimatedNumber value={overallPercentage} suffix="%" />
                           </span>
                         </div>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Aggregate Accuracy</span>
-                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25">
-                          {overallPercentage}%
-                        </span>
-                      </div>
-                    </div>
+                    </MotionStaggerItem>
 
                     {/* Card 2: MCQ Accuracy Breakdown */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-emerald-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(160,185,129,0.15)] flex flex-col justify-between">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          MCQ Tally
-                        </span>
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="w-4 h-4" />
+                    <MotionStaggerItem>
+                      <div className="h-full bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] uppercase tracking-wider">
+                            MCQ Tally
+                          </span>
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="space-y-2.5">
+                          <div className="flex justify-between items-center text-xs sm:text-sm">
+                            <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Correct
+                            </span>
+                            <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                              <AnimatedNumber value={correctMCQs} />
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs sm:text-sm">
+                            <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Incorrect
+                            </span>
+                            <span className="font-mono font-bold text-rose-700 dark:text-rose-400 tabular-nums">
+                              <AnimatedNumber value={incorrectMCQs} />
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs sm:text-sm">
+                            <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#FFD426] border border-[#141413]" /> Skipped
+                            </span>
+                            <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
+                              <AnimatedNumber value={unattemptedMCQs} />
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2.5">
-                        <div className="flex justify-between items-center text-xs sm:text-sm">
-                          <span className="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" /> Correct
-                          </span>
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{correctMCQs}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs sm:text-sm">
-                          <span className="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]" /> Incorrect
-                          </span>
-                          <span className="font-mono font-bold text-red-600 dark:text-red-400">{incorrectMCQs}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs sm:text-sm">
-                          <span className="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)]" /> Skipped
-                          </span>
-                          <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{unattemptedMCQs}</span>
-                        </div>
-                      </div>
-                    </div>
+                    </MotionStaggerItem>
 
                     {/* Card 3: MCQ Breakdown with Dynamic Domain Labels */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-cyan-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(6,182,212,0.15)] flex flex-col justify-between">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          MCQ Modules
-                        </span>
-                        <div className="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 shadow-[0_0_10px_rgba(6,182,212,0.2)] flex items-center justify-center shrink-0">
-                          <SlidersHorizontal className="w-4 h-4" />
+                    <MotionStaggerItem>
+                      <div className="h-full bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] uppercase tracking-wider">
+                            MCQ Modules
+                          </span>
+                          <div className="w-8 h-8 rounded-lg bg-[#ECD5FF] text-[#141413] border border-[#141413] flex items-center justify-center shrink-0">
+                            <SlidersHorizontal className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="space-y-3.5">
+                          <div>
+                            <div className="flex justify-between items-center text-xs mb-1.5">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={primaryMcqLabel}>
+                                {primaryMcqLabel}
+                              </span>
+                              <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{mcqStaticScore}/{mcqStaticMax}</span>
+                            </div>
+                            <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: mcqStaticMax > 0 ? Math.min(1, mcqStaticScore / mcqStaticMax) : 0 }}
+                                transition={{ duration: 0.75, ease: EASE_OUT_EXPO }}
+                                className="bg-[#0D47FF] dark:bg-[#ECD5FF] h-full w-full rounded-full origin-left"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-center text-xs mb-1.5">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={secondaryMcqLabel}>
+                                {secondaryMcqLabel}
+                              </span>
+                              <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{mcqDynamicScore}/{mcqDynamicMax}</span>
+                            </div>
+                            <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: mcqDynamicMax > 0 ? Math.min(1, mcqDynamicScore / mcqDynamicMax) : 0 }}
+                                transition={{ duration: 0.75, delay: 0.08, ease: EASE_OUT_EXPO }}
+                                className="bg-emerald-600 h-full w-full rounded-full origin-left"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-3.5">
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={primaryMcqLabel}>
-                              {primaryMcqLabel}
-                            </span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{mcqStaticScore}/{mcqStaticMax}</span>
-                          </div>
-                          <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-teal-500 to-cyan-500 h-full rounded-full shadow-[0_0_8px_rgba(20,184,166,0.5)]" style={{ width: `${mcqStaticMax > 0 ? (mcqStaticScore / mcqStaticMax) * 100 : 0}%` }} />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={secondaryMcqLabel}>
-                              {secondaryMcqLabel}
-                            </span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{mcqDynamicScore}/{mcqDynamicMax}</span>
-                          </div>
-                          <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: `${mcqDynamicMax > 0 ? (mcqDynamicScore / mcqDynamicMax) * 100 : 0}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    </MotionStaggerItem>
 
                     {/* Card 4: Descriptive Modules with Dynamic Domain Labels */}
-                    <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-purple-500/25 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(168,85,247,0.15)] flex flex-col justify-between">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Descriptive Rubric
-                        </span>
-                        <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25 shadow-[0_0_10px_rgba(168,85,247,0.2)] flex items-center justify-center shrink-0">
-                          <FileEdit className="w-4 h-4" />
+                    <MotionStaggerItem>
+                      <div className="h-full bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] uppercase tracking-wider">
+                            Descriptive Rubric
+                          </span>
+                          <div className="w-8 h-8 rounded-lg bg-[#FFD426] text-[#141413] border border-[#141413] flex items-center justify-center shrink-0">
+                            <FileEdit className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="space-y-3.5">
+                          <div>
+                            <div className="flex justify-between items-center text-xs mb-1.5">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={primaryDescLabel}>
+                                {primaryDescLabel}
+                              </span>
+                              <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{descStaticScore}/{descStaticMax}</span>
+                            </div>
+                            <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: descStaticMax > 0 ? Math.min(1, descStaticScore / descStaticMax) : 0 }}
+                                transition={{ duration: 0.75, ease: EASE_OUT_EXPO }}
+                                className="bg-[#0D47FF] dark:bg-[#ECD5FF] h-full w-full rounded-full origin-left"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-center text-xs mb-1.5">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={secondaryDescLabel}>
+                                {secondaryDescLabel}
+                              </span>
+                              <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{descDynamicScore}/{descDynamicMax}</span>
+                            </div>
+                            <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: descDynamicMax > 0 ? Math.min(1, descDynamicScore / descDynamicMax) : 0 }}
+                                transition={{ duration: 0.75, delay: 0.08, ease: EASE_OUT_EXPO }}
+                                className="bg-[#FFD426] h-full w-full rounded-full origin-left"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-3.5">
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={primaryDescLabel}>
-                              {primaryDescLabel}
-                            </span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{descStaticScore}/{descStaticMax}</span>
-                          </div>
-                          <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full shadow-[0_0_8px_rgba(168,85,247,0.5)]" style={{ width: `${descStaticMax > 0 ? (descStaticScore / descStaticMax) * 100 : 0}%` }} />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]" title={secondaryDescLabel}>
-                              {secondaryDescLabel}
-                            </span>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white shrink-0">{descDynamicScore}/{descDynamicMax}</span>
-                          </div>
-                          <div className="w-full bg-slate-200/60 dark:bg-white/10 h-2 rounded-full overflow-hidden">
-                            <div className="bg-gradient-to-r from-amber-500 to-pink-500 h-full rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]" style={{ width: `${descDynamicMax > 0 ? (descDynamicScore / descDynamicMax) * 100 : 0}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    </MotionStaggerItem>
+                  </MotionStaggerGrid>
                 );
               })()}
-            </div>
+            </motion.div>
           )}
 
           {/* MCQ Tab Review */}
           {activeTab === 'mcq' && (
-            <div className="space-y-6">
-              {mcqQuestions.map((q, i) => {
+            <motion.div
+              key="tab-mcq"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+              className="space-y-5"
+            >
+              {mcqQuestions.length === 0 ? (
+                <div className="text-center py-12 bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A]">
+                  <p className="text-sm font-medium text-[#5C5A52] dark:text-[#A8A396]">No Multiple Choice Questions in this assessment.</p>
+                </div>
+              ) : mcqQuestions.map((q, i) => {
                 const userAns = getQuestionUserAnswer(q);
                 const isAttempted = !!(userAns && userAns.trim() !== '');
                 const isCorrect = isAttempted && checkMCQCorrect(userAns, q.correctAnswer, q.options);
@@ -490,57 +550,57 @@ export function Results({ user }: { user: User }) {
                 const scoreDisplay = isCorrect ? `+${q.maxMarks || 1} Marks` : isUnattempted ? '0 Marks' : '-0.25 Marks';
                 
                 return (
-                  <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-5 sm:p-6 shadow-lg shadow-slate-200/30 dark:shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)]">
+                  <div key={i} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-3 py-1 bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25 text-xs font-mono font-bold rounded-full">
+                        <span className="px-2.5 py-0.5 bg-[#ECD5FF] text-[#141413] border border-[#141413] text-[11px] font-mono font-bold rounded-full">
                           {q.sourceTag}
                         </span>
                         {q.isPyq && (
-                          <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full flex items-center gap-1 ring-1 ring-amber-400/20">
-                            <Award className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span className="px-2.5 py-0.5 bg-[#FFD426] border border-[#141413] text-[#141413] text-[11px] font-bold rounded-full flex items-center gap-1">
+                            <Award className="w-3 h-3 shrink-0" />
                             <span>{q.pyqYear || 'RBI Grade B PYQ'}</span>
                           </span>
                         )}
-                        <span className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-mono font-bold text-[#5C5A52] dark:text-[#A8A396]">
                           QUESTION {i + 1} OF {mcqQuestions.length}
                         </span>
                       </div>
                       <span className={clsx(
-                        "px-3 py-1 text-xs font-bold rounded-full border shadow-xs",
+                        "px-3 py-1 text-xs font-bold rounded-full border tabular-nums",
                         isCorrect
-                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                          ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-500/40"
                           : isUnattempted
-                            ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
-                            : "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30"
+                            ? "bg-[#FFFFFF] dark:bg-[#1C1C1A] text-[#5C5A52] dark:text-[#A8A396] border-[#E5E1CE] dark:border-[#2E2E2A]"
+                            : "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-500/40"
                       )}>
                         {isCorrect ? '✓ Correct' : isUnattempted ? '○ Unattempted' : '✗ Incorrect'} ({scoreDisplay})
                       </span>
                     </div>
                     
-                    <p className="text-slate-900 dark:text-white font-medium mb-5 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                    <p className="text-[#141413] dark:text-[#FAF8EC] font-medium mb-5 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                       {q.text}
                     </p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
                       {/* Your Answer */}
                       <div className={clsx(
-                        'p-4 rounded-xl border backdrop-blur-md',
+                        'p-4 rounded-xl border-[1.5px]',
                         isCorrect 
-                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-300' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-950 dark:text-emerald-200' 
                           : isUnattempted 
-                            ? 'bg-slate-100/50 border-slate-200/80 dark:bg-white/5 dark:border-white/10'
-                            : 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
+                            ? 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                            : 'bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-950 dark:text-rose-200'
                       )}>
-                        <p className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Your Answer</p>
+                        <p className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5C5A52] dark:text-[#A8A396] mb-1">Your Answer</p>
                         <p className="font-semibold text-sm">
-                          {userAns || <span className="italic text-slate-400">Not attempted</span>}
+                          {userAns || <span className="italic text-[#5C5A52] dark:text-[#A8A396]">Not attempted</span>}
                         </p>
                       </div>
 
                       {/* Correct Answer */}
-                      <div className="p-4 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-300 backdrop-blur-md">
-                        <p className="text-[11px] font-mono uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80 mb-1">Correct Answer</p>
+                      <div className="p-4 rounded-xl border-[1.5px] bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-950 dark:text-emerald-200">
+                        <p className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1">Correct Answer</p>
                         <p className="font-semibold text-sm">
                           {q.correctAnswer}
                         </p>
@@ -548,9 +608,9 @@ export function Results({ user }: { user: User }) {
                     </div>
 
                     {q.options && q.options.length > 0 && (
-                      <div className="mb-4 pt-3 border-t border-slate-200/60 dark:border-white/10">
-                        <p className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Options Review</p>
-                        <div className="space-y-1.5">
+                      <div className="mb-4 pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                        <p className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] uppercase tracking-wider mb-2.5">Options Review</p>
+                        <div className="space-y-2">
                           {q.options.map((opt, optIdx) => {
                             const optLetter = ['A', 'B', 'C', 'D', 'E'][optIdx] || String.fromCharCode(65 + optIdx);
                             const isUserPick = userAns ? (userAns === opt || userAns.toLowerCase() === opt.toLowerCase()) : false;
@@ -559,30 +619,30 @@ export function Results({ user }: { user: User }) {
                               <div 
                                 key={optIdx}
                                 className={clsx(
-                                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border transition-colors",
+                                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border-[1.5px] transition-colors",
                                   isCorrectPick
-                                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-900 dark:text-emerald-300 font-medium"
+                                    ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 font-semibold"
                                     : isUserPick && !isCorrectPick
-                                      ? "bg-red-500/15 border-red-500/40 text-red-900 dark:text-red-300 font-medium"
-                                      : "bg-white/40 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300"
+                                      ? "bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-950 dark:text-rose-200 font-semibold"
+                                      : "bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#5C5A52] dark:text-[#A8A396]"
                                 )}
                               >
                                 <span className={clsx(
                                   "w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center font-mono shrink-0",
                                   isCorrectPick
-                                    ? "bg-emerald-600 text-white shadow-xs"
+                                    ? "bg-emerald-600 text-white"
                                     : isUserPick && !isCorrectPick
-                                      ? "bg-red-600 text-white shadow-xs"
-                                      : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+                                      ? "bg-rose-600 text-white"
+                                      : "bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC]"
                                 )}>
                                   {optLetter}
                                 </span>
                                 <span className="flex-1">{opt}</span>
                                 {isCorrectPick && (
-                                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold ml-2">✓ Correct Answer</span>
+                                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-bold ml-2">✓ Correct Answer</span>
                                 )}
                                 {isUserPick && !isCorrectPick && (
-                                  <span className="text-xs text-red-600 dark:text-red-400 font-bold ml-2">✗ Your Choice</span>
+                                  <span className="text-xs text-rose-700 dark:text-rose-400 font-bold ml-2">✗ Your Choice</span>
                                 )}
                               </div>
                             );
@@ -592,11 +652,11 @@ export function Results({ user }: { user: User }) {
                     )}
 
                     {(q as any).explanation && (
-                      <div className="border-t border-slate-200/60 dark:border-white/10 pt-4 mt-4">
-                        <p className="text-[11px] font-mono font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <div className="border-t border-[#E5E1CE] dark:border-[#2E2E2A] pt-4 mt-4">
+                        <p className="text-[11px] font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                           <Lightbulb className="w-3.5 h-3.5" /> Explanation & Rationale
                         </p>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[#5C5A52] dark:text-[#A8A396] leading-relaxed">
                           {(q as any).explanation}
                         </p>
                       </div>
@@ -604,13 +664,45 @@ export function Results({ user }: { user: User }) {
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
 
           {/* Descriptive Tab Evaluation */}
           {activeTab === 'descriptive' && (
-            <div className="space-y-8">
-              {descQuestions.map((q, i) => {
+            <motion.div
+              key="tab-descriptive"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+              className="space-y-6"
+            >
+              {descQuestions.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl px-4 py-3">
+                  <div>
+                    <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#141413] dark:text-[#FAF8EC]">
+                      Phase II Descriptive Rubrics ({descQuestions.length} Questions)
+                    </p>
+                    <p className="text-xs text-[#5C5A52] dark:text-[#A8A396]">
+                      Evaluated against official RBI Grade B analytical & structural depth criteria.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleReEvaluateAllDescriptive}
+                    disabled={reEvaluatingAll}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{reEvaluatingAll ? 'Re-Evaluating All...' : 'Re-Grade All Descriptive'}</span>
+                  </button>
+                </div>
+              )}
+
+              {descQuestions.length === 0 ? (
+                <div className="text-center py-12 bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A]">
+                  <p className="text-sm font-medium text-[#5C5A52] dark:text-[#A8A396]">No Descriptive Questions in this assessment.</p>
+                </div>
+              ) : descQuestions.map((q, i) => {
                 const qId = q.id || (test.questions.indexOf(q)).toString();
                 const evalData = test.evaluations?.[qId];
                 const userAns = q.userAnswer || test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()];
@@ -618,20 +710,20 @@ export function Results({ user }: { user: User }) {
                 const isCurrentlyReevaluating = reEvaluatingQId === qId;
                 
                 return (
-                  <div key={i} className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl p-6 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(0,0,0,0.5)]">
+                  <div key={i} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-3 py-1 bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 text-xs font-mono font-bold rounded-full">
+                        <span className="px-2.5 py-0.5 bg-[#ECD5FF] text-[#141413] border border-[#141413] text-[11px] font-mono font-bold rounded-full">
                           {q.sourceTag} DESCRIPTIVE
                         </span>
                         {q.isPyq && (
-                          <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full flex items-center gap-1 ring-1 ring-amber-400/20">
-                            <Award className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span className="px-2.5 py-0.5 bg-[#FFD426] border border-[#141413] text-[#141413] text-[11px] font-bold rounded-full flex items-center gap-1">
+                            <Award className="w-3 h-3 shrink-0" />
                             <span>{q.pyqYear || 'RBI Grade B PYQ'}</span>
                           </span>
                         )}
                         {q.wordLimit && (
-                          <span className="px-2.5 py-0.5 bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-mono rounded-full">
+                          <span className="px-2.5 py-0.5 bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#5C5A52] dark:text-[#A8A396] text-[11px] font-mono font-bold rounded-full">
                             Word Limit: {q.wordLimit}
                           </span>
                         )}
@@ -641,16 +733,16 @@ export function Results({ user }: { user: User }) {
                         <button
                           onClick={() => handleReEvaluateQuestion(qId)}
                           disabled={isCurrentlyReevaluating || reEvaluatingAll}
-                          className="sketch-tactile-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 text-xs font-bold font-mono transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#ECD5FF] text-[#141413] dark:text-[#FAF8EC] hover:text-[#141413] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-xs font-bold font-mono transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           {isCurrentlyReevaluating ? (
                             <>
-                              <FuturisticSpinner size="xs" color="teal" />
+                              <FuturisticSpinner size="xs" color="cobalt" />
                               <span>Re-Grading...</span>
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-3.5 h-3.5" />
+                              <Sparkles className="w-3.5 h-3.5 text-[#0D47FF] dark:text-[#ECD5FF]" />
                               <span>Re-Grade Answer</span>
                             </>
                           )}
@@ -658,7 +750,7 @@ export function Results({ user }: { user: User }) {
                       )}
                     </div>
                     
-                    <p className="text-slate-900 dark:text-white font-medium mb-6 text-sm sm:text-base leading-relaxed">
+                    <p className="text-[#141413] dark:text-[#FAF8EC] font-medium mb-6 text-sm sm:text-base leading-relaxed">
                       {q.text}
                     </p>
                     
@@ -666,33 +758,33 @@ export function Results({ user }: { user: User }) {
                       {/* Your Answer Column */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C5A52] dark:text-[#A8A396]">
                             YOUR SUBMITTED ANSWER
                           </h4>
                           {userAns && (
-                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] font-mono font-bold text-[#5C5A52] dark:text-[#A8A396] tabular-nums">
                               {userAns.trim().split(/\s+/).filter(Boolean).length} words
                             </span>
                           )}
                         </div>
-                        <div className="p-4 bg-white/60 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed shadow-inner sketch-notebook-pad">
-                          {userAns || <span className="italic text-slate-400">No answer provided.</span>}
+                        <div className="p-4 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-xl text-[#141413] dark:text-[#FAF8EC] whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed">
+                          {userAns || <span className="italic text-[#5C5A52] dark:text-[#A8A396]">No answer provided.</span>}
                         </div>
                       </div>
                       
-                      {/* AI Evaluation Column */}
+                      {/* Evaluation Column */}
                       <div className="space-y-5">
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-white/10">
+                        <div className="flex items-center justify-between pb-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
                           <div>
-                            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C5A52] dark:text-[#A8A396]">
                               RBI GRADE B EVALUATOR REPORT
                             </h4>
-                            <span className="text-[11px] text-slate-400">
+                            <span className="text-[11px] text-[#5C5A52] dark:text-[#A8A396]">
                               Official Phase II Examination Standard
                             </span>
                           </div>
-                          <span className="font-mono font-bold text-xl text-teal-600 dark:text-teal-400">
-                            {evalData?.totalScore || 0} <span className="text-sm text-slate-400 font-normal">/ {q.maxMarks} Marks</span>
+                          <span className="font-mono font-black text-xl text-[#0D47FF] dark:text-[#ECD5FF] tabular-nums">
+                            {evalData?.totalScore || 0} <span className="text-sm text-[#5C5A52] dark:text-[#A8A396] font-normal">/ {q.maxMarks} Marks</span>
                           </span>
                         </div>
                         
@@ -700,7 +792,7 @@ export function Results({ user }: { user: User }) {
                           <div className="space-y-5">
                             {/* Dimensional Rubric Breakdown */}
                             <div>
-                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C5A52] dark:text-[#A8A396] mb-3">
                                 DIMENSIONAL RUBRIC BREAKDOWN
                               </h5>
                               <div className="space-y-3">
@@ -711,13 +803,13 @@ export function Results({ user }: { user: User }) {
                                   return (
                                     <div key={idx}>
                                       <div className="flex justify-between items-center text-xs mb-1">
-                                        <span className="text-slate-600 dark:text-slate-300 font-medium">{criterion}</span>
-                                        <span className="font-mono font-bold text-slate-900 dark:text-white">{numScore} / {maxForCrit}</span>
+                                        <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium">{criterion}</span>
+                                        <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">{numScore} / {maxForCrit}</span>
                                       </div>
                                       <FuturisticProgressBar 
                                         progress={pct}
-                                        color="teal"
-                                        height={5}
+                                        color="cobalt"
+                                        height={6}
                                       />
                                     </div>
                                   );
@@ -726,20 +818,20 @@ export function Results({ user }: { user: User }) {
                             </div>
 
                             {/* Actionable Writing Feedback */}
-                            <div className="pt-4 border-t border-slate-200/60 dark:border-white/10">
-                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 mb-3 flex items-center gap-2">
-                                <Lightbulb className="w-4 h-4 text-amber-500" /> ACTIONABLE WRITING FEEDBACK
+                            <div className="pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                              <h5 className="text-xs font-mono font-bold uppercase tracking-wider text-[#141413] dark:text-[#FFD426] mb-3 flex items-center gap-2">
+                                <Lightbulb className="w-4 h-4 text-[#0D47FF] dark:text-[#FFD426]" /> ACTIONABLE WRITING FEEDBACK
                               </h5>
                               <ul className="space-y-2.5">
                                 {evalData.feedbackPoints?.map((pt: string, idx: number) => (
-                                  <li key={idx} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                    <span className="text-amber-500 shrink-0 mt-0.5">•</span>
+                                  <li key={idx} className="flex gap-2 text-xs sm:text-sm text-[#5C5A52] dark:text-[#A8A396] leading-relaxed">
+                                    <span className="text-[#0D47FF] dark:text-[#FFD426] shrink-0 font-bold">•</span>
                                     <span>{pt}</span>
                                   </li>
                                 ))}
                                 {evalData.suggestions?.map((sug: string, idx: number) => (
-                                  <li key={`sug-${idx}`} className="flex gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                    <span className="text-teal-500 shrink-0 font-bold">→</span>
+                                  <li key={`sug-${idx}`} className="flex gap-2 text-xs sm:text-sm text-[#5C5A52] dark:text-[#A8A396] leading-relaxed">
+                                    <span className="text-[#0D47FF] dark:text-[#ECD5FF] shrink-0 font-bold">→</span>
                                     <span>{sug}</span>
                                   </li>
                                 ))}
@@ -752,12 +844,11 @@ export function Results({ user }: { user: User }) {
                     
                     {/* Model Answer Section */}
                     {q.modelAnswer && (
-                      <div className="mt-8 pt-4">
-                        <Divider variant="scribble" color="rgba(16, 185, 129, 0.25)" className="mb-4" />
+                      <div className="mt-6 pt-6 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
                         <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Ideal / Benchmark Model Answer
+                          <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Ideal / Benchmark Model Answer
                         </h4>
-                        <div className="p-4 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/25 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed shadow-xs sketch-notebook-pad">
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border-[1.5px] border-emerald-500/40 rounded-xl text-[#141413] dark:text-emerald-100 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed">
                           {q.modelAnswer}
                         </div>
                       </div>
@@ -765,23 +856,30 @@ export function Results({ user }: { user: User }) {
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
 
           {/* Feedback Tab */}
           {activeTab === 'feedback' && test.overallFeedback && (
-            <div className="space-y-6">
-              <div className="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/30 dark:shadow-[0_0_25px_-5px_rgba(0,0,0,0.5)]">
+            <motion.div
+              key="tab-feedback"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+              className="space-y-6"
+            >
+              <div className="bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-6 sm:p-8">
                 
                 <div className="grid md:grid-cols-2 gap-8 sm:gap-10">
                   <div className="space-y-4">
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500" /> Key Conceptual Strengths
+                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Key Conceptual Strengths
                     </h4>
                     <ul className="space-y-3">
                       {test.overallFeedback.strengths.map((pt, idx) => (
-                        <li key={idx} className="flex gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                          <span className="text-emerald-500 mt-0.5">•</span>
+                        <li key={idx} className="flex gap-3 text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC]">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">•</span>
                           <span className="leading-relaxed">{pt}</span>
                         </li>
                       ))}
@@ -789,13 +887,13 @@ export function Results({ user }: { user: User }) {
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                      <MinusCircle className="w-4 h-4 text-amber-500" /> High-Priority Knowledge Gaps
+                    <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-2">
+                      <MinusCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" /> High-Priority Knowledge Gaps
                     </h4>
                     <ul className="space-y-3">
                       {test.overallFeedback.weaknesses.map((pt, idx) => (
-                        <li key={idx} className="flex gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                          <span className="text-amber-500 mt-0.5">•</span>
+                        <li key={idx} className="flex gap-3 text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC]">
+                          <span className="text-rose-600 dark:text-rose-400 font-bold mt-0.5">•</span>
                           <span className="leading-relaxed">{pt}</span>
                         </li>
                       ))}
@@ -803,17 +901,17 @@ export function Results({ user }: { user: User }) {
                   </div>
                 </div>
 
-                <div className="mt-10 pt-8 border-t border-slate-200/60 dark:border-white/10">
-                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-5 flex items-center gap-2">
-                    <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Actionable Recommended Steps
+                <div className="mt-8 pt-6 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#141413] dark:text-[#FAF8EC] mb-4 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" /> Actionable Recommended Steps
                   </h4>
-                  <div className="grid gap-3.5">
+                  <div className="grid gap-3">
                     {test.overallFeedback.nextSteps.map((pt, idx) => (
-                      <div key={idx} className="flex items-start gap-4 p-4 bg-white/60 dark:bg-white/[0.02] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs hover:border-teal-500/40 transition-colors">
-                        <div className="w-8 h-8 shrink-0 rounded-xl bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs">
+                      <div key={idx} className="flex items-start gap-4 p-4 bg-[#FFFFFF] dark:bg-[#1C1C1A] rounded-xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors">
+                        <div className="w-8 h-8 shrink-0 rounded-lg bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413] flex items-center justify-center font-mono font-bold text-xs tabular-nums">
                           {idx + 1}
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC] mt-1 leading-relaxed">
                           {pt}
                         </p>
                       </div>
@@ -822,10 +920,11 @@ export function Results({ user }: { user: User }) {
                 </div>
 
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
       </div>
-    </div>
+    </MotionPage>
   );
 }

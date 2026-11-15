@@ -8,7 +8,6 @@
 @import "@fontsource/plus-jakarta-sans/700.css";
 @import "@fontsource/plus-jakarta-sans/800.css";
 
-
 @theme {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-serif: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -17,9 +16,31 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+:root {
+  --bg-canvas: #FAF8EC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F3F0E0;
+  --text-ink: #141413;
+  --text-muted: #66665E;
+  --border-hairline: #E5E1CE;
+  --accent-lavender: #ECD5FF;
+  --accent-yellow: #FFD426;
+  --accent-cobalt: #0D47FF;
+}
+
+.dark {
+  --bg-canvas: #141413;
+  --bg-surface: #1C1C1A;
+  --bg-surface-alt: #242421;
+  --text-ink: #FAF8EC;
+  --text-muted: #A3A399;
+  --border-hairline: #2E2E2A;
+}
+
 body {
   font-family: var(--font-sans);
-  background-color: #F8FAFC;
+  background-color: #FAF8EC;
+  color: #141413;
   overflow-x: clip;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -31,17 +52,61 @@ html {
 }
 
 .dark body {
-  background-color: #030612;
+  background-color: #141413;
+  color: #FAF8EC;
 }
 
-/* Hardware-accelerated GPU layer isolation to prevent scroll jitter */
+/* Editorial Newsreader italic signature emphasis */
+.font-editorial-italic {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Signature ink card classes inspired by Scaler x Wispr editorial blocks */
+.ink-card-featured {
+  border: 1.5px solid #141413;
+  box-shadow: 4px 4px 0px #141413;
+}
+
+.dark .ink-card-featured {
+  border: 1.5px solid rgba(250, 248, 236, 0.85);
+  box-shadow: 4px 4px 0px #ECD5FF;
+}
+
+.ink-btn-hard {
+  border: 1.5px solid #141413;
+  box-shadow: 3px 3px 0px #141413;
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ink-btn-hard:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #141413;
+}
+
+.ink-btn-hard:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #141413;
+}
+
+.dark .ink-btn-hard {
+  border: 1.5px solid #FAF8EC;
+  box-shadow: 3px 3px 0px #ECD5FF;
+}
+
+.dark .ink-btn-hard:hover {
+  box-shadow: 4px 4px 0px #ECD5FF;
+}
+
+/* Hardware-accelerated GPU layer isolation */
 .gpu-layer {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform;
 }
 
-/* Custom premium liquid scrollbar */
+/* Crisp Editorial Scrollbar */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -52,112 +117,77 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(13, 148, 136, 0.3);
+  background: rgba(20, 20, 19, 0.2);
   border-radius: 9999px;
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 148, 136, 0.6);
-  background-clip: padding-box;
+  background: rgba(20, 20, 19, 0.45);
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  background-clip: padding-box;
+  background: rgba(250, 248, 236, 0.18);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
-  background-clip: padding-box;
+  background: rgba(236, 213, 255, 0.4);
 }
 
-/* =========================================================================
-   Sketchbook Animations & Hand-Drawn UI Refinement System
-   ========================================================= */
-
-/* Sketchbook tactile button hover & active states */
+/* Tactile button subtle lift */
 .sketch-tactile-btn {
-  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, background-color 0.18s ease;
   will-change: transform;
 }
 
 .sketch-tactile-btn:hover {
-  transform: translate(-1.5px, -1.5px) rotate(-0.8deg);
-  filter: drop-shadow(3px 4px 0px rgba(13, 148, 136, 0.25));
+  transform: translateY(-1.5px);
 }
 
 .sketch-tactile-btn:active {
-  transform: translate(0.5px, 0.5px) rotate(0deg) scale(0.98);
-  filter: drop-shadow(1px 2px 0px rgba(13, 148, 136, 0.15));
-}
-
-.dark .sketch-tactile-btn:hover {
-  filter: drop-shadow(3px 4px 0px rgba(0, 0, 0, 0.45));
-}
-
-/* Sketchbook tactile card hover */
-.sketch-card-hover {
-  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.sketch-card-hover:hover {
-  transform: translateY(-2px) rotate(-0.25deg);
+  transform: translateY(0.5px) scale(0.99);
 }
 
 /* Notebook paper subtle ruling for descriptive writing pad */
 .sketch-notebook-pad {
-  background-image: linear-gradient(rgba(13, 148, 136, 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(20, 20, 19, 0.06) 1px, transparent 1px);
   background-size: 100% 28px;
   line-height: 28px;
 }
 
 .dark .sketch-notebook-pad {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(250, 248, 236, 0.05) 1px, transparent 1px);
 }
 
-/* Wobbly sketch underline */
-.sketch-underline {
-  position: relative;
-  display: inline-block;
+@keyframes marqueeScrollLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
-.sketch-underline::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -3px;
-  width: 100%;
-  height: 2px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M0,3 Q25,0 50,3 T100,3' fill='none' stroke='%230D9488' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-size: 100% 100%;
-  opacity: 0.8;
+@keyframes marqueeScrollRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
-/* Sketchbook UI Library Dark Mode Tuning */
-.dark .sketch-button-text,
-.dark .sketch-select-text,
-.dark .sketch-dropdown-item {
-  color: #f1f5f9 !important;
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marqueeScrollLeft 24s linear infinite;
+  will-change: transform;
 }
 
-.dark .sketch-badge-content {
-  color: #f8fafc !important;
-}
-
-.dark .sketch-spinner__svg path,
-.dark .sketch-spinner__svg circle {
-  stroke: #2dd4bf !important;
-}
-
-.dark .sketch-spinner__dot {
-  fill: #2dd4bf !important;
-}
-
-.dark .sketch-divider svg path {
-  stroke: rgba(255, 255, 255, 0.15) !important;
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marqueeScrollRight 24s linear infinite;
+  will-change: transform;
 }
 
 @keyframes indeterminateSlide {
@@ -171,6 +201,116 @@ html {
   100% {
     transform: translateX(350%);
     width: 25%;
+  }
+}
+
+@keyframes equalizerPulse {
+  0%, 100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sparklePop {
+  0%, 100% {
+    transform: scale(0.92) rotate(0deg);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.12) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+@keyframes trainBob {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -2.5px, 0);
+  }
+}
+
+@keyframes sheenSweep {
+  0% {
+    transform: translate3d(-140%, 0, 0) skewX(-22deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  55% {
+    transform: translate3d(240%, 0, 0) skewX(-22deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(240%, 0, 0) skewX(-22deg);
+    opacity: 0;
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 14s linear infinite;
+  will-change: transform;
+}
+
+.animate-sparkle {
+  animation: sparklePop 2.2s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.animate-train-bob {
+  animation: trainBob 0.85s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-sheen-sweep {
+  animation: sheenSweep 4.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* Hide horizontal scrollbar nicely while preserving native swipe touch scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe viewport padding on notched mobile screens */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Accessibility: honor OS reduced motion preference globally */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-left,
+  .animate-marquee-right,
+  .animate-spin-slow,
+  .animate-sparkle,
+  .animate-train-bob,
+  .animate-sheen-sweep {
+    animation: none !important;
+  }
+
+  .ink-btn-hard,
+  .sketch-tactile-btn {
+    transition: none !important;
   }
 }
 

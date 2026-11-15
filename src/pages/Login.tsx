@@ -1,47 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { 
-  BookOpen, 
-  Heart, 
-  Sparkles, 
-  ShieldCheck, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  CheckCircle2, 
-  TrendingUp, 
-  Radio, 
-  Activity, 
-  Sun, 
-  Moon, 
-  Layers,
-  Compass
+import {
+  BookOpen,
+  Heart,
+  ShieldCheck,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Download,
+  Sun,
+  Moon,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AtmosphericBackground } from '../components/AtmosphericBackground';
+import {
+  StationSignboard,
+  DiagonalMarquee,
+  OfficerLanyardPass,
+  downloadOfficerPassSVG,
+  PrizeBadgeIcon
+} from '../components/SignatureGraphics';
+import {
+  EASE_OUT_EXPO,
+  SPRING_SNAPPY,
+  SPRING_BUTTERY,
+  AnimatedNumber,
+  MotionStaggerGrid,
+  MotionStaggerItem
+} from '../components/MotionPrimitives';
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
+  const [candidateName, setCandidateName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
-  const [istTime, setIstTime] = useState('');
-  
-  // Theme state for login view
+
   const [isDark, setIsDark] = useState(() => {
-    return document.documentElement.classList.contains('dark') ||
+    return (
+      document.documentElement.classList.contains('dark') ||
       localStorage.getItem('theme') === 'dark' ||
-      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
   });
 
   useEffect(() => {
@@ -53,24 +65,6 @@ export function Login() {
       localStorage.setItem('theme', 'light');
     }
   }, [isDark]);
-
-  // Live IST Clock
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        timeZone: 'Asia/Kolkata',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      };
-      setIstTime(new Intl.DateTimeFormat('en-GB', options).format(now));
-    };
-    updateTime();
-    const timer = setInterval(updateTime, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const cleanErrorMessage = (msg: string) => {
     if (!msg) return 'Authentication failed. Please verify your credentials and try again.';
@@ -106,8 +100,9 @@ export function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
-    
+
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -122,8 +117,24 @@ export function Login() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address first to receive a password reset link.');
+      return;
+    }
+    setError('');
+    setNotice('');
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setNotice(`Password reset link sent to ${email.trim()}.`);
+    } catch (err: any) {
+      setError(cleanErrorMessage(err?.message || 'Could not send reset email.'));
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError('');
+    setNotice('');
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
@@ -135,367 +146,281 @@ export function Login() {
     }
   };
 
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const livePassName =
+    candidateName.trim() ||
+    (email.trim() ? email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Officer Candidate');
+
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 transition-colors duration-500 overflow-x-hidden select-none font-sans">
-      
-      {/* 1. Futuristic Colorful Atmospheric Glow Canvas */}
-      <AtmosphericBackground />
-
-      {/* 2. Top Precision Header Bar */}
-      <header className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-[#9A7D3C] via-amber-500 to-emerald-600 p-[1.5px] shadow-lg shadow-[#9A7D3C]/15">
-            <div className="w-full h-full rounded-2xl bg-white dark:bg-[#070B18] flex items-center justify-center text-[#9A7D3C] dark:text-[#E5C378]">
-              <BookOpen className="w-5 h-5" />
-            </div>
-          </div>
-          <div>
-            <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-              RBI Grade B <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#E5C378] dark:via-amber-300 dark:to-emerald-400 bg-clip-text text-transparent">Engine</span>
+    <div className="min-h-screen w-full flex flex-col bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] font-sans overflow-x-clip">
+      {/* 1. CLEAN 3-ZONE TOP NAVIGATION BAR */}
+      <header className="w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-2 sm:gap-4">
+          {/* Zone 1: Dual Brand Wordmark */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
+            <span className="font-heading font-black text-sm sm:text-lg tracking-tight text-white whitespace-nowrap">
+              RBI GRADE B
             </span>
-            <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              <span>OFFICER CADRE // CYCLE 2026-27</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Controls: IST Clock + Theme Toggle */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs text-xs font-mono">
-            <Activity className="w-3.5 h-3.5 text-[#9A7D3C] dark:text-[#E5C378]" />
-            <span className="text-slate-400 dark:text-slate-500 text-[11px]">IST:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 tabular-nums text-[11px]">{istTime || '12:00:00'}</span>
+            <span className="hidden xs:inline sm:inline text-[#A3A399] text-sm">×</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 font-heading font-bold text-base sm:text-lg text-[#ECD5FF] whitespace-nowrap">
+              <BookOpen className="w-4 h-4 text-[#ECD5FF]" />
+              Engine
+            </span>
           </div>
 
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className="p-2.5 rounded-xl bg-white/70 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[#9A7D3C]/50 dark:hover:border-amber-400/50 transition-all cursor-pointer backdrop-blur-md shadow-xs"
-            aria-label="Toggle theme"
-            title="Toggle theme"
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
-          </button>
+          {/* Zone 2: Minimal Text Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-widest text-[#A3A399]">
+            <button onClick={() => scrollToSection('rounds-section')} className="hover:text-white transition-colors cursor-pointer">
+              Rounds
+            </button>
+            <button onClick={() => scrollToSection('benchmarks-section')} className="hover:text-white transition-colors cursor-pointer">
+              Benchmarks
+            </button>
+            <button onClick={() => scrollToSection('portal-stage')} className="hover:text-white transition-colors cursor-pointer">
+              Officer Pass
+            </button>
+          </nav>
+
+          {/* Zone 3: Theme Switcher + Auth Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setIsDark(!isDark)}
+              className="p-2 rounded-lg border border-[#2E2E2A] text-[#A3A399] hover:text-white hover:border-[#FAF8EC]/40 transition-colors cursor-pointer"
+              aria-label="Toggle theme"
+              title="Toggle Cream / Dark Canvas below"
+            >
+              {isDark ? <Sun className="w-4 h-4 text-[#FFD426]" /> : <Moon className="w-4 h-4" />}
+            </motion.button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setError('');
+                scrollToSection('portal-stage');
+              }}
+              className="text-xs sm:text-sm font-semibold text-[#FAF8EC] hover:text-[#ECD5FF] transition-colors px-2 py-1.5 cursor-pointer whitespace-nowrap"
+            >
+              Log in
+            </button>
+
+            <motion.button
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.96 }}
+              type="button"
+              onClick={() => {
+                setIsLogin(false);
+                setError('');
+                scrollToSection('portal-stage');
+              }}
+              className="px-3 sm:px-4 py-2 rounded-lg bg-[#0D47FF] hover:bg-[#1954FF] text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer whitespace-nowrap"
+            >
+              Start free
+            </motion.button>
+          </div>
         </div>
       </header>
 
-      {/* 3. Main Centerpiece: Dual-Column Futuristic Composition With Right-Aligned Login Card */}
-      <main className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-8 lg:py-10 flex-1 flex items-center">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-16 items-center">
-          
-          {/* LEFT COLUMN: Artistic, Creative, Colorful Engine Showcase */}
-          <div className="lg:col-span-7 space-y-6 sm:space-y-8 text-left order-2 lg:order-1">
-            
-            {/* Holographic Badge with Gradient Border */}
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-[#9A7D3C]/15 via-amber-500/10 to-emerald-500/15 dark:from-[#9A7D3C]/30 dark:via-amber-500/20 dark:to-emerald-500/20 border border-[#9A7D3C]/30 dark:border-amber-500/30 backdrop-blur-xl shadow-xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#9A7D3C] dark:text-amber-400 animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-mono font-semibold tracking-wider uppercase text-slate-800 dark:text-amber-200">
-                Next-Gen RBI Officer Simulator
-              </span>
-              <span className="px-1.5 py-0.5 text-[9px] font-mono rounded-full bg-gradient-to-r from-[#9A7D3C] to-amber-600 text-white font-bold">
-                PRO 2026
-              </span>
-            </motion.div>
-
-            {/* Display Headline with Vibrant Dark-Mode Gradient */}
+      {/* 2. SIGNATURE DARK EDITORIAL AUTH STAGE + HANGING LAVENDER LANYARD PASS */}
+      <section id="portal-stage" className="w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-16 sm:pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+            {/* LEFT COLUMN: Editorial Headline + Form */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="space-y-3"
-            >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] xl:text-[56px] font-serif font-black tracking-tight leading-[1.08] text-slate-900 dark:text-white">
-                Master the Exam with <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-500 dark:from-[#F3E5AB] dark:via-amber-400 dark:to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_2px_20px_rgba(245,158,11,0.2)]">
-                  Intelligent Simulation
-                </span>
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed font-normal">
-                Calibrated to exact Reserve Bank of India standards. Experience adaptive sectional time-banks, 1/4th negative penalty scoring, and full-spectrum Phase I &amp; Phase II analytics.
-              </p>
-            </motion.div>
-
-            {/* Futuristic Holographic Cards Array (Vibrant Neon Gradient Accents in Dark Mode) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl"
-            >
-              {/* Card 1: Phase I Mastery (Amber/Gold Radiant Glow) */}
-              <div className="relative group p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/70 border border-slate-200/80 dark:border-amber-500/20 backdrop-blur-xl hover:border-amber-500/50 dark:hover:border-amber-400/50 transition-all duration-300 shadow-sm dark:shadow-[0_0_20px_-5px_rgba(245,158,11,0.15)]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
-                    <Compass className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/20">
-                    PHASE I &bull; 200 MARKS
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Full Pattern Simulation</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  GA (80Q), Reasoning (60Q), Quants (30Q), &amp; English (30Q) with strict sectional timings.
-                </p>
-              </div>
-
-              {/* Card 2: Phase II ESI & FM (Emerald Radiant Glow) */}
-              <div className="relative group p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/70 border border-slate-200/80 dark:border-emerald-500/20 backdrop-blur-xl hover:border-emerald-500/50 dark:hover:border-emerald-400/50 transition-all duration-300 shadow-sm dark:shadow-[0_0_20px_-5px_rgba(16,185,129,0.15)]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20">
-                    PHASE II &bull; 300 MARKS
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">ESI &amp; FM Subject Depth</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Economic &amp; Social Issues, Finance, Management &amp; Descriptive answer frameworks.
-                </p>
-              </div>
-
-              {/* Card 3: Real-Time Telemetry (Cyan/Electric Blue Glow) */}
-              <div className="relative group p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/70 border border-slate-200/80 dark:border-cyan-500/20 backdrop-blur-xl hover:border-cyan-500/50 dark:hover:border-cyan-400/50 transition-all duration-300 shadow-sm dark:shadow-[0_0_20px_-5px_rgba(6,182,212,0.15)]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-xs">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-semibold border border-cyan-500/20">
-                    ACCURACY RADAR
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Precision Score Analytics</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Detailed cut-off projections, sectional performance tracking, and negative penalty analysis.
-                </p>
-              </div>
-
-              {/* Card 4: Security & Compliance (Fuchsia/Violet Glow) */}
-              <div className="relative group p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/70 border border-slate-200/80 dark:border-purple-500/20 backdrop-blur-xl hover:border-purple-500/50 dark:hover:border-purple-400/50 transition-all duration-300 shadow-sm dark:shadow-[0_0_20px_-5px_rgba(168,85,247,0.15)]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-semibold border border-purple-500/20">
-                    IBPS ENGINE CLONE
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Exam Hall Fidelity</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Authentic question palette layout, review tagging, and instant answer persistence.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Quick Feature Checklist Pills */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap items-center gap-3 pt-2 text-xs font-medium text-slate-600 dark:text-slate-400"
-            >
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Instant Result Review</span>
-              </div>
-              <span className="text-slate-300 dark:text-slate-700">&bull;</span>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Unlimited Mock Attempts</span>
-              </div>
-              <span className="text-slate-300 dark:text-slate-700">&bull;</span>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Cross-Device Responsive</span>
-              </div>
-            </motion.div>
-
-          </div>
-
-          {/* RIGHT COLUMN: Right-Aligned Futuristic Portal with Radiant Gradient Frame in Dark Mode */}
-          <div className="lg:col-span-5 w-full flex justify-center lg:justify-end items-center order-1 lg:order-2">
-            <motion.div 
-              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              initial={{ opacity: 0, y: 28, scale: 0.985 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-md lg:max-w-[420px] xl:max-w-[460px] relative lg:ml-auto"
+              transition={{ duration: 0.68, ease: EASE_OUT_EXPO }}
+              className="lg:col-span-7 pt-4 sm:pt-10 space-y-6 will-change-transform"
             >
-              
-              {/* Atmospheric Gradient Halo in Dark Mode */}
-              <div className="absolute -inset-1.5 sm:-inset-2 rounded-[32px] bg-gradient-to-tr from-[#9A7D3C] via-amber-500/40 via-emerald-500/40 to-indigo-600/50 blur-xl dark:blur-2xl opacity-40 dark:opacity-75 pointer-events-none" />
-              
-              {/* Outer Radiant Gradient Border Frame */}
-              <div className="relative p-[1.5px] rounded-3xl bg-gradient-to-b from-slate-200 via-[#9A7D3C]/30 to-slate-200 dark:from-amber-400/50 dark:via-emerald-400/40 dark:to-indigo-500/50 shadow-2xl dark:shadow-[0_0_50px_-10px_rgba(154,125,60,0.3)]">
-                
-                <div className="rounded-[23px] bg-white/95 dark:bg-[#070B18]/95 backdrop-blur-3xl p-5 sm:p-7 md:p-8 space-y-5 sm:space-y-6">
-                  
-                  {/* Portal Header */}
-                  <div className="space-y-1.5 text-center">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-[11px] font-mono text-slate-600 dark:text-slate-400 mb-1">
-                      <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
-                      <span>SECURE CANDIDATE PORTAL</span>
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
-                      {isLogin ? 'Welcome Back' : 'Create Candidate Account'}
-                    </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {isLogin ? 'Sign in to resume your active exam preparation' : 'Register to unlock tailored mock test engines'}
-                    </p>
-                  </div>
+              <div className="space-y-3">
+                <span className="block font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#A3A399]">
+                  {isLogin ? 'SIGN IN · OFFICER GATEWAY' : 'REGISTER · CYCLE 2026–27'}
+                </span>
+                <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[58px] tracking-tight leading-[1.06] text-white">
+                  {isLogin ? 'Access your ' : 'Claim your '}
+                  <span className="font-editorial-italic text-[#ECD5FF] font-normal">cadre.</span>
+                </h1>
+                <p className="text-sm sm:text-base text-[#A3A399] max-w-xl leading-relaxed">
+                  Calibrated strictly to official RBI Grade B Phase I &amp; Phase II exam patterns.{' '}
+                  <span className="text-[#FF9E44] font-semibold">
+                    Live Dual-Track questions, PYQs &amp; AI descriptive rubrics.
+                  </span>
+                </p>
+              </div>
 
-                  {/* Animated Switcher Tabs with High-Contrast Indicator */}
-                  <div className="relative p-1 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 grid grid-cols-2 text-xs font-semibold">
-                    <button
-                      type="button"
-                      id="login-tab-signin"
-                      onClick={() => { setIsLogin(true); setError(''); }}
-                      className={`relative z-10 py-2.5 rounded-lg transition-colors duration-200 cursor-pointer min-h-[40px] flex items-center justify-center ${
-                        isLogin 
-                          ? 'text-slate-900 dark:text-amber-300 font-bold' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'
-                      }`}
-                    >
-                      Sign In
-                    </button>
-                    <button
-                      type="button"
-                      id="login-tab-create"
-                      onClick={() => { setIsLogin(false); setError(''); }}
-                      className={`relative z-10 py-2.5 rounded-lg transition-colors duration-200 cursor-pointer min-h-[40px] flex items-center justify-center ${
-                        !isLogin 
-                          ? 'text-slate-900 dark:text-amber-300 font-bold' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium'
-                      }`}
-                    >
-                      Create Account
-                    </button>
-                    
-                    {/* Sliding Pill Indicator with High Contrast in Both Modes */}
-                    <motion.div
-                      className="absolute top-1 bottom-1 rounded-lg bg-white dark:bg-[#151D2F] shadow-sm border border-slate-200/80 dark:border-amber-400/40 dark:shadow-[0_0_12px_rgba(245,158,11,0.25)] pointer-events-none"
-                      initial={false}
-                      animate={{
-                        left: isLogin ? '4px' : '50%',
-                        width: 'calc(50% - 4px)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+              {/* Clean Segmented Switcher Tabs with layoutId */}
+              <div className="inline-flex p-1 rounded-xl bg-[#1C1C1A] border border-[#2E2E2A] gap-1 relative">
+                {[
+                  { id: 'signin', label: 'Sign In', active: isLogin, val: true },
+                  { id: 'create', label: 'Create Account', active: !isLogin, val: false }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    id={`login-tab-${tab.id}`}
+                    onClick={() => {
+                      setIsLogin(tab.val);
+                      setError('');
+                      setNotice('');
+                    }}
+                    className={`relative px-4 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer z-10 ${
+                      tab.active ? 'text-[#141413]' : 'text-[#A3A399] hover:text-white'
+                    }`}
+                  >
+                    {tab.active && (
+                      <motion.span
+                        layoutId="login-auth-tab"
+                        transition={SPRING_SNAPPY}
+                        className="absolute inset-0 rounded-lg bg-[#ECD5FF] -z-10"
+                      />
+                    )}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Auth Form */}
+              <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Optional Live Pass Name Preview Input / Or Officer Name on Register */}
+                  <div className="space-y-1.5">
+                    <label className="block font-mono text-[10px] font-bold uppercase tracking-widest text-[#A3A399]">
+                      Name on Pass
+                    </label>
+                    <input
+                      type="text"
+                      value={candidateName}
+                      onChange={(e) => setCandidateName(e.target.value)}
+                      placeholder="Officer Ayush"
+                      className="w-full min-h-[46px] px-3.5 py-2.5 rounded-lg bg-[#1C1C1A] border border-[#2E2E2A] text-sm text-white placeholder-[#66665E] focus:outline-none focus:border-[#ECD5FF] transition-colors"
                     />
                   </div>
 
-                  {/* Form Inputs */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    
-                    {/* Email Input */}
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Email Address
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                          <Mail className="w-4 h-4" />
-                        </div>
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="candidate@rbi-aspirant.org"
-                          required
-                          className="w-full min-h-[46px] pl-10 pr-4 py-2.5 bg-slate-50/70 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-base sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9A7D3C] dark:focus:border-amber-400 focus:ring-2 focus:ring-[#9A7D3C]/20 dark:focus:ring-amber-400/20 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Password
-                        </label>
-                        {isLogin && (
-                          <span className="text-[11px] text-[#9A7D3C] dark:text-[#E5C378] hover:underline cursor-pointer">
-                            Forgot password?
-                          </span>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                          <Lock className="w-4 h-4" />
-                        </div>
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••••••"
-                          required
-                          className="w-full min-h-[46px] pl-10 pr-10 py-2.5 bg-slate-50/70 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-base sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9A7D3C] dark:focus:border-amber-400 focus:ring-2 focus:ring-[#9A7D3C]/20 dark:focus:ring-amber-400/20 transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer min-h-[44px] min-w-[44px] justify-center"
-                          title={showPassword ? 'Hide password' : 'Show password'}
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Error Banner */}
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6, height: 0 }}
-                          animate={{ opacity: 1, y: 0, height: 'auto' }}
-                          exit={{ opacity: 0, y: -6, height: 0 }}
-                          className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2"
-                        >
-                          <span className="font-bold shrink-0">!</span>
-                          <span>{error}</span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Primary Submit Button with Radiant Gradient */}
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="relative group w-full min-h-[48px] py-3 px-4 rounded-xl bg-gradient-to-r from-[#9A7D3C] via-amber-500 to-emerald-600 text-white font-semibold text-sm shadow-md hover:shadow-lg hover:shadow-[#9A7D3C]/30 dark:shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-white/25 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
-                      <span>
-                        {loading 
-                          ? 'Authenticating...' 
-                          : isLogin ? 'Access Simulator' : 'Initialize Account'}
-                      </span>
-                      {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                    </button>
-
-                  </form>
-
-                  {/* Divider */}
-                  <div className="relative my-3 sm:my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200/80 dark:border-white/10" />
-                    </div>
-                    <div className="relative flex justify-center text-[10px] sm:text-[11px] uppercase tracking-wider font-mono">
-                      <span className="px-3 bg-white/95 dark:bg-[#070B18] text-slate-400">
-                        OR SECURE SSO
-                      </span>
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="block font-mono text-[10px] font-bold uppercase tracking-widest text-[#A3A399]">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#66665E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@email.com"
+                        required
+                        className="w-full min-h-[46px] pl-10 pr-3.5 py-2.5 rounded-lg bg-[#1C1C1A] border border-[#2E2E2A] text-sm text-white placeholder-[#66665E] focus:outline-none focus:border-[#ECD5FF] transition-colors"
+                      />
                     </div>
                   </div>
+                </div>
 
-                  {/* Google Sign In Button */}
-                  <button
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-mono text-[10px] font-bold uppercase tracking-widest text-[#A3A399]">
+                      Password
+                    </label>
+                    {isLogin && (
+                      <button
+                        type="button"
+                        onClick={handlePasswordReset}
+                        className="text-[11px] text-[#ECD5FF] hover:underline cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#66665E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      required
+                      className="w-full min-h-[46px] pl-10 pr-11 py-2.5 rounded-lg bg-[#1C1C1A] border border-[#2E2E2A] text-sm text-white placeholder-[#66665E] focus:outline-none focus:border-[#ECD5FF] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 px-3.5 flex items-center text-[#A3A399] hover:text-white cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error & Notice Banners */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-3 rounded-lg bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs flex items-start gap-2"
+                    >
+                      <span className="font-bold">!</span>
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+                  {notice && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-3 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-start gap-2"
+                    >
+                      <Check className="w-4 h-4 shrink-0" />
+                      <span>{notice}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Primary Action Row: Cobalt Blue CTA + Download Pass + Google SSO */}
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={SPRING_SNAPPY}
+                    className="flex-1 sm:flex-initial min-h-[44px] px-5 sm:px-6 py-3 rounded-lg bg-[#0D47FF] hover:bg-[#1954FF] text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60"
+                  >
+                    <span>
+                      {loading
+                        ? 'Authenticating...'
+                        : isLogin
+                          ? 'Access Simulator'
+                          : 'Register to claim'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
+                  </motion.button>
+
+                  <motion.button
                     type="button"
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => downloadOfficerPassSVG(livePassName, 'General', '0389')}
+                    className="min-h-[44px] px-4 py-3 rounded-lg border-b border-[#FAF8EC]/40 hover:border-white text-xs sm:text-sm font-medium text-[#FAF8EC] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 shrink-0" />
+                    <span>Download pass</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={handleGoogleSignIn}
                     disabled={loading}
-                    className="w-full min-h-[46px] py-2.5 px-4 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all duration-200 flex items-center justify-center gap-3 shadow-xs cursor-pointer disabled:opacity-70"
+                    className="w-full sm:w-auto sm:ml-auto min-h-[44px] px-4 py-3 rounded-lg bg-[#1C1C1A] hover:bg-[#242421] border border-[#2E2E2A] text-xs sm:text-sm font-semibold text-white inline-flex items-center justify-center gap-2.5 transition-colors cursor-pointer disabled:opacity-60"
                   >
                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -503,44 +428,301 @@ export function Login() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    <span>Continue with Google</span>
-                  </button>
+                    <span>Google SSO</span>
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
 
-                  {/* Footer Signature Inside Portal */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-center">
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                      <span>Made with Love</span>
-                      <Heart className="w-3 h-3 text-rose-500 fill-rose-500 animate-pulse drop-shadow-[0_0_6px_rgba(244,63,94,0.4)]" />
-                      <span className="font-bold text-slate-900 dark:text-white">Ayush</span>
-                    </div>
+            {/* RIGHT COLUMN: Hanging Soft Lavender Officer Pass Card */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end -mt-2 sm:-mt-6 lg:-mt-10 relative">
+              <motion.div
+                aria-hidden="true"
+                animate={{ scale: [0.95, 1.08, 0.95], opacity: [0.22, 0.4, 0.22] }}
+                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="pointer-events-none absolute top-14 w-72 h-72 rounded-full bg-[#ECD5FF]/20 blur-3xl"
+              />
+              <div className="relative z-10">
+                <OfficerLanyardPass
+                  name={livePassName}
+                  stream="General"
+                  passNumber="0389"
+                  subtitle="Reserve Bank Aspirant"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. STATION SIGNBOARDS: THREE-STAGE EXAMINATION ARCHITECTURE */}
+      <section
+        id="rounds-section"
+        className="w-full bg-[#FAF8EC] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] py-14 sm:py-20 border-b border-[#E5E1CE] dark:border-[#2E2E2A]"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10 sm:space-y-12">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.05 }}
+            transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+            className="max-w-2xl space-y-2"
+          >
+            <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+              EXAMINATION ARCHITECTURE · CYCLE 2026–27
+            </span>
+            <h2 className="font-heading font-black text-3xl sm:text-4xl tracking-tight">
+              Three stages from prelims to{' '}
+              <span className="font-editorial-italic text-[#0D47FF] dark:text-[#ECD5FF]">appointment.</span>
+            </h2>
+          </motion.div>
+
+          <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+            {/* Stage 1 */}
+            <MotionStaggerItem className="space-y-5">
+              <StationSignboard title="PHASE I" subtitle="PF 1 · ONLINE PRELIMS" variant={1} />
+              <div className="pt-4 border-t border-[#141413]/20 dark:border-[#FAF8EC]/20 space-y-3">
+                <h3 className="font-heading font-black text-lg">
+                  Phase 1 · Objective Qualifying
+                </h3>
+                <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                  200 Marks across 120 minutes with strict sectional windows and 1/4th (-0.25) negative marking calibration.
+                </p>
+                <div className="pt-2 space-y-2 text-xs">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+                    SECTIONAL BLUEPRINT
                   </div>
-
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">80 Qs</span>
+                    <span>General Awareness (25m)</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">60 Qs</span>
+                    <span>Reasoning Ability (45m)</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">30+30</span>
+                    <span>Quant &amp; English (50m)</span>
+                  </div>
                 </div>
               </div>
+            </MotionStaggerItem>
 
+            {/* Stage 2 */}
+            <MotionStaggerItem className="space-y-5">
+              <StationSignboard title="PHASE II" subtitle="PF 2 · MAINS SELECTION" variant={2} />
+              <div className="pt-4 border-t border-[#141413]/20 dark:border-[#FAF8EC]/20 space-y-3">
+                <h3 className="font-heading font-black text-lg">
+                  Phase 2 · ESI, English &amp; FM
+                </h3>
+                <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                  300 Marks combining objective MCQs and typed descriptive answers benchmarked against official PYQs.
+                </p>
+                <div className="pt-2 space-y-2 text-xs">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+                    MERIT PAPERS
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">100 M</span>
+                    <span>Paper I: Economic &amp; Social Issues</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">100 M</span>
+                    <span>Paper II: English Descriptive Writing</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">100 M</span>
+                    <span>Paper III: Finance &amp; Management</span>
+                  </div>
+                </div>
+              </div>
+            </MotionStaggerItem>
+
+            {/* Stage 3 */}
+            <MotionStaggerItem className="space-y-5">
+              <StationSignboard title="FINALE" subtitle="PF 3 · CENTRAL BOARD" variant={3} />
+              <div className="pt-4 border-t border-[#141413]/20 dark:border-[#FAF8EC]/20 space-y-3">
+                <h3 className="font-heading font-black text-lg">
+                  Stage 3 · Interview &amp; Merit
+                </h3>
+                <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                  Comprehensive 375-Mark final merit calibration merging Phase II scores with central banking analytical readiness.
+                </p>
+                <div className="pt-2 space-y-2 text-xs">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+                    FINAL SELECTION
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#0D47FF] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">75 M</span>
+                    <span>Personality &amp; RBI Board Viva</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#0D47FF] border border-[#141413] shrink-0" />
+                    <span className="font-mono font-bold tabular-nums">375 M</span>
+                    <span>Final All-India Cadre Merit List</span>
+                  </div>
+                </div>
+              </div>
+            </MotionStaggerItem>
+          </MotionStaggerGrid>
+        </div>
+      </section>
+
+      {/* 4. CRISSCROSSING DIAGONAL TICKER MARQUEE */}
+      <DiagonalMarquee />
+
+      {/* 5. HIGHLIGHTED BENCHMARK CARDS + SOFT LAVENDER CALLOUT STRIP */}
+      <section
+        id="benchmarks-section"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-14 space-y-5"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.05 }}
+          transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
+          className="text-center space-y-2 mb-6"
+        >
+          <div className="font-heading font-black text-3xl sm:text-4xl tracking-tight tabular-nums">
+            <AnimatedNumber value={575} />{' '}
+            <span className="font-medium text-[#66665E] dark:text-[#A3A399] text-xl sm:text-3xl">
+              total syllabus marks calibrated
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] max-w-xl mx-auto">
+            Dual-track synthesis combining RBI static PYQs with verified recent macroeconomic and banking circulars.
+          </p>
+        </motion.div>
+
+        <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+          {/* Card 1 */}
+          <MotionStaggerItem className="h-full">
+            <motion.div
+              whileHover={{ y: -6 }}
+              whileTap={{ scale: 0.99 }}
+              transition={SPRING_BUTTERY}
+              className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="block font-mono text-[11px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
+                    DUAL-TRACK ENGINE
+                  </span>
+                  <div className="font-heading font-black text-2xl sm:text-3xl tracking-tight leading-tight mt-1.5">
+                    Static + Dynamic
+                  </div>
+                </div>
+                <PrizeBadgeIcon type="trophy" />
+              </div>
+              <div className="mt-6 pt-3.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-xs text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                ✓ Exact RBI Act 1934 &amp; recent 2024–26 circulars in GA, ESI &amp; FM
+              </div>
             </motion.div>
+          </MotionStaggerItem>
+
+          {/* Card 2 */}
+          <MotionStaggerItem className="h-full">
+            <motion.div
+              whileHover={{ y: -6 }}
+              whileTap={{ scale: 0.99 }}
+              transition={SPRING_BUTTERY}
+              className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="block font-mono text-[11px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
+                    SPACED REPETITION
+                  </span>
+                  <div className="font-heading font-black text-2xl sm:text-3xl tracking-tight leading-tight mt-1.5">
+                    5-Stage Leitner
+                  </div>
+                </div>
+                <PrizeBadgeIcon type="medal2" />
+              </div>
+              <div className="mt-6 pt-3.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-xs text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                ✓ Automated Mistake Notebook synced across devices
+              </div>
+            </motion.div>
+          </MotionStaggerItem>
+
+          {/* Card 3 */}
+          <MotionStaggerItem className="h-full">
+            <motion.div
+              whileHover={{ y: -6 }}
+              whileTap={{ scale: 0.99 }}
+              transition={SPRING_BUTTERY}
+              className="h-full rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] ink-card-featured p-5 sm:p-6 flex flex-col justify-between transition-shadow hover:shadow-[6px_6px_0px_#141413] dark:hover:shadow-[6px_6px_0px_#ECD5FF] will-change-transform group"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="block font-mono text-[11px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
+                    PHASE II RUBRICS
+                  </span>
+                  <div className="font-heading font-black text-2xl sm:text-3xl tracking-tight leading-tight mt-1.5">
+                    AI Descriptive
+                  </div>
+                </div>
+                <PrizeBadgeIcon type="medal3" />
+              </div>
+              <div className="mt-6 pt-3.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-xs text-[#66665E] dark:text-[#A3A399] leading-relaxed">
+                ✓ Dimension-by-dimension RBI grading &amp; model answers
+              </div>
+            </motion.div>
+          </MotionStaggerItem>
+        </MotionStaggerGrid>
+
+        {/* Wide Soft Lavender Highlight Strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.05 }}
+          whileHover={{ y: -2 }}
+          transition={SPRING_SNAPPY}
+          className="rounded-2xl bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413] px-5 sm:px-7 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[3px_3px_0px_#141413]"
+        >
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+            <span className="font-heading font-black">Upload any study notes or circulars</span>
+            <span className="text-[#141413]/75">PDFs, DOCX, images or pick any official syllabus chapter</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToSection('portal-stage')}
+            className="text-xs font-bold underline underline-offset-4 hover:text-[#0D47FF] text-left sm:text-right shrink-0 cursor-pointer group inline-flex items-center gap-1"
+          >
+            <span>✓ Sign in above to begin</span>
+            <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
+          </button>
+        </motion.div>
+      </section>
+
+      {/* 6. CLEAN EDITORIAL FOOTER */}
+      <footer className="mt-auto w-full border-t border-[#E5E1CE] dark:border-[#2E2E2A] py-5 px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#66665E] dark:text-[#A3A399]">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <ShieldCheck className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+            <span>&copy; {new Date().getFullYear()} RBI Grade B Engine · Officer Preparation Workspace</span>
           </div>
 
-        </div>
-      </main>
-
-      {/* 4. Bottom System Bar */}
-      <footer className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-5 border-t border-slate-200/60 dark:border-white/[0.05] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#9A7D3C] dark:text-amber-400" />
-          <span>&copy; {new Date().getFullYear()} RBI Grade B Engine &bull; Official Cadre Preparation Standard</span>
-        </div>
-
-        <div className="flex items-center gap-4 text-[11px] font-mono">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            256-BIT TLS ENCRYPTION
-          </span>
-          <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
-          <span className="text-[#9A7D3C] dark:text-amber-400 font-semibold">CANDIDATE GATEWAY ONLINE</span>
+          <div className="flex items-center gap-1.5 font-medium">
+            <span>Made with</span>
+            <motion.span
+              animate={{ scale: [1, 1.22, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="inline-flex"
+            >
+              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+            </motion.span>
+            <span className="font-heading font-bold text-[#141413] dark:text-white">Ayush</span>
+          </div>
         </div>
       </footer>
-
     </div>
   );
 }

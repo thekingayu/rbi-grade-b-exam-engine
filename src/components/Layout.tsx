@@ -1,10 +1,19 @@
 import { Link, useLocation, useOutlet, useNavigate } from 'react-router-dom';
 import { User, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { 
-  Moon, Sun, BookOpen, Compass, Plus, Clock, LogOut, 
-  RotateCcw, SlidersHorizontal, ChevronDown, Sparkles, 
-  Search, Timer as TimerIcon, User as UserIcon 
+import {
+  Moon,
+  Sun,
+  BookOpen,
+  Compass,
+  Plus,
+  Clock,
+  LogOut,
+  RotateCcw,
+  ChevronDown,
+  Search,
+  Timer as TimerIcon,
+  ArrowRight
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,23 +22,26 @@ import { AtmosphericBackground } from './AtmosphericBackground';
 import { useSubject } from '../context/SubjectContext';
 import { CommandPalette } from './CommandPalette';
 import { PomodoroTimer } from './PomodoroTimer';
-import { SubjectIcon } from './dashboard/SubjectIcon';
+import { EqualizerBars, SPRING_SNAPPY, SPRING_TACTILE, EASE_OUT_EXPO } from './MotionPrimitives';
 
 export function Layout({ user }: { user: User }) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
-  const { subjects, activeSubject, setActiveSubject, userProfile } = useSubject();
+  const { subjects, activeSubject, setActiveSubject, userProfile, targetExamDate } = useSubject();
 
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' ||
-            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return (
+      localStorage.getItem('theme') === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
   });
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showSubjectMenu, setShowSubjectMenu] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showPomodoro, setShowPomodoro] = useState(false);
+  const [countdownText, setCountdownText] = useState('');
 
   useEffect(() => {
     if (darkMode) {
@@ -48,7 +60,7 @@ export function Layout({ user }: { user: User }) {
         window.requestAnimationFrame(() => {
           const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
           if (totalHeight > 0) {
-            setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100)));
+            setScrollProgress(Math.min(1, Math.max(0, window.scrollY / totalHeight)));
           } else {
             setScrollProgress(0);
           }
@@ -62,283 +74,253 @@ export function Layout({ user }: { user: User }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const activeColor = activeSubject ? activeSubject.accentColor : '#0D9488';
-  const currentDisplayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Cadre Officer';
+  // Global Cmd/Ctrl+K toggle shortcut
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // Live exam target countdown ticker for the Floating Dark Bottom Dock
+  useEffect(() => {
+    const updateCountdown = () => {
+      const targetMs = new Date(`${targetExamDate}T09:00:00+05:30`).getTime();
+      const diff = Math.max(0, targetMs - Date.now());
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const mins = Math.floor((diff / (1000 * 60)) % 60);
+      const secs = Math.floor((diff / 1000) % 60);
+      setCountdownText(`${days}d ${hours.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`);
+    };
+    updateCountdown();
+    const id = setInterval(updateCountdown, 1000);
+    return () => clearInterval(id);
+  }, [targetExamDate]);
+
+  const activeColor = activeSubject ? activeSubject.accentColor : '#0D47FF';
+  const currentDisplayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Officer';
   const currentPhoto = userProfile?.photoURL || user.photoURL;
+  const isNewExamRoute = location.pathname.startsWith('/new') || location.pathname.startsWith('/exam/new');
+
+  const navItems = [
+    { path: '/', label: 'Dashboard' },
+    { path: '/new', label: 'New Exam', matchPrefix: '/new' },
+    { path: '/mistakes', label: 'Mistakes' },
+    { path: '/history', label: 'Archive' },
+    { path: '/manage-subjects', label: 'Subjects' },
+    { path: '/syllabus', label: 'Syllabus' }
+  ];
+
+  const isNavActive = (item: { path: string; matchPrefix?: string }) => {
+    if (item.matchPrefix) return location.pathname.startsWith(item.matchPrefix);
+    return location.pathname === item.path;
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#030612] text-slate-900 dark:text-slate-100 font-sans selection:bg-teal-600 selection:text-white transition-colors duration-500">
-      
-      {/* Shared Futuristic Atmospheric Glow */}
+    <div className="min-h-screen bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] font-sans selection:bg-[#ECD5FF] selection:text-[#141413] transition-colors duration-300">
       <AtmosphericBackground />
 
-      {/* Global Command Palette */}
-      <CommandPalette 
-        isOpen={showCommandPalette} 
-        onClose={() => setShowCommandPalette(false)} 
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
       />
 
-      {/* Pomodoro Timer Modal Widget */}
-      <PomodoroTimer 
-        isOpen={showPomodoro} 
-        onClose={() => setShowPomodoro(false)} 
+      <PomodoroTimer
+        isOpen={showPomodoro}
+        onClose={() => setShowPomodoro(false)}
       />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 dark:border-white/10 bg-white/60 dark:bg-[#0A0F1C]/75 backdrop-blur-2xl">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
-            
-            {/* Logo / Brand Name & Subject Switcher Dropdown */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
-                <div 
-                  className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl p-[1.5px] shadow-lg shrink-0 group-hover:scale-105 transition-transform"
-                  style={{
-                    background: `linear-gradient(135deg, ${activeColor}, #06B6D4, #6366F1)`
-                  }}
-                >
-                  <div className="w-full h-full rounded-xl sm:rounded-2xl bg-white dark:bg-[#070B18] flex items-center justify-center" style={{ color: activeColor }}>
-                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                </div>
-                <div className="hidden sm:block">
-                  <span className="font-serif text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1 leading-tight whitespace-nowrap">
-                    RBI Grade B <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 bg-clip-text text-transparent">Engine</span>
-                  </span>
-                  <div className="flex items-center text-[9px] font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    <span>OFFICER CADRE 2026</span>
-                  </div>
-                </div>
+        {/* Clean 3-Zone Editorial Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC]/92 dark:bg-[#141413]/92 backdrop-blur-md">
+          <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-1.5 sm:gap-4">
+            {/* ZONE 1: Brand Lockup & Subject Scope Dropdown */}
+            <div className="flex items-center gap-1.5 sm:gap-4 min-w-0">
+              <Link to="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0 group">
+                <span className="font-heading text-xs sm:text-base font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] whitespace-nowrap">
+                  RBI GRADE B
+                </span>
+                <span className="hidden sm:inline text-[#66665E] dark:text-[#A3A399]">×</span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 font-heading text-sm sm:text-base font-bold text-[#0D47FF] dark:text-[#ECD5FF] whitespace-nowrap">
+                  <BookOpen className="w-4 h-4 transition-transform group-hover:scale-110" />
+                  Engine
+                </span>
               </Link>
 
-              {/* SUBJECT SWITCHER DROPDOWN */}
-              <div className="relative shrink-0">
+              {/* Subject Switcher Dropdown */}
+              <div className="relative min-w-0">
                 <button
                   onClick={() => setShowSubjectMenu(!showSubjectMenu)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer max-w-[140px] sm:max-w-[190px] shrink-0"
+                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer max-w-[110px] sm:max-w-[180px]"
+                  aria-expanded={showSubjectMenu}
+                  aria-label="Switch subject scope"
                 >
-                  <span 
-                    className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: activeColor }}
                   />
-                  <span className="truncate text-slate-800 dark:text-slate-200">
+                  <span className="truncate text-[#141413] dark:text-[#FAF8EC]">
                     {activeSubject ? activeSubject.name : 'All Subjects'}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-auto" />
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-[#66665E] dark:text-[#A3A399] shrink-0 ml-auto transition-transform duration-200 ${
+                      showSubjectMenu ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
 
-                {showSubjectMenu && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowSubjectMenu(false)} 
-                    />
-                    <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl bg-white/95 dark:bg-[#070B18]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
-                      <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/5 mb-1">
-                        Select Curriculum Scope
-                      </div>
-                      
-                      <button
-                        onClick={() => {
-                          setActiveSubject(null);
-                          setShowSubjectMenu(false);
-                          navigate('/');
-                        }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-left transition-colors cursor-pointer ${
-                          !activeSubject ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                        }`}
+                <AnimatePresence>
+                  {showSubjectMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowSubjectMenu(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: -6 }}
+                        transition={SPRING_SNAPPY}
+                        className="absolute top-full left-0 mt-2 w-64 max-w-[85vw] rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] p-2 z-50 origin-top-left"
                       >
-                        <span className="w-2 h-2 rounded-full bg-teal-500" />
-                        <span>All Subjects (Command Center)</span>
-                      </button>
+                        <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] border-b border-[#E5E1CE] dark:border-[#2E2E2A] mb-1">
+                          Curriculum Scope
+                        </div>
 
-                      <div className="my-1.5 border-t border-slate-100 dark:border-white/5" />
+                        <button
+                          onClick={() => {
+                            setActiveSubject(null);
+                            setShowSubjectMenu(false);
+                            navigate('/');
+                          }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-left transition-colors cursor-pointer ${
+                            !activeSubject
+                              ? 'bg-[#ECD5FF] text-[#141413]'
+                              : 'text-[#141413] dark:text-[#FAF8EC] hover:bg-[#F3F0E0] dark:hover:bg-[#242421]'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-[#0D47FF]" />
+                          <span>All Subjects (Command Center)</span>
+                        </button>
 
-                      <div className="max-h-60 overflow-y-auto space-y-1">
-                        {subjects.filter(s => s.slug !== 'uncategorized').map(sub => (
-                          <button
-                            key={sub.id}
-                            onClick={() => {
-                              setActiveSubject(sub);
-                              setShowSubjectMenu(false);
-                              navigate(`/subject/${sub.slug}`);
-                            }}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-left transition-colors cursor-pointer ${
-                              activeSubject?.id === sub.id
-                                ? 'bg-slate-100 dark:bg-white/10'
-                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-white/5'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span 
-                                className="w-2 h-2 rounded-full shrink-0" 
-                                style={{ backgroundColor: sub.accentColor }} 
-                              />
-                              <span className="truncate">{sub.name}</span>
-                            </div>
-                            <span className="text-[9px] font-mono text-slate-400 shrink-0">
-                              {sub.phase}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
+                        <div className="my-1.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]" />
+
+                        <div className="max-h-60 overflow-y-auto space-y-0.5">
+                          {subjects
+                            .filter((s) => s.slug !== 'uncategorized')
+                            .map((sub) => (
+                              <button
+                                key={sub.id}
+                                onClick={() => {
+                                  setActiveSubject(sub);
+                                  setShowSubjectMenu(false);
+                                  navigate(`/subject/${sub.slug}`);
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors cursor-pointer ${
+                                  activeSubject?.id === sub.id
+                                    ? 'bg-[#ECD5FF] text-[#141413] font-bold'
+                                    : 'text-[#141413] dark:text-[#FAF8EC] hover:bg-[#F3F0E0] dark:hover:bg-[#242421]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: sub.accentColor }}
+                                  />
+                                  <span className="truncate">{sub.name}</span>
+                                </div>
+                                <span className="text-[10px] font-mono opacity-65 shrink-0">
+                                  {sub.phase}
+                                </span>
+                              </button>
+                            ))}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-            
-            {/* Desktop Navigation (Full on xl, Streamlined on lg to eliminate any screen collision) */}
-            <nav className="hidden xl:flex items-center gap-1 bg-white/70 dark:bg-white/[0.04] p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs shrink-0">
-              <Link 
-                to="/" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/' 
-                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Dashboard</span>
-              </Link>
-              <Link 
-                to="/new" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname.startsWith('/new') 
-                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Exam</span>
-              </Link>
-              <Link 
-                to="/mistakes" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/mistakes' 
-                    ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Mistakes</span>
-              </Link>
-              <Link 
-                to="/history" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/history' 
-                    ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>Archive</span>
-              </Link>
-              <Link 
-                to="/manage-subjects" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/manage-subjects' 
-                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Subjects</span>
-              </Link>
-              <Link 
-                to="/syllabus" 
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/syllabus' 
-                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Syllabus</span>
-              </Link>
+
+            {/* ZONE 2: Clean Flat Editorial Navigation Links with shared layoutId underline */}
+            <nav className="hidden lg:flex items-center gap-5 xl:gap-7 shrink-0">
+              {navItems.map((item) => {
+                const active = isNavActive(item);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`relative py-2 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors ${
+                      active
+                        ? 'text-[#141413] dark:text-[#ECD5FF] font-bold'
+                        : 'text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-white font-semibold'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {active && (
+                      <motion.span
+                        layoutId="desktop-nav-underline"
+                        transition={SPRING_SNAPPY}
+                        className="absolute bottom-0 inset-x-0 h-[2px] bg-[#0D47FF] dark:bg-[#ECD5FF] rounded-full"
+                      />
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
 
-            {/* Compact Navigation for medium desktops (1024px to 1279px) ensuring ZERO overlap with All Subjects */}
-            <nav className="hidden lg:flex xl:hidden items-center gap-1 bg-white/70 dark:bg-white/[0.04] p-1 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xs shrink-0">
-              <Link 
-                to="/" 
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/' 
-                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-                title="Dashboard"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Home</span>
-              </Link>
-              <Link 
-                to="/new" 
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname.startsWith('/new') 
-                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-                title="New Exam"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Exam</span>
-              </Link>
-              <Link 
-                to="/syllabus" 
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  location.pathname === '/syllabus' 
-                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-                title="Syllabus"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Syllabus</span>
-              </Link>
-            </nav>
-
-            {/* Right Action Controls */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Command Palette Trigger */}
-              <button
+            {/* ZONE 3: Action Utilities & Profile */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <motion.button
+                whileTap={{ scale: 0.93 }}
                 onClick={() => setShowCommandPalette(true)}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-xs font-mono text-slate-500 dark:text-slate-400 cursor-pointer"
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 h-9 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 text-xs font-mono text-[#66665E] dark:text-[#A3A399] cursor-pointer"
                 title="Command Palette (Ctrl/Cmd+K)"
+                aria-label="Open quick navigation palette"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">⌘K</span>
-              </button>
+              </motion.button>
 
-              {/* Pomodoro Timer Toggle */}
-              <button
+              <motion.button
+                whileTap={{ scale: 0.93 }}
                 onClick={() => setShowPomodoro(!showPomodoro)}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 cursor-pointer transition-all"
+                className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-colors cursor-pointer ${
+                  showPomodoro
+                    ? 'bg-[#FFD426] text-[#141413] border-[#141413]'
+                    : 'bg-[#F3F0E0] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] hover:border-[#141413]'
+                }`}
                 title="Pomodoro Study Timer"
+                aria-label="Toggle Pomodoro timer"
               >
                 <TimerIcon className="w-4 h-4" />
-              </button>
-              
-              {/* Dark mode */}
-              <button 
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.93, rotate: 15 }}
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 transition-all cursor-pointer"
+                className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer"
                 aria-label="Toggle dark mode"
               >
-                {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-              </button>
+                {darkMode ? <Sun className="w-4 h-4 text-[#FFD426]" /> : <Moon className="w-4 h-4 text-[#141413]" />}
+              </motion.button>
 
-              {/* User Profile Button linking to /profile */}
+              {/* Profile Link */}
               <Link
                 to="/profile"
-                className={`flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-2xl border transition-all cursor-pointer shrink-0 ${
+                className={`flex items-center gap-2 pl-1 pr-1.5 sm:pl-1.5 sm:pr-2.5 h-9 rounded-lg border transition-colors shrink-0 ${
                   location.pathname === '/profile'
-                    ? 'bg-teal-500/15 border-teal-500/40 ring-2 ring-teal-500/20 shadow-xs'
-                    : 'bg-slate-100/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                    ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
+                    : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
                 }`}
-                title="Manage Officer Profile & Settings"
+                title="Officer Dossier & Lanyard Pass"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden shrink-0">
+                <div className="w-7 h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
                   {currentPhoto ? (
                     currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
                       <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />
@@ -349,133 +331,173 @@ export function Layout({ user }: { user: User }) {
                     <span>{currentDisplayName.charAt(0).toUpperCase()}</span>
                   )}
                 </div>
-                <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight truncate max-w-[110px]">
-                    {currentDisplayName.split(' ')[0]}
-                  </span>
-                  <span className="text-[9px] font-mono text-teal-600 dark:text-teal-400 font-bold leading-tight">
-                    {userProfile?.stream || 'Officer'}
-                  </span>
-                </div>
+                <span className="hidden lg:inline text-xs font-bold truncate max-w-[90px]">
+                  {currentDisplayName.split(' ')[0]}
+                </span>
               </Link>
 
-              {/* Sign out */}
-              <button 
+              {/* Sign Out (Desktop) */}
+              <motion.button
+                whileTap={{ scale: 0.94 }}
                 onClick={() => signOut(auth)}
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 transition-all cursor-pointer shrink-0"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg text-xs font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#F3F0E0] dark:bg-[#1C1C1A] hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-[#E5E1CE] dark:border-[#2E2E2A] transition-colors cursor-pointer shrink-0"
                 title="Sign Out"
               >
-                <LogOut className="w-3.5 h-3.5 shrink-0" />
-                <span className="font-semibold">Sign Out</span>
-              </button>
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">Sign Out</span>
+              </motion.button>
             </div>
           </div>
 
-          {/* Micro-precision liquid scroll progress bar */}
+          {/* Minimal Cobalt Scroll Progress Rule (GPU scaleX compositor-only) */}
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent overflow-hidden pointer-events-none">
-            <div 
-              className="h-full shadow-[0_0_8px_rgba(13,148,136,0.6)]"
-              style={{ 
-                width: `${scrollProgress}%`,
-                background: `linear-gradient(90deg, ${activeColor}, #06B6D4, #6366F1)`,
-                transition: 'width 60ms cubic-bezier(0, 0, 0.2, 1)'
+            <div
+              className="h-full w-full bg-[#0D47FF] dark:bg-[#ECD5FF] origin-left will-change-transform"
+              style={{
+                transform: `scaleX(${scrollProgress})`,
               }}
             />
           </div>
         </header>
 
-        {/* Sleek, Perfectly-Aligned Symmetrical Mobile Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 dark:bg-[#070B18]/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom,6px)]">
+        {/* Mobile Bottom Navigation Bar (Strictly aligned 5 columns, Sign Out in 5th slot) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#FAF8EC]/95 dark:bg-[#141413]/95 backdrop-blur-md border-t border-[#E5E1CE] dark:border-[#2E2E2A] pb-safe">
           <div className="grid grid-cols-5 items-center h-16 max-w-md mx-auto px-1">
-            {/* 1. Dashboard / Home */}
-            <Link 
-              to="/" 
-              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
-                location.pathname === '/' 
-                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+            <Link
+              to="/"
+              className={`relative flex flex-col items-center justify-center h-full gap-1 text-center transition-colors ${
+                location.pathname === '/'
+                  ? 'text-[#0D47FF] dark:text-[#ECD5FF] font-extrabold'
+                  : 'text-[#66665E] dark:text-[#A3A399] font-medium'
               }`}
             >
-              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/' ? 'bg-teal-500/15' : ''}`}>
-                <Compass className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+              {location.pathname === '/' && (
+                <motion.span
+                  layoutId="mobile-nav-pill"
+                  transition={SPRING_SNAPPY}
+                  className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
+                />
+              )}
+              <Compass className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Dashboard</span>
             </Link>
 
-            {/* 2. Mistakes */}
-            <Link 
-              to="/mistakes" 
-              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
-                location.pathname === '/mistakes' 
-                  ? 'text-rose-600 dark:text-rose-400 font-extrabold' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+            <Link
+              to="/mistakes"
+              className={`relative flex flex-col items-center justify-center h-full gap-1 text-center transition-colors ${
+                location.pathname === '/mistakes'
+                  ? 'text-[#0D47FF] dark:text-[#ECD5FF] font-extrabold'
+                  : 'text-[#66665E] dark:text-[#A3A399] font-medium'
               }`}
             >
-              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/mistakes' ? 'bg-rose-500/15' : ''}`}>
-                <RotateCcw className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] leading-none tracking-tight">Mistakes</span>
+              {location.pathname === '/mistakes' && (
+                <motion.span
+                  layoutId="mobile-nav-pill"
+                  transition={SPRING_SNAPPY}
+                  className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
+                />
+              )}
+              <RotateCcw className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Mistakes</span>
             </Link>
 
-            {/* 3. Center Elevated Action: New Exam + (Symmetrically Aligned) */}
-            <Link 
-              to="/new" 
-              className="flex flex-col items-center justify-center h-full gap-1 text-center transition-all group cursor-pointer focus:outline-none"
+            <Link
+              to="/new"
+              className="flex flex-col items-center justify-center h-full gap-1 text-center cursor-pointer"
               title="Start New Exam"
             >
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md transition-all duration-200 group-hover:scale-105 group-active:scale-95 ${
-                location.pathname.startsWith('/new')
-                  ? 'bg-gradient-to-tr from-teal-500 via-cyan-400 to-indigo-600 shadow-teal-500/40 ring-2 ring-teal-500/30'
-                  : 'bg-gradient-to-tr from-teal-500 via-cyan-500 to-indigo-600 shadow-teal-500/25'
-              }`}>
-                <Plus className="w-5 h-5 stroke-[2.75]" />
-              </div>
-              <span className={`text-[10px] leading-none tracking-tight ${
-                location.pathname.startsWith('/new') 
-                  ? 'text-teal-600 dark:text-teal-400 font-extrabold' 
-                  : 'text-slate-700 dark:text-slate-300 font-bold'
-              }`}>
+              <motion.div
+                whileTap={{ scale: 0.9 }}
+                transition={SPRING_TACTILE}
+                className="w-9 h-9 rounded-xl bg-[#0D47FF] border-[1.5px] border-[#141413] dark:border-[#FAF8EC] text-white flex items-center justify-center shadow-[2px_2px_0px_#141413] dark:shadow-[2px_2px_0px_#ECD5FF]"
+              >
+                <Plus className="w-5 h-5 stroke-[2.5]" />
+              </motion.div>
+              <span
+                className={`text-[10px] leading-none ${
+                  isNewExamRoute
+                    ? 'text-[#0D47FF] dark:text-[#ECD5FF] font-extrabold'
+                    : 'text-[#141413] dark:text-[#FAF8EC] font-bold'
+                }`}
+              >
                 New Exam
               </span>
             </Link>
 
-            {/* 4. Archive */}
-            <Link 
-              to="/history" 
-              className={`flex flex-col items-center justify-center h-full gap-1 text-center transition-all ${
-                location.pathname === '/history' 
-                  ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 font-medium'
+            <Link
+              to="/history"
+              className={`relative flex flex-col items-center justify-center h-full gap-1 text-center transition-colors ${
+                location.pathname === '/history'
+                  ? 'text-[#0D47FF] dark:text-[#ECD5FF] font-extrabold'
+                  : 'text-[#66665E] dark:text-[#A3A399] font-medium'
               }`}
             >
-              <div className={`p-1 rounded-xl transition-all ${location.pathname === '/history' ? 'bg-indigo-500/15' : ''}`}>
-                <Clock className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] leading-none tracking-tight">Archive</span>
+              {location.pathname === '/history' && (
+                <motion.span
+                  layoutId="mobile-nav-pill"
+                  transition={SPRING_SNAPPY}
+                  className="absolute top-0 w-8 h-[2.5px] rounded-full bg-[#0D47FF] dark:bg-[#ECD5FF]"
+                />
+              )}
+              <Clock className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Archive</span>
             </Link>
 
-            {/* 5. Sign Out (Replacing duplicate profile link in bottom nav) */}
-            <button 
+            <motion.button
+              whileTap={{ scale: 0.93 }}
               type="button"
-              onClick={() => auth.signOut()}
-              className="flex flex-col items-center justify-center h-full gap-1 text-center transition-all text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium active:scale-95 cursor-pointer focus:outline-none"
-              title="Sign Out of Engine"
+              onClick={() => signOut(auth)}
+              className="flex flex-col items-center justify-center h-full gap-1 text-center text-[#66665E] dark:text-[#A3A399] hover:text-rose-600 dark:hover:text-rose-400 font-medium cursor-pointer"
+              title="Sign Out"
             >
-              <div className="p-1 rounded-xl hover:bg-rose-500/10 transition-all text-rose-500 dark:text-rose-400">
-                <LogOut className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] leading-none tracking-tight">Sign Out</span>
-            </button>
+              <LogOut className="w-4 h-4" />
+              <span className="text-[10px] leading-none">Sign Out</span>
+            </motion.button>
           </div>
         </nav>
 
-        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-28 md:pb-12 w-full relative">
-          <AnimatePresence 
-            mode="wait" 
+        {/* Signature Floating Dark Bottom Countdown Dock (Desktop only) */}
+        <AnimatePresence>
+          {!isNewExamRoute && (
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+              className="hidden lg:flex fixed bottom-5 left-1/2 -translate-x-1/2 z-40 items-center gap-4 pl-5 pr-2 py-2 rounded-full bg-[#141413] text-[#FAF8EC] border border-[#2E2E2A] dark:border-[#FAF8EC]/30 shadow-2xl"
+            >
+              <div className="flex items-center gap-2.5">
+                <EqualizerBars barCount={5} colorClass="bg-[#ECD5FF]" heightClass="h-4" />
+                <div className="leading-tight">
+                  <span className="block font-mono text-[9px] uppercase tracking-widest text-[#A3A399]">
+                    TARGET EXAM IN
+                  </span>
+                  <span className="font-mono text-xs font-bold tabular-nums text-white">
+                    {countdownText}
+                  </span>
+                </div>
+              </div>
+
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to="/new"
+                  className="px-4 py-2 rounded-full bg-[#ECD5FF] hover:bg-[#E1BEFF] text-[#141413] text-xs font-bold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                >
+                  <span>Start Exam</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 w-full relative">
+          <AnimatePresence
+            mode="wait"
             initial={false}
             onExitComplete={() => {
-              if (window.__lenis) {
-                window.__lenis.scrollTo(0, { immediate: true });
+              if ((window as any).__lenis) {
+                (window as any).__lenis.scrollTo(0, { immediate: true });
               } else {
                 window.scrollTo(0, 0);
               }
@@ -483,11 +505,11 @@ export function Layout({ user }: { user: User }) {
           >
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10, filter: 'blur(3px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -6, filter: 'blur(2px)' }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex-1"
+              initial={{ opacity: 0, y: 18, scale: 0.992 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.36, ease: EASE_OUT_EXPO }}
+              className="w-full flex-1 will-change-transform"
             >
               {currentOutlet}
             </motion.div>

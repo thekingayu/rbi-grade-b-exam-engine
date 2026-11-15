@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  BookOpen, Download, CheckSquare, Square, Search, 
-  ArrowRight, Award, Compass, Sparkles, Filter, 
-  Layers, ChevronRight, FileText, BarChart2, ShieldCheck, 
-  ExternalLink, CheckCircle2, RotateCcw, AlertCircle
+import {
+  Download, CheckSquare, Square, Search,
+  ArrowRight, Award, Compass, Sparkles,
+  ChevronRight, BarChart2, ShieldCheck
 } from 'lucide-react';
-import { getSubjectBySlug } from '../data/subjects';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  MotionPage,
+  MotionSection,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  AnimatedNumber,
+  SPRING_SNAPPY,
+  SPRING_TACTILE,
+  EASE_OUT_EXPO,
+} from '../components/MotionPrimitives';
 
 interface SyllabusTopicItem {
   id: string;
@@ -615,40 +624,44 @@ export function Syllabus({ user }: { user: User }) {
   });
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pt-2 pb-16 relative z-10 animate-in fade-in duration-500">
+    <MotionPage className="max-w-6xl mx-auto space-y-8 pt-2 pb-16 relative z-10">
       
       {/* Top Hero Banner & Download Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/90 via-slate-50/80 to-white/90 dark:from-[#070B18]/90 dark:via-[#0A1024]/90 dark:to-[#070B18]/90 border border-slate-200/80 dark:border-white/10 p-6 sm:p-10 shadow-2xl backdrop-blur-2xl">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-gradient-to-bl from-teal-500/20 via-cyan-500/15 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 rounded-full bg-gradient-to-tr from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div className="ink-card-featured rounded-3xl p-5 sm:p-10 bg-[#FAF8EC] dark:bg-[#1C1C1A]">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 text-xs font-mono font-bold tracking-wider uppercase border border-teal-500/20">
-              <ShieldCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#ECD5FF] text-[#141413] text-xs font-mono font-bold tracking-wider uppercase border border-[#141413]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#141413]" />
               <span>Official RBI Recruitment Standard</span>
             </div>
             
-            <h1 className="font-serif font-black text-2xl sm:text-4xl text-slate-900 dark:text-white tracking-tight leading-tight">
-              RBI Grade B Officer Syllabus & Checklist
+            <h1 className="font-heading font-extrabold text-2xl sm:text-4xl text-[#141413] dark:text-[#FAF8EC] tracking-tight leading-tight">
+              RBI Grade B Officer{' '}
+              <span className="font-editorial-italic font-normal text-[#0D47FF] dark:text-[#ECD5FF]">
+                Syllabus & Checklist
+              </span>
             </h1>
             
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
+            <p className="text-sm text-[#40403B] dark:text-[#A3A399] leading-relaxed">
               Comprehensive topic-wise tracker for the General (DR) stream across Phase 1 Prelims (200 Marks) and Phase 2 Mains (300 Marks). Calibrated strictly to the Reserve Bank of India notification standards.
             </p>
 
             {/* Overall Syllabus Progress Bar */}
             <div className="pt-2">
-              <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 mb-1.5">
-                <span className="font-bold text-slate-700 dark:text-slate-300">
-                  Curriculum Mastery: {completedCount} of {allTopicsCount} Topics Checked
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-[#66665E] dark:text-[#A3A399] mb-1.5 tabular-nums">
+                <span className="font-bold text-[#141413] dark:text-[#FAF8EC]">
+                  Curriculum Mastery: <AnimatedNumber value={completedCount} duration={0.4} /> of {allTopicsCount} Topics Checked
                 </span>
-                <span className="font-bold text-teal-600 dark:text-teal-400">{progressPct}% Complete</span>
+                <span className="font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
+                  <AnimatedNumber value={progressPct} suffix="% Complete" duration={0.5} />
+                </span>
               </div>
-              <div className="w-full bg-slate-200/80 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(20,184,166,0.6)]"
-                  style={{ width: `${progressPct}%` }}
+              <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2.5 rounded-full overflow-hidden border border-[#141413]/20 dark:border-[#2E2E2A]">
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: Math.min(1, progressPct / 100) }}
+                  transition={{ duration: 0.65, ease: EASE_OUT_EXPO }}
+                  className="bg-[#0D47FF] dark:bg-[#ECD5FF] h-full w-full rounded-full origin-left"
                 />
               </div>
             </div>
@@ -656,145 +669,171 @@ export function Syllabus({ user }: { user: User }) {
 
           {/* Download Action Capsule */}
           <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-            <a
+            <motion.a
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_SNAPPY}
               href="/assets/aistudio/RBI_Grade_B_Syllabus_Phase1_Phase2_7420ffa7.pdf"
               download="RBI_Grade_B_Official_Syllabus_Phase1_Phase2.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold text-sm shadow-xl shadow-teal-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="min-h-[46px] flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#0D47FF] hover:bg-[#0936CC] text-white font-bold text-sm border-[1.5px] border-[#141413] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] transition-colors cursor-pointer"
             >
-              <Download className="w-4 h-4 stroke-[2.5]" />
+              <Download className="w-4 h-4 stroke-[2.5] shrink-0" />
               <span>Download Official Syllabus PDF</span>
-            </a>
+            </motion.a>
 
-            <button
+            <motion.button
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_SNAPPY}
               onClick={() => navigate('/new')}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white/80 dark:bg-white/5 border border-slate-300 dark:border-white/10 hover:border-teal-500 text-slate-800 dark:text-white font-bold text-xs transition-all cursor-pointer"
+              className="min-h-[44px] flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/60 hover:bg-[#FFD426] hover:text-[#141413] text-[#141413] dark:text-[#FAF8EC] font-bold text-xs transition-colors cursor-pointer"
             >
-              <Compass className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <Compass className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
               <span>Launch Mock Exam Now</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
 
       {/* Exam At A Glance Infographic Table */}
-      <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-            <BarChart2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+      <MotionSection className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-3xl p-5 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+            <BarChart2 className="w-5 h-5 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
             <span>1. Exam at a Glance</span>
           </h2>
-          <span className="text-xs font-mono text-slate-400">Total Merit: 375 Marks</span>
+          <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[#FFD426] text-[#141413] border border-[#141413] tabular-nums">
+            Total Merit: 375 Marks
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-[#E5E1CE] dark:border-[#2E2E2A]">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider">
-                <th className="py-2.5 px-3">Stage</th>
-                <th className="py-2.5 px-3">Papers / Sections</th>
-                <th className="py-2.5 px-3">Marks</th>
-                <th className="py-2.5 px-3">Time</th>
-                <th className="py-2.5 px-3">Nature</th>
+              <tr className="bg-[#FAF8EC] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] font-mono uppercase tracking-wider">
+                <th className="py-3 px-3.5">Stage</th>
+                <th className="py-3 px-3.5">Papers / Sections</th>
+                <th className="py-3 px-3.5">Marks</th>
+                <th className="py-3 px-3.5">Time</th>
+                <th className="py-3 px-3.5">Nature</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-300">
-              <tr className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                <td className="py-3 px-3 font-bold text-teal-700 dark:text-teal-400 whitespace-nowrap">Phase 1 (Prelims)</td>
-                <td className="py-3 px-3">General Awareness (80 Q), Quantitative Aptitude (30 Q), English Language (30 Q), Reasoning Ability (60 Q)</td>
-                <td className="py-3 px-3 font-mono font-bold">200</td>
-                <td className="py-3 px-3 whitespace-nowrap">120 min (total)</td>
-                <td className="py-3 px-3 text-slate-500">Objective MCQ, -0.25 penalty. Qualifying only - not in final merit.</td>
+            <tbody className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A] text-[#40403B] dark:text-[#D5D5C8]">
+              <tr className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50">
+                <td className="py-3 px-3.5 font-bold text-[#0D47FF] dark:text-[#ECD5FF] whitespace-nowrap">Phase 1 (Prelims)</td>
+                <td className="py-3 px-3.5">General Awareness (80 Q), Quantitative Aptitude (30 Q), English Language (30 Q), Reasoning Ability (60 Q)</td>
+                <td className="py-3 px-3.5 font-mono font-bold tabular-nums text-[#141413] dark:text-[#FAF8EC]">200</td>
+                <td className="py-3 px-3.5 whitespace-nowrap tabular-nums">120 min (total)</td>
+                <td className="py-3 px-3.5 text-[#66665E] dark:text-[#A3A399]">Objective MCQ, -0.25 penalty. Qualifying only - not in final merit.</td>
               </tr>
-              <tr className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                <td className="py-3 px-3 font-bold text-indigo-700 dark:text-indigo-400 whitespace-nowrap" rowSpan={3}>Phase 2 (Mains)</td>
-                <td className="py-3 px-3">Paper I: Economic & Social Issues (ESI)</td>
-                <td className="py-3 px-3 font-mono font-bold">100</td>
-                <td className="py-3 px-3 whitespace-nowrap">120 min</td>
-                <td className="py-3 px-3">Objective (50M) + Descriptive typed on screen (50M)</td>
+              <tr className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50">
+                <td className="py-3 px-3.5 font-bold text-[#141413] dark:text-[#FFD426] whitespace-nowrap" rowSpan={3}>Phase 2 (Mains)</td>
+                <td className="py-3 px-3.5">Paper I: Economic & Social Issues (ESI)</td>
+                <td className="py-3 px-3.5 font-mono font-bold tabular-nums text-[#141413] dark:text-[#FAF8EC]">100</td>
+                <td className="py-3 px-3.5 whitespace-nowrap tabular-nums">120 min</td>
+                <td className="py-3 px-3.5">Objective (50M) + Descriptive typed on screen (50M)</td>
               </tr>
-              <tr className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                <td className="py-3 px-3">Paper II: English (Writing Skills)</td>
-                <td className="py-3 px-3 font-mono font-bold">100</td>
-                <td className="py-3 px-3 whitespace-nowrap">90 min</td>
-                <td className="py-3 px-3">Descriptive, typed on screen (Essay, Precis, Comprehension)</td>
+              <tr className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50">
+                <td className="py-3 px-3.5">Paper II: English (Writing Skills)</td>
+                <td className="py-3 px-3.5 font-mono font-bold tabular-nums text-[#141413] dark:text-[#FAF8EC]">100</td>
+                <td className="py-3 px-3.5 whitespace-nowrap tabular-nums">90 min</td>
+                <td className="py-3 px-3.5">Descriptive, typed on screen (Essay, Precis, Comprehension)</td>
               </tr>
-              <tr className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                <td className="py-3 px-3">Paper III: Finance & Management (FM)</td>
-                <td className="py-3 px-3 font-mono font-bold">100</td>
-                <td className="py-3 px-3 whitespace-nowrap">120 min</td>
-                <td className="py-3 px-3">Objective (50M) + Descriptive typed on screen (50M)</td>
+              <tr className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50">
+                <td className="py-3 px-3.5">Paper III: Finance & Management (FM)</td>
+                <td className="py-3 px-3.5 font-mono font-bold tabular-nums text-[#141413] dark:text-[#FAF8EC]">100</td>
+                <td className="py-3 px-3.5 whitespace-nowrap tabular-nums">120 min</td>
+                <td className="py-3 px-3.5">Objective (50M) + Descriptive typed on screen (50M)</td>
               </tr>
-              <tr className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                <td className="py-3 px-3 font-bold text-amber-700 dark:text-amber-400 whitespace-nowrap">Interview</td>
-                <td className="py-3 px-3">Personality Test & Central Banking Viva</td>
-                <td className="py-3 px-3 font-mono font-bold">75</td>
-                <td className="py-3 px-3">-</td>
-                <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">Final Merit = Phase 2 (300) + Interview (75) = 375</td>
+              <tr className="hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50">
+                <td className="py-3 px-3.5 font-bold text-[#141413] dark:text-[#FFD426] whitespace-nowrap">Interview</td>
+                <td className="py-3 px-3.5">Personality Test & Central Banking Viva</td>
+                <td className="py-3 px-3.5 font-mono font-bold tabular-nums text-[#141413] dark:text-[#FAF8EC]">75</td>
+                <td className="py-3 px-3.5">-</td>
+                <td className="py-3 px-3.5 font-bold text-[#141413] dark:text-[#FAF8EC]">Final Merit = Phase 2 (300) + Interview (75) = 375</td>
               </tr>
             </tbody>
           </table>
         </div>
         
-        <p className="text-[11px] font-mono text-slate-500 border-t border-slate-100 dark:border-white/5 pt-2">
+        <p className="text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] pt-1">
           * Negative marking (-0.25) applies to the objective portions of Phase 1 and Phase 2; descriptive portions carry no negative marking.
         </p>
-      </div>
+      </MotionSection>
 
       {/* Search & Phase Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         {/* Phase Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 backdrop-blur-xl w-full sm:w-auto">
+        <div className="flex overflow-x-auto no-scrollbar items-center gap-1 p-1.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] w-full sm:w-auto">
           {[
             { id: 'all', label: 'Complete Checklist' },
             { id: 'phase1', label: 'Phase 1 (Prelims)' },
             { id: 'phase2', label: 'Phase 2 (Mains)' },
             { id: 'priorities', label: 'Part C: High-Weightage' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? 'bg-teal-500/15 text-teal-800 dark:text-teal-200 border border-teal-500/40 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`relative flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer z-10 min-h-[38px] ${
+                  isActive
+                    ? 'text-[#141413]'
+                    : 'text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC]'
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="syllabus-filter-pill"
+                    transition={SPRING_SNAPPY}
+                    className="absolute inset-0 rounded-xl bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] -z-10"
+                  />
+                )}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Search bar */}
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#66665E] dark:text-[#A3A399]" />
           <input
             type="text"
             placeholder="Search syllabus topic or concept..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full min-h-[42px] pl-9 pr-4 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-xs text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#66665E] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
           />
         </div>
       </div>
 
+      <AnimatePresence mode="wait">
       {/* Part C: High-Weightage Priorities view if selected */}
-      {activeTab === 'priorities' && (
-        <div className="space-y-6 animate-in fade-in">
+      {activeTab === 'priorities' ? (
+        <motion.div
+          key="syllabus-priorities"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
           
           {/* Phase 1 High-Weightage */}
-          <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+          <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-3xl p-5 sm:p-6 space-y-4">
+            <h3 className="font-heading font-extrabold text-base text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#0D47FF] dark:text-[#FFD426]" />
               <span>Phase 1 High-Weightage Areas (Typical Expected Questions)</span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 {
                   section: 'General Awareness (~50-80 Qs)',
-                  color: 'text-teal-600 dark:text-teal-400',
+                  dot: 'bg-[#0D47FF]',
                   items: [
                     'Current Affairs: Economic and National (25-35 Qs)',
                     'Banking & Financial Awareness: Monetary Policy, Circulars (15-25 Qs)',
@@ -804,7 +843,7 @@ export function Syllabus({ user }: { user: User }) {
                 },
                 {
                   section: 'Reasoning Ability (~60 Qs)',
-                  color: 'text-cyan-600 dark:text-cyan-400',
+                  dot: 'bg-[#ECD5FF]',
                   items: [
                     'Seating Arrangement & Puzzles: Multi-variable floors/circles (20-40 Qs)',
                     'Logical Reasoning: Assumptions & Inferences (8-10 Qs)',
@@ -815,7 +854,7 @@ export function Syllabus({ user }: { user: User }) {
                 },
                 {
                   section: 'Quantitative Aptitude (~30 Qs)',
-                  color: 'text-indigo-600 dark:text-indigo-400',
+                  dot: 'bg-[#FFD426]',
                   items: [
                     'Data Interpretation & Caselets: Multi-table/graph (10-15 Qs)',
                     'Commercial Arithmetic: SI/CI, Profit-Loss, Time-Work (8-12 Qs)',
@@ -825,7 +864,7 @@ export function Syllabus({ user }: { user: User }) {
                 },
                 {
                   section: 'English Language (~30 Qs)',
-                  color: 'text-rose-600 dark:text-rose-400',
+                  dot: 'bg-[#141413] dark:bg-[#FAF8EC]',
                   items: [
                     'Reading Comprehension: Editorial inferences (8-15 Qs)',
                     'Para Jumbles: Sentence rearrangement (4-5 Qs)',
@@ -835,46 +874,64 @@ export function Syllabus({ user }: { user: User }) {
                   ]
                 }
               ].map(card => (
-                <div key={card.section} className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2">
-                  <h4 className={`font-serif font-bold text-sm ${card.color}`}>{card.section}</h4>
-                  <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                    {card.items.map(item => (
-                      <li key={item} className="flex items-start gap-1.5">
-                        <span className="text-teal-500 font-bold">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <MotionStaggerItem key={card.section}>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    transition={SPRING_SNAPPY}
+                    className="h-full p-4 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] space-y-2 transition-colors"
+                  >
+                    <h4 className="font-heading font-bold text-sm text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full border border-[#141413] shrink-0 ${card.dot}`} />
+                      <span>{card.section}</span>
+                    </h4>
+                    <ul className="space-y-1 text-xs text-[#40403B] dark:text-[#A3A399]">
+                      {card.items.map(item => (
+                        <li key={item} className="flex items-start gap-1.5">
+                          <span className="text-[#0D47FF] dark:text-[#FFD426] font-bold">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                </MotionStaggerItem>
               ))}
-            </div>
+            </MotionStaggerGrid>
           </div>
 
           {/* Phase 2 Priority Topics */}
-          <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              <Award className="w-4 h-4 text-indigo-500" />
+          <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-3xl p-5 sm:p-6 space-y-4">
+            <h3 className="font-heading font-extrabold text-base text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
               <span>Phase 2 Priority Topics</span>
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2">
-                <span className="text-xs font-mono font-bold text-amber-600 uppercase block">ESI Paper I</span>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#141413] dark:text-[#FFD426] uppercase">
+                  <span className="w-2 h-2 rounded-full bg-[#FFD426] border border-[#141413]" />
+                  <span>ESI Paper I</span>
+                </span>
+                <p className="text-xs text-[#40403B] dark:text-[#A3A399] leading-relaxed">
                   Inflation, monetary and fiscal policy; poverty, unemployment, sustainable development; economic reforms; globalisation (WTO, IMF, World Bank); Union Budget and Economic Survey; social issues (education, health, gender); financial inclusion.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2">
-                <span className="text-xs font-mono font-bold text-emerald-600 uppercase block">FM: Part 1 Finance</span>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] uppercase">
+                  <span className="w-2 h-2 rounded-full bg-[#0D47FF] border border-[#141413]" />
+                  <span>FM: Part 1 Finance</span>
+                </span>
+                <p className="text-xs text-[#40403B] dark:text-[#A3A399] leading-relaxed">
                   Indian financial system and RBI functions; money, capital, forex and bond markets; Basel norms, risk management, NPAs; repo, reverse repo, CRR, SLR; financial inclusion and digital payments; derivatives; inflation and fiscal policy.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2">
-                <span className="text-xs font-mono font-bold text-purple-600 uppercase block">FM: Part 2 Management</span>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#141413] dark:text-[#ECD5FF] uppercase">
+                  <span className="w-2 h-2 rounded-full bg-[#ECD5FF] border border-[#141413]" />
+                  <span>FM: Part 2 Management</span>
+                </span>
+                <p className="text-xs text-[#40403B] dark:text-[#A3A399] leading-relaxed">
                   Leadership theories and styles; motivation theories; communication process and barriers; HRD and performance appraisal; organisational behaviour; corporate governance and ethics; functions of management; decision-making and conflict management.
                 </p>
               </div>
@@ -882,67 +939,71 @@ export function Syllabus({ user }: { user: User }) {
           </div>
 
           {/* Suggested Revision Order */}
-          <div className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+          <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-3xl p-5 sm:p-6 space-y-4">
+            <h3 className="font-heading font-extrabold text-base text-[#141413] dark:text-[#FAF8EC]">
               Suggested 4-Step Revision Strategy
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-1">
-                <span className="font-mono font-bold text-teal-700 dark:text-teal-300 block">Step 1 • Speed Engine</span>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#0D47FF]/40 space-y-1">
+                <span className="font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] block">Step 1 • Speed Engine</span>
+                <p className="text-[#40403B] dark:text-[#A3A399] text-[11px]">
                   Daily current affairs and banking awareness; practice puzzles and DI for speed. Aim to clear the cut-off comfortably.
                 </p>
               </div>
-              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 space-y-1">
-                <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 block">Step 2 • Phase 2 Depth</span>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#ECD5FF] dark:border-[#ECD5FF]/40 space-y-1">
+                <span className="font-mono font-bold text-[#141413] dark:text-[#ECD5FF] block">Step 2 • Phase 2 Depth</span>
+                <p className="text-[#40403B] dark:text-[#A3A399] text-[11px]">
                   Build concepts in ESI and FM from standard sources, then practise typed descriptive answers with structured examples.
                 </p>
               </div>
-              <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-1">
-                <span className="font-mono font-bold text-purple-700 dark:text-purple-300 block">Step 3 • Writing Acumen</span>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#141413]/30 dark:border-[#2E2E2A] space-y-1">
+                <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] block">Step 3 • Writing Acumen</span>
+                <p className="text-[#40403B] dark:text-[#A3A399] text-[11px]">
                   Weekly essay and précis practice, typed on screen to match actual exam conditions and character budgets.
                 </p>
               </div>
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1">
-                <span className="font-mono font-bold text-amber-700 dark:text-amber-300 block">Step 4 • Final Polish</span>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-[#FFD426]/20 dark:bg-[#141413] border-[1.5px] border-[#FFD426] space-y-1">
+                <span className="font-mono font-bold text-[#141413] dark:text-[#FFD426] block">Step 4 • Final Polish</span>
+                <p className="text-[#40403B] dark:text-[#A3A399] text-[11px]">
                   Previous-year papers (PYQs), full-pattern mocks, and interview preparation using Economic Survey & RBI Annual Report.
                 </p>
               </div>
             </div>
           </div>
 
-        </div>
-      )}
-
-      {/* Sections Checklist View */}
-      {activeTab !== 'priorities' && (
-        <div className="space-y-6">
+        </motion.div>
+      ) : (
+        <motion.div
+          key={`syllabus-sections-${activeTab}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
           {filteredSections.map(section => {
             const sectionCompleted = section.topics.filter(t => completedTopics[t.id]).length;
             const sectionTotal = section.topics.length;
             const sectionPct = Math.round((sectionCompleted / sectionTotal) * 100);
 
             return (
-              <div
+              <MotionSection
                 key={section.code}
-                className="bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6"
+                className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-3xl p-5 sm:p-8 space-y-6"
               >
                 {/* Section Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 dark:border-white/10 pb-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 text-xs font-mono font-bold">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-4">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2.5">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#ECD5FF] text-[#141413] border border-[#141413] text-xs font-mono font-bold shrink-0">
                         {section.code}
                       </span>
-                      <h3 className="font-serif font-black text-xl text-slate-900 dark:text-white">
+                      <h3 className="font-heading font-extrabold text-lg sm:text-xl text-[#141413] dark:text-[#FAF8EC]">
                         {section.title}
                       </h3>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#66665E] dark:text-[#A3A399] font-mono">
                       <span>{section.questionsOrMarks}</span>
                       <span>•</span>
                       <span>{section.duration}</span>
@@ -951,38 +1012,42 @@ export function Syllabus({ user }: { user: User }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400 block">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] block tabular-nums">
                         {sectionCompleted} / {sectionTotal} Done ({sectionPct}%)
                       </span>
-                      <div className="w-24 bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
-                        <div 
-                          className="bg-teal-500 h-full rounded-full transition-all"
-                          style={{ width: `${sectionPct}%` }}
+                      <div className="w-24 bg-[#E5E1CE] dark:bg-[#2E2E2A] h-1.5 rounded-full overflow-hidden mt-1">
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: Math.min(1, sectionPct / 100) }}
+                          transition={{ duration: 0.55, ease: EASE_OUT_EXPO }}
+                          className="bg-[#0D47FF] dark:bg-[#ECD5FF] h-full w-full rounded-full origin-left"
                         />
                       </div>
                     </div>
 
-                    <button
+                    <motion.button
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => navigate(`/new?subject=${section.subjectSlug}`)}
-                      className="px-3 py-1.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                      className="min-h-[38px] px-3.5 py-2 rounded-xl bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0"
                     >
                       <span>Drill Section</span>
                       <ArrowRight className="w-3 h-3" />
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 
                 {/* Key Reports pill if ESI */}
                 {section.keyReports && (
-                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1">
-                    <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-300 uppercase">
+                  <div className="p-3.5 rounded-2xl bg-[#FFD426]/15 dark:bg-[#141413] border border-[#FFD426] space-y-1.5">
+                    <span className="text-xs font-mono font-bold text-[#141413] dark:text-[#FFD426] uppercase">
                       Mandatory Annual Reports & Policy Documents:
                     </span>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
                       {section.keyReports.map(rep => (
-                        <span key={rep} className="text-[11px] font-sans px-2.5 py-1 rounded-lg bg-white/80 dark:bg-white/5 border border-amber-500/30 text-slate-800 dark:text-slate-200">
+                        <span key={rep} className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#141413]/25 dark:border-[#FFD426]/40 text-[#141413] dark:text-[#FAF8EC]">
                           {rep}
                         </span>
                       ))}
@@ -995,38 +1060,47 @@ export function Syllabus({ user }: { user: User }) {
                   {section.topics.map(t => {
                     const isChecked = !!completedTopics[t.id];
                     return (
-                      <div
+                      <motion.div
                         key={t.id}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.99 }}
+                        transition={SPRING_SNAPPY}
                         onClick={() => toggleTopic(t.id)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
+                        className={`p-4 rounded-2xl border-[1.5px] transition-colors cursor-pointer flex items-start gap-3 select-none ${
                           isChecked
-                            ? 'bg-teal-500/[0.04] dark:bg-teal-500/[0.08] border-teal-500/40 shadow-xs'
-                            : 'bg-white/60 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5 hover:border-slate-300'
+                            ? 'bg-[#ECD5FF]/25 dark:bg-[#ECD5FF]/10 border-[#141413] dark:border-[#ECD5FF]/60'
+                            : 'bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/50'
                         }`}
                       >
-                        <div className="pt-0.5 shrink-0">
+                        <motion.div
+                          key={isChecked ? 'checked' : 'unchecked'}
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          transition={SPRING_TACTILE}
+                          className="pt-0.5 shrink-0"
+                        >
                           {isChecked ? (
-                            <CheckSquare className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                            <CheckSquare className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
                           ) : (
-                            <Square className="w-4 h-4 text-slate-400" />
+                            <Square className="w-4 h-4 text-[#66665E] dark:text-[#A3A399]" />
                           )}
-                        </div>
+                        </motion.div>
 
                         <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center flex-wrap gap-2">
                             <span className={`text-xs font-bold leading-snug ${
-                              isChecked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'
+                              isChecked ? 'line-through text-[#66665E] dark:text-[#A3A399]' : 'text-[#141413] dark:text-[#FAF8EC]'
                             }`}>
                               {t.topic}
                             </span>
                             {t.highWeightage && (
-                              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 shrink-0">
+                              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FFD426] text-[#141413] border border-[#141413] shrink-0">
                                 High Weightage
                               </span>
                             )}
                           </div>
 
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
+                          <p className="text-[11px] text-[#40403B] dark:text-[#A3A399] leading-relaxed">
                             {t.whatToCover}
                           </p>
                         </div>
@@ -1037,21 +1111,22 @@ export function Syllabus({ user }: { user: User }) {
                             e.stopPropagation();
                             navigate(`/new?subject=${t.subjectSlug}&topic=${encodeURIComponent(t.topic)}`);
                           }}
-                          className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-500/10 transition-colors"
+                          className="shrink-0 p-2 rounded-lg text-[#66665E] dark:text-[#A3A399] hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] hover:bg-[#ECD5FF]/40 dark:hover:bg-[#ECD5FF]/10 transition-colors cursor-pointer"
                           title="Generate Practice Questions on this topic"
                         >
-                          <ChevronRight className="w-3.5 h-3.5" />
+                          <ChevronRight className="w-4 h-4" />
                         </button>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
-              </div>
+              </MotionSection>
             );
           })}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
-    </div>
+    </MotionPage>
   );
 }

@@ -11,15 +11,23 @@ import { InsightsPanel } from '../components/dashboard/InsightsPanel';
 import { ActivityHeatmap } from '../components/dashboard/ActivityHeatmap';
 import { ExamCountdownGoal } from '../components/dashboard/ExamCountdownGoal';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
+import { RailwayTimeline, DiagonalMarquee, PrizeBadgeIcon } from '../components/SignatureGraphics';
 import { 
   Plus, CheckCircle2, TrendingUp, Trophy, ArrowRight,
-  Clock, Flame, BookOpen, Sparkles, AlertCircle, ArrowUpRight,
-  Layers, FileText, User as UserIcon, ShieldCheck
+  Clock, Flame, BookOpen, Compass
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { Divider } from 'sketchbook-ui';
 import { calculateDaysRemaining } from '../utils/date';
-import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
+import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import {
+  MotionPage,
+  MotionSection,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  AnimatedNumber,
+  SPRING_SNAPPY
+} from '../components/MotionPrimitives';
 
 export function Dashboard({ user }: { user: User }) {
   const { subjects, setActiveSubject, targetExamDate, userProfile } = useSubject();
@@ -33,7 +41,6 @@ export function Dashboard({ user }: { user: User }) {
 
   const daysRemaining = calculateDaysRemaining(targetExamDate);
 
-  // Clear active subject on root dashboard
   useEffect(() => {
     setActiveSubject(null);
   }, [setActiveSubject]);
@@ -77,15 +84,14 @@ export function Dashboard({ user }: { user: User }) {
       <div className="py-20 flex items-center justify-center">
         <FuturisticScreenLoader 
           title="Cadre Command Center" 
-          subtitle="CALIBRATING PREPARATION TELEMETRY..." 
-          color="teal"
+          subtitle="CALIBRATING PREPARATION BENCHMARKS..." 
+          color="cobalt"
         />
       </div>
     );
   }
 
   const completed = tests.filter(t => t.status === 'completed');
-  const reversedTests = [...completed].reverse();
 
   // 1. KPI: Total tests taken
   const testsTaken = completed.length;
@@ -100,7 +106,7 @@ export function Dashboard({ user }: { user: User }) {
   // 3. KPI: Best score %
   const bestScore = testsTaken > 0 ? Math.max(...scorePercentages) : 0;
 
-  // 4. KPI: Momentum (computed over the last 3 tests vs prior tests)
+  // 4. KPI: Momentum
   let momentumLabel = "—";
   let momentumIsPositive = true;
   if (scorePercentages.length >= 4) {
@@ -143,354 +149,392 @@ export function Dashboard({ user }: { user: User }) {
 
   // 6. KPI: Total hours practiced
   const totalSeconds = completed.reduce((sum, t) => sum + (t.durationUsedSeconds || t.durationSeconds || 1800), 0);
-  const totalHours = (totalSeconds / 3600).toFixed(1);
+  const totalHoursNum = Number((totalSeconds / 3600).toFixed(1));
 
-  // Group subjects by phase
   const phase1Subjects = subjects.filter(s => s.phase === 'Phase 1' && s.slug !== 'uncategorized');
   const phase2Subjects = subjects.filter(s => s.phase === 'Phase 2');
 
+  // Dynamic rail progress between Phase 1 -> Phase 2 -> Interview (12% baseline + exam activity)
+  const railProgress = Math.min(94, Math.max(14, 14 + testsTaken * 6));
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
+    <MotionPage className="space-y-8 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
       
-      {/* 1. Global Hero Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40 backdrop-blur-md mb-2.5">
-            <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="text-[11px] font-mono font-bold text-slate-800 dark:text-teal-200 tracking-wider uppercase">
-              RESERVE BANK OF INDIA · OFFICER CADRE COMMAND CENTER
-            </span>
-            <span className="px-1.5 py-0.2 rounded-full bg-teal-600 text-white text-[9px] font-bold">{targetYear}</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-serif font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
-            Welcome back, <span className="bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 dark:from-teal-300 dark:via-cyan-300 dark:to-indigo-300 bg-clip-text text-transparent">{displayName.split(' ')[0]}</span>
+      {/* 1. Editorial Hero Header */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 sm:gap-6">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399] mb-2">
+            RESERVE BANK OF INDIA · OFFICER CADRE {targetYear} · {daysRemaining} DAYS TO EXAM
+          </p>
+          <h1 className="text-3xl sm:text-5xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] tracking-tight leading-[1.08]">
+            Welcome back, <span className="font-editorial-italic text-[#0D47FF] dark:text-[#ECD5FF] font-normal">{displayName.split(' ')[0]}.</span>
           </h1>
-          <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-1.5">
-            <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-medium">
-              Centralized preparation telemetry across all Phase 1 and Phase 2 curriculum verticals.
-            </p>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 text-teal-800 dark:text-teal-200 text-xs font-bold">
-              <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span>{daysRemaining} Days Remaining</span>
-            </div>
-          </div>
+          <p className="text-[#55554F] dark:text-[#A3A399] text-sm sm:text-base font-normal mt-2 max-w-2xl">
+            Centralized preparation telemetry across all Phase 1 and Phase 2 curriculum verticals.
+          </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
-          {/* Officer Profile Badge */}
-          <Link 
-            to="/profile"
-            className="group flex items-center justify-between sm:justify-start gap-3 p-2.5 sm:p-2 sm:pr-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 hover:border-teal-500/40 hover:bg-teal-500/[0.04] dark:hover:bg-slate-850 transition-all duration-200 backdrop-blur-md shadow-xs cursor-pointer w-full sm:w-auto"
-            title="Open Officer Dossier & Profile Settings"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-teal-500/30 flex items-center justify-center bg-gradient-to-tr from-teal-500/20 to-indigo-500/20 shrink-0">
-                {photoURL ? (
-                  <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-bold text-teal-700 dark:text-teal-300 text-sm">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
-              </div>
-              <div className="text-left min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto shrink-0">
+          {/* Officer Profile Dossier Link */}
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link 
+              to="/profile"
+              className="group flex items-center justify-between sm:justify-start gap-3 px-3 py-2 min-h-[46px] rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-all cursor-pointer w-full sm:w-auto"
+              title="Open Officer Dossier & Lanyard Pass"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl overflow-hidden border-[1.5px] border-[#141413] flex items-center justify-center bg-[#ECD5FF] text-[#141413] shrink-0">
+                  {photoURL && (photoURL.startsWith('http') || photoURL.startsWith('data:')) ? (
+                    <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-bold text-xs">
+                      {photoURL || displayName.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] truncate block">
                     {displayName}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
-                    {stream}
+                  <span className="text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] flex items-center gap-1">
+                    {stream} Stream <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                  Officer Dossier <ArrowRight className="w-2.5 h-2.5 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-                </span>
               </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-400 sm:hidden shrink-0" />
-          </Link>
+              <ArrowRight className="w-4 h-4 text-[#66665E] sm:hidden shrink-0" />
+            </Link>
+          </motion.div>
 
-          <Link 
-            to="/syllabus" 
-            className="sketch-tactile-btn inline-flex items-center justify-center gap-2 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-white/10 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl font-bold transition-all shadow-xs backdrop-blur-xl w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0"
-            title="Download & Track Official RBI Grade B Syllabus"
-          >
-            <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-            <span>Syllabus & PDF</span>
-          </Link>
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link 
+              to="/syllabus" 
+              className="inline-flex items-center justify-center gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-5 py-3 min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-sm cursor-pointer shrink-0 whitespace-nowrap"
+            >
+              <BookOpen className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+              <span>Syllabus & PDF</span>
+            </Link>
+          </motion.div>
 
-          <Link 
-            to="/new" 
-            className="sketch-tactile-btn inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 hover:from-teal-500 hover:via-cyan-500 hover:to-indigo-500 text-white border border-teal-400/30 px-6 sm:px-8 py-3.5 rounded-2xl font-bold transition-all shadow-xl shadow-teal-600/25 dark:shadow-[0_0_30px_rgba(13,148,136,0.3)] backdrop-blur-xl w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0"
-          >
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shadow-xs shrink-0">
-              <Plus className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span>Start New Exam</span>
-          </Link>
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
+            <Link 
+              to="/new" 
+              className="inline-flex items-center justify-center gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] px-6 py-3 min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0 whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 text-white shrink-0" />
+              <span>Start New Exam</span>
+            </Link>
+          </motion.div>
         </div>
       </div>
 
-      {/* 2. Target Exam Countdown & Cutoff Score Tracker */}
-      <ExamCountdownGoal currentAvgScore={avgScore} />
-
-      {/* 3. KPI Row: Total tests, Overall avg, Best score, Momentum (3-test), Streak, Total hours */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <KpiMiniCard
-          icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-          title="Total Tests"
-          value={testsTaken.toString()}
-          subtext="Attempts logged"
-          color="emerald"
-        />
-        <KpiMiniCard
-          icon={<TrendingUp className="w-4 h-4 text-cyan-500" />}
-          title="Overall Average"
-          value={testsTaken > 0 ? `${avgScore}%` : '—'}
-          subtext="Aggregate accuracy"
-          color="cyan"
-        />
-        <KpiMiniCard
-          icon={<Trophy className="w-4 h-4 text-amber-500" />}
-          title="Personal Best"
-          value={testsTaken > 0 ? `${bestScore}%` : '—'}
-          subtext="Top score benchmark"
-          color="amber"
-        />
-        <KpiMiniCard
-          icon={<TrendingUp className={`w-4 h-4 ${momentumIsPositive ? 'text-teal-500' : 'text-rose-500'}`} />}
-          title="3-Test Momentum"
-          value={momentumLabel}
-          subtext="vs prior baseline"
-          color="teal"
-        />
-        <KpiMiniCard
-          icon={<Flame className="w-4 h-4 text-rose-500" />}
-          title="Study Streak"
-          value={`${streak}d`}
-          subtext="Consecutive days"
-          color="rose"
-        />
-        <KpiMiniCard
-          icon={<Clock className="w-4 h-4 text-indigo-500" />}
-          title="Hours Practiced"
-          value={`${totalHours}h`}
-          subtext="Time in exam room"
-          color="indigo"
-        />
-      </div>
-
-      {/* 4. SUBJECT GRID (THE CENTERPIECE) */}
-      <div className="space-y-6">
-        
-        {/* Phase 1 Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(13,148,136,0.8)]" />
-              <h2 className="text-lg sm:text-xl font-serif font-black text-slate-900 dark:text-white">
-                Phase 1 Subjects · Preliminary Cadre Examination
-              </h2>
+      {/* Soft Lavender Feature Strip */}
+      <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.995 }} transition={SPRING_SNAPPY}>
+        <Link
+          to="/syllabus"
+          className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 rounded-2xl bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] hover:shadow-[5px_5px_0px_#141413] text-[#141413] transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <Compass className="w-5 h-5 text-[#141413] shrink-0 transition-transform duration-300 group-hover:rotate-45" />
+            <div>
+              <span className="font-heading font-extrabold text-sm sm:text-base">
+                Dual-Track Official Blueprint Active
+              </span>
+              <span className="hidden md:inline text-xs font-medium text-[#141413]/75 ml-2.5">
+                Static PYQ rigor paired with live RBI policy & circular synthesis for GA, ESI & FM
+              </span>
             </div>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-              4 Verticals · Objective Speed
+          </div>
+          <span className="text-xs font-mono font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0">
+            Inspect 2026 Syllabus <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </span>
+        </Link>
+      </motion.div>
+
+      {/* 2. Target Exam Countdown & Cutoff Score Tracker */}
+      <MotionSection>
+        <ExamCountdownGoal currentAvgScore={avgScore} />
+      </MotionSection>
+
+      {/* 3. Signature Railway Preparation Timeline */}
+      <MotionSection>
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl px-4 sm:px-6 pt-4 pb-3">
+          <RailwayTimeline
+            milestones={[
+              { label: 'Phase 1 Prelims', caption: '200 Marks' },
+              { label: 'Phase 2 Mains', caption: '300 Marks' },
+              { label: 'Board Interview', caption: '75 Marks' }
+            ]}
+            progressPct={railProgress}
+          />
+        </div>
+      </MotionSection>
+
+      {/* 4. KPI Row */}
+      <MotionStaggerGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <MotionStaggerItem className="ink-card-featured group rounded-2xl p-4 flex flex-col justify-between min-h-[120px] col-span-2 md:col-span-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#0D47FF] dark:text-[#ECD5FF] font-bold">
+              PERSONAL BEST
+            </span>
+            <Trophy className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
+          </div>
+          <div className="flex items-end justify-between gap-2 mt-2">
+            <div>
+              <p className="text-2xl sm:text-3xl font-heading font-black tabular-nums text-[#141413] dark:text-[#FAF8EC] leading-none">
+                {testsTaken > 0 ? <AnimatedNumber value={bestScore} suffix="%" /> : '—'}
+              </p>
+              <p className="text-[10px] font-medium text-[#66665E] dark:text-[#A3A399] mt-1">
+                Top benchmark
+              </p>
+            </div>
+            <PrizeBadgeIcon type="trophy" />
+          </div>
+        </MotionStaggerItem>
+
+        <MotionStaggerItem>
+          <KpiMiniCard
+            icon={<CheckCircle2 className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />}
+            title="Total Tests"
+            valueNode={<AnimatedNumber value={testsTaken} />}
+            subtext="Attempts logged"
+          />
+        </MotionStaggerItem>
+        <MotionStaggerItem>
+          <KpiMiniCard
+            icon={<TrendingUp className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />}
+            title="Overall Average"
+            valueNode={testsTaken > 0 ? <AnimatedNumber value={avgScore} suffix="%" /> : '—'}
+            subtext="Aggregate accuracy"
+          />
+        </MotionStaggerItem>
+        <MotionStaggerItem>
+          <KpiMiniCard
+            icon={<TrendingUp className={`w-4 h-4 ${momentumIsPositive ? 'text-emerald-600' : 'text-rose-500'}`} />}
+            title="3-Test Momentum"
+            valueNode={momentumLabel}
+            subtext="vs prior baseline"
+          />
+        </MotionStaggerItem>
+        <MotionStaggerItem>
+          <KpiMiniCard
+            icon={<Flame className="w-4 h-4 text-amber-500" />}
+            title="Study Streak"
+            valueNode={<AnimatedNumber value={streak} suffix="d" />}
+            subtext="Consecutive days"
+          />
+        </MotionStaggerItem>
+        <MotionStaggerItem>
+          <KpiMiniCard
+            icon={<Clock className="w-4 h-4 text-[#141413] dark:text-[#FAF8EC]" />}
+            title="Hours Practiced"
+            valueNode={<AnimatedNumber value={totalHoursNum} decimals={1} suffix="h" />}
+            subtext="Time in exam room"
+          />
+        </MotionStaggerItem>
+      </MotionStaggerGrid>
+
+      {/* 5. SUBJECT GRID (THE CENTERPIECE) */}
+      <div className="space-y-8">
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
+            <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+              Phase 1 Subjects · Preliminary Examination
+            </h2>
+            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
+              4 Verticals · 200 Marks
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {phase1Subjects.map(sub => (
-              <SubjectCard key={sub.id} subject={sub} tests={tests} />
+              <MotionStaggerItem key={sub.id} className="h-full">
+                <SubjectCard subject={sub} tests={tests} />
+              </MotionStaggerItem>
             ))}
-          </div>
+          </MotionStaggerGrid>
         </div>
 
-        {/* Phase 2 Section */}
-        <div className="pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-              <h2 className="text-lg sm:text-xl font-serif font-black text-slate-900 dark:text-white">
-                Phase 2 Subjects · Main Selection & Writing
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
+            <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+              Phase 2 Subjects · Main Selection & Writing
+            </h2>
+            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
               3 Papers · 300 Total Marks
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+          <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
             {phase2Subjects.map(sub => (
-              <SubjectCard key={sub.id} subject={sub} tests={tests} />
+              <MotionStaggerItem key={sub.id} className="h-full">
+                <SubjectCard subject={sub} tests={tests} />
+              </MotionStaggerItem>
             ))}
-          </div>
+          </MotionStaggerGrid>
         </div>
       </div>
 
-      {/* 5. Rule-Based Smart Insights */}
-      <div>
+      {/* Diagonal Editorial Ribbon Divider */}
+      <DiagonalMarquee />
+
+      {/* 6. Rule-Based Smart Insights */}
+      <MotionSection>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-teal-500" />
-            <span>Cadre Diagnostic Insights</span>
+          <h3 className="font-heading font-bold text-lg text-[#141413] dark:text-[#FAF8EC]">
+            Cadre Diagnostic Insights
           </h3>
-          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">
-            AI-POWERED PATTERN AUDIT
+          <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] uppercase tracking-widest">
+            PATTERN AUDIT
           </span>
         </div>
         <InsightsPanel subjects={subjects} tests={tests} />
-      </div>
+      </MotionSection>
 
-      {/* 6. Cross-Subject Visual Analytics */}
+      {/* 7. Cross-Subject Visual Analytics */}
       <CrossSubjectCharts subjects={subjects} tests={tests} />
 
-      {/* 7. Activity Heatmap */}
+      {/* 8. Activity Heatmap */}
       <ActivityHeatmap tests={tests} streakDays={streak} />
 
-      {/* 8. Recent Attempts (Across all subjects) */}
-      <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-[0_0_35px_-10px_rgba(0,0,0,0.7)]">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent pointer-events-none" />
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-slate-200/60 dark:border-white/10 bg-white/30 dark:bg-white/[0.02] gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/25 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5" />
+      {/* 9. Recent Attempts */}
+      <MotionSection>
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#ECD5FF] text-[#141413] border-[1.5px] border-[#141413] flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-heading font-bold text-[#141413] dark:text-[#FAF8EC] leading-tight">
+                  Recent Exam Attempts
+                </h3>
+                <span className="text-xs text-[#66665E] dark:text-[#A3A399]">
+                  Chronological attempts across all Phase 1 & Phase 2 subjects
+                </span>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">Recent Exam Attempts</h3>
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Chronological attempts across all Phase 1 & Phase 2 subjects</span>
-            </div>
+            <Link 
+              to="/history" 
+              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] px-4 py-2.5 rounded-xl border border-[#E5E1CE] dark:border-[#2E2E2A] w-full sm:w-auto transition-colors"
+            >
+              View All Archive <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <Link 
-            to="/history" 
-            className="sketch-tactile-btn flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors bg-white/70 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs backdrop-blur-sm w-full sm:w-auto justify-center hover:border-teal-500/40"
-          >
-            View All Archive <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
 
-        <div className="divide-y divide-slate-200/60 dark:divide-white/10">
-          {tests.length === 0 ? (
-            <div className="p-8 sm:p-14 text-center">
-              <p className="text-lg font-serif font-bold text-slate-900 dark:text-white">No exams taken yet</p>
-              <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm">Select any subject above or click Start New Exam to begin.</p>
-            </div>
-          ) : (
-            tests.slice(0, 5).map(test => {
-              const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug) || {
-                name: 'Uncategorised',
-                accentColor: '#64748B',
-                icon: 'Layers'
-              };
+          <div className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A]">
+            {tests.length === 0 ? (
+              <div className="p-8 sm:p-14 text-center">
+                <p className="text-lg font-heading font-bold text-[#141413] dark:text-[#FAF8EC]">No exams taken yet</p>
+                <p className="text-[#66665E] dark:text-[#A3A399] mt-1 text-xs sm:text-sm">Select any subject above or click Start New Exam to begin.</p>
+              </div>
+            ) : (
+              tests.slice(0, 5).map(test => {
+                const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug) || {
+                  name: 'Uncategorised',
+                  accentColor: '#64748B',
+                  icon: 'Layers'
+                };
 
-              const maxMarks = test.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
-              const pct = Math.round(((test.totalScore || 0) / maxMarks) * 100);
+                const maxMarks = test.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
+                const pct = Math.round(((test.totalScore || 0) / maxMarks) * 100);
 
-              return (
-                <div key={test.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/50 dark:hover:bg-white/[0.03] transition-all group">
-                  <div className="flex items-center gap-3.5">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
-                      style={{
-                        backgroundColor: `color-mix(in srgb, ${subMatch.accentColor} 14%, transparent)`,
-                        borderColor: `color-mix(in srgb, ${subMatch.accentColor} 30%, transparent)`,
-                        color: subMatch.accentColor
-                      }}
-                    >
-                      <SubjectIcon name={subMatch.icon} className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
-                          style={{
-                            backgroundColor: `color-mix(in srgb, ${subMatch.accentColor} 10%, transparent)`,
-                            borderColor: `color-mix(in srgb, ${subMatch.accentColor} 25%, transparent)`,
-                            color: subMatch.accentColor
-                          }}
-                        >
-                          {subMatch.name}
-                        </span>
-                        {test.mode && (
-                          <span className="text-[10px] font-mono text-slate-400">
-                            · {test.mode}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="font-bold text-slate-900 dark:text-white mt-1 text-sm sm:text-base">
-                        {test.status === 'in-progress' ? 'Test in Progress' : `Exam · ${format(test.createdAt, 'MMM d, yyyy · h:mm a')}`}
-                      </h4>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between md:justify-end gap-5">
-                    {test.status === 'completed' && (
-                      <div className="text-right">
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Score</span>
-                        <span className="text-xl sm:text-2xl font-serif font-black text-slate-900 dark:text-white">
-                          {pct}%
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      {test.status !== 'completed' && (
-                        <button
-                          onClick={() => handleTerminate(test.id)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/25 cursor-pointer"
-                        >
-                          Terminate
-                        </button>
-                      )}
-                      <Link
-                        to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white shadow-xs cursor-pointer"
+                return (
+                  <motion.div
+                    key={test.id}
+                    whileHover={{ x: 2 }}
+                    className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[#141413]/15 dark:border-white/10"
+                        style={{
+                          backgroundColor: `color-mix(in srgb, ${subMatch.accentColor} 14%, transparent)`,
+                          color: subMatch.accentColor
+                        }}
                       >
-                        {test.status === 'completed' ? 'View Results' : 'Resume'}
-                      </Link>
+                        <SubjectIcon name={subMatch.icon} className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] truncate">
+                          {subMatch.name}{test.mode ? ` · ${test.mode}` : ''}
+                        </div>
+                        <h4 className="font-bold text-[#141413] dark:text-[#FAF8EC] mt-0.5 text-sm sm:text-base truncate">
+                          {test.status === 'in-progress' ? 'Test in Progress' : `Exam · ${format(test.createdAt, 'MMM d, yyyy · h:mm a')}`}
+                        </h4>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
 
-    </div>
+                    <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-5 shrink-0">
+                      {test.status === 'completed' && (
+                        <div className="text-left md:text-right">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">Score</span>
+                          <span className="text-xl sm:text-2xl font-heading font-black tabular-nums text-[#141413] dark:text-[#FAF8EC]">
+                            {pct}%
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        {test.status !== 'completed' && (
+                          <button
+                            onClick={() => handleTerminate(test.id)}
+                            className="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
+                          >
+                            Terminate
+                          </button>
+                        )}
+                        <Link
+                          to={test.status === 'completed' ? `/results/${test.id}` : `/exam/${test.id}`}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] cursor-pointer whitespace-nowrap"
+                        >
+                          {test.status === 'completed' ? 'View Results' : 'Resume'}
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </MotionSection>
+
+    </MotionPage>
   );
 }
 
 function KpiMiniCard({
   icon,
   title,
-  value,
-  subtext,
-  color = 'teal'
+  valueNode,
+  subtext
 }: {
   icon: React.ReactNode;
   title: string;
-  value: string;
+  valueNode: React.ReactNode;
   subtext: string;
-  color?: string;
 }) {
   return (
-    <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-[110px] shadow-sm hover:-translate-y-0.5 transition-all overflow-hidden">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold truncate">
+    <motion.div
+      whileHover={{ y: -2 }}
+      transition={SPRING_SNAPPY}
+      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-4 flex flex-col justify-between min-h-[120px] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] font-bold truncate">
           {title}
         </span>
-        <div className="p-1 rounded-lg bg-slate-100 dark:bg-white/5">
+        <div className="p-1.5 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] shrink-0">
           {icon}
         </div>
       </div>
       <div>
-        <p className="text-2xl font-serif font-black text-slate-900 dark:text-white tracking-tight">
-          {value}
+        <p className="text-2xl font-heading font-black tabular-nums text-[#141413] dark:text-[#FAF8EC] tracking-tight">
+          {valueNode}
         </p>
-        <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate mt-0.5">
+        <p className="text-[10px] font-medium text-[#66665E] dark:text-[#A3A399] truncate mt-0.5">
           {subtext}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -2,14 +2,21 @@ import React, { useState } from 'react';
 import { User } from 'firebase/auth';
 import { useSubject } from '../context/SubjectContext';
 import { Link } from 'react-router-dom';
-import { 
-  SlidersHorizontal, ArrowLeft, Check, RotateCcw, 
-  ChevronRight, Edit2, ShieldAlert, Sparkles, BookOpen 
+import {
+  SlidersHorizontal, ArrowLeft, ChevronRight, Edit2, X
 } from 'lucide-react';
 import { Subject } from '../types';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
+import { motion } from 'motion/react';
+import {
+  MotionPage,
+  MotionStaggerGrid,
+  MotionStaggerItem,
+  MotionModal,
+  SPRING_SNAPPY,
+} from '../components/MotionPrimitives';
 
-export function ManageSubjects({ user }: { user: User }) {
+export function ManageSubjects({ user: _user }: { user: User }) {
   const { subjects, updateSubject, resetSubjectsToDefault } = useSubject();
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
@@ -22,26 +29,31 @@ export function ManageSubjects({ user }: { user: User }) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pt-2 pb-16 relative z-10 animate-in fade-in duration-500">
+    <MotionPage className="max-w-5xl mx-auto space-y-6 pt-2 pb-16 relative z-10">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400 mb-1">
-            <Link to="/" className="hover:text-teal-600 dark:hover:text-teal-400 flex items-center gap-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#66665E] dark:text-[#A3A399] mb-1">
+            <Link to="/" className="hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] flex items-center gap-1 transition-colors">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-bold text-slate-900 dark:text-white uppercase">
+            <span className="font-bold text-[#141413] dark:text-[#FAF8EC] uppercase">
               Curriculum Administration
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-black text-slate-900 dark:text-white flex items-center gap-2.5">
-            <SlidersHorizontal className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-            <span>Manage RBI Examination Subjects</span>
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2.5 tracking-tight">
+            <SlidersHorizontal className="w-6 h-6 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+            <span>
+              Manage RBI{' '}
+              <span className="font-editorial-italic font-normal text-[#0D47FF] dark:text-[#ECD5FF]">
+                Examination Subjects
+              </span>
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+          <p className="text-xs sm:text-sm text-[#40403B] dark:text-[#A3A399] mt-1">
             Adjust exam marks, durations, negative-marking penalties, and question mixes dynamically.
           </p>
         </div>
@@ -52,136 +64,137 @@ export function ManageSubjects({ user }: { user: User }) {
               resetSubjectsToDefault();
             }
           }}
-          className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer self-start sm:self-center"
+          className="min-h-[38px] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] px-3.5 py-2 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer self-start sm:self-center transition-colors"
         >
           Reset to Factory Defaults
         </button>
       </div>
 
       {/* Subject Configuration List */}
-      <div className="space-y-4">
+      <MotionStaggerGrid className="space-y-4">
         {subjects.map(s => (
-          <div
-            key={s.id}
-            className="p-5 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
-                style={{
-                  backgroundColor: `${s.accentColor}18`,
-                  borderColor: `${s.accentColor}35`,
-                  color: s.accentColor
-                }}
-              >
-                <SubjectIcon name={s.icon} className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
-                    {s.phase}
-                  </span>
-                  <span className="text-xs font-mono text-slate-400">
-                    Slug: {s.slug}
-                  </span>
-                </div>
-                <h3 className="font-serif font-black text-lg text-slate-900 dark:text-white mt-0.5">
-                  {s.name}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
-                  <span>Marks: <strong className="text-slate-800 dark:text-slate-200">{s.totalMarks}</strong></span>
-                  <span>Duration: <strong className="text-slate-800 dark:text-slate-200">{s.durationMinutes}m</strong></span>
-                  <span>Negative: <strong className="text-slate-800 dark:text-slate-200">-{s.negativeMarking}</strong></span>
-                  <span>MCQ: <strong className="text-slate-800 dark:text-slate-200">{s.questionTypeMix.mcq ? 'Yes' : 'No'}</strong></span>
-                  <span>Desc: <strong className="text-slate-800 dark:text-slate-200">{s.questionTypeMix.descriptive ? 'Yes' : 'No'}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setEditingSubject(s)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/25 flex items-center gap-1.5 cursor-pointer self-start md:self-center transition-colors"
+          <MotionStaggerItem key={s.id}>
+            <motion.div
+              whileHover={{ y: -2 }}
+              transition={SPRING_SNAPPY}
+              className="p-4 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
-              <Edit2 className="w-3.5 h-3.5" />
-              <span>Edit Pattern</span>
-            </button>
-          </div>
+              <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 border border-[#141413]/15 dark:border-[#2E2E2A]"
+                  style={{
+                    backgroundColor: `${s.accentColor}18`,
+                    color: s.accentColor
+                  }}
+                >
+                  <SubjectIcon name={s.icon} className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md border border-[#141413]/25 dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#ECD5FF]">
+                      {s.phase}
+                    </span>
+                    <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
+                      Slug: {s.slug}
+                    </span>
+                  </div>
+                  <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] mt-0.5 truncate">
+                    {s.name}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#66665E] dark:text-[#A3A399] mt-1 tabular-nums">
+                    <span>Marks: <strong className="text-[#141413] dark:text-[#FAF8EC]">{s.totalMarks}</strong></span>
+                    <span>Duration: <strong className="text-[#141413] dark:text-[#FAF8EC]">{s.durationMinutes}m</strong></span>
+                    <span>Negative: <strong className="text-[#141413] dark:text-[#FAF8EC]">-{s.negativeMarking}</strong></span>
+                    <span>MCQ: <strong className="text-[#141413] dark:text-[#FAF8EC]">{s.questionTypeMix.mcq ? 'Yes' : 'No'}</strong></span>
+                    <span>Desc: <strong className="text-[#141413] dark:text-[#FAF8EC]">{s.questionTypeMix.descriptive ? 'Yes' : 'No'}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setEditingSubject(s)}
+                className="min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center gap-1.5 cursor-pointer self-start md:self-center transition-colors shrink-0"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                <span>Edit Pattern</span>
+              </motion.button>
+            </motion.div>
+          </MotionStaggerItem>
         ))}
-      </div>
+      </MotionStaggerGrid>
 
       {/* Edit Subject Modal */}
-      {editingSubject && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in overflow-y-auto"
-          onClick={() => setEditingSubject(null)}
-        >
-          <div 
-            className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-              <h3 className="text-xl font-serif font-black text-slate-900 dark:text-white">
+      <MotionModal
+        isOpen={!!editingSubject}
+        onClose={() => setEditingSubject(null)}
+        maxWidthClass="max-w-lg"
+      >
+        {editingSubject && (
+          <div className="w-full rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[2px] border-[#141413] dark:border-[#ECD5FF] p-5 sm:p-7 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 space-y-4 max-h-[88vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-3">
+              <h3 className="text-lg sm:text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
                 Edit {editingSubject.name} Pattern
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingSubject(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                className="p-1.5 rounded-lg text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] cursor-pointer"
                 aria-label="Close edit modal"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 text-xs font-medium">
               <div>
-                <label className="block text-slate-500 uppercase font-mono text-[10px] mb-1">Subject Name</label>
+                <label className="block text-[#66665E] dark:text-[#A3A399] uppercase font-mono font-bold text-[10px] mb-1">Subject Name</label>
                 <input
                   type="text"
                   value={editingSubject.name}
                   onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                  className="w-full min-h-[42px] px-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-500 uppercase font-mono text-[10px] mb-1">Total Marks</label>
+                  <label className="block text-[#66665E] dark:text-[#A3A399] uppercase font-mono font-bold text-[10px] mb-1">Total Marks</label>
                   <input
                     type="number"
                     value={editingSubject.totalMarks}
                     onChange={(e) => setEditingSubject({ ...editingSubject, totalMarks: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                    className="w-full min-h-[42px] px-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] tabular-nums focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 uppercase font-mono text-[10px] mb-1">Duration (Min)</label>
+                  <label className="block text-[#66665E] dark:text-[#A3A399] uppercase font-mono font-bold text-[10px] mb-1">Duration (Min)</label>
                   <input
                     type="number"
                     value={editingSubject.durationMinutes}
                     onChange={(e) => setEditingSubject({ ...editingSubject, durationMinutes: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                    className="w-full min-h-[42px] px-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] tabular-nums focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 uppercase font-mono text-[10px] mb-1">Negative Mark</label>
+                  <label className="block text-[#66665E] dark:text-[#A3A399] uppercase font-mono font-bold text-[10px] mb-1">Negative Mark</label>
                   <input
                     type="number"
                     step="0.05"
                     value={editingSubject.negativeMarking}
                     onChange={(e) => setEditingSubject({ ...editingSubject, negativeMarking: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                    className="w-full min-h-[42px] px-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] tabular-nums focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-6 pt-2">
+              <div className="flex flex-wrap items-center gap-5 pt-2 text-[#141413] dark:text-[#FAF8EC] font-bold">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -190,7 +203,7 @@ export function ManageSubjects({ user }: { user: User }) {
                       ...editingSubject,
                       questionTypeMix: { ...editingSubject.questionTypeMix, mcq: e.target.checked }
                     })}
-                    className="accent-teal-600"
+                    className="accent-[#0D47FF]"
                   />
                   <span>Includes MCQs</span>
                 </label>
@@ -203,50 +216,51 @@ export function ManageSubjects({ user }: { user: User }) {
                       ...editingSubject,
                       questionTypeMix: { ...editingSubject.questionTypeMix, descriptive: e.target.checked }
                     })}
-                    className="accent-teal-600"
+                    className="accent-[#0D47FF]"
                   />
                   <span>Includes Descriptive</span>
                 </label>
               </div>
 
               <div>
-                <label className="block text-slate-500 uppercase font-mono text-[10px] mb-1">Accent Hex Color</label>
+                <label className="block text-[#66665E] dark:text-[#A3A399] uppercase font-mono font-bold text-[10px] mb-1">Accent Hex Color</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
                     value={editingSubject.accentColor}
                     onChange={(e) => setEditingSubject({ ...editingSubject, accentColor: e.target.value })}
-                    className="w-10 h-10 rounded-lg cursor-pointer border-0"
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-[#141413]"
                   />
                   <input
                     type="text"
                     value={editingSubject.accentColor}
                     onChange={(e) => setEditingSubject({ ...editingSubject, accentColor: e.target.value })}
-                    className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white font-mono"
+                    className="flex-1 min-h-[42px] px-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] font-mono"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
                 <button
                   type="button"
                   onClick={() => setEditingSubject(null)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                  className="min-h-[40px] px-4 py-2 rounded-xl text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer"
+                  className="min-h-[40px] px-5 py-2.5 rounded-xl bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] font-bold cursor-pointer"
                 >
                   Save Changes
-                </button>
+                </motion.button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </MotionModal>
 
-    </div>
+    </MotionPage>
   );
 }

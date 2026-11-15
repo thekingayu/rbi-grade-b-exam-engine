@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'motion/react';
+import { EASE_OUT_EXPO, AnimatedNumber } from '../MotionPrimitives';
 
 interface ReadinessRingProps {
   score: number; // 0 to 100
@@ -28,33 +30,32 @@ export function ReadinessRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          className="stroke-slate-200/70 dark:stroke-white/10"
+          className="stroke-[#E5E1CE] dark:stroke-[#2E2E2A]"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        {/* Animated Dynamic Arc */}
-        <circle
+        {/* Crisp Progress Arc animating smoothly on entry */}
+        <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke={color}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
-          strokeDashoffset={offset}
+          initial={{ strokeDashoffset: circumference }}
+          whileInView={{ strokeDashoffset: offset }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 1.25, ease: EASE_OUT_EXPO }}
           strokeLinecap="round"
           fill="transparent"
-          style={{
-            transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-            filter: `drop-shadow(0 0 6px ${color}66)`
-          }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
-        <span className="text-xs sm:text-sm font-bold font-mono tracking-tight text-slate-900 dark:text-white leading-none">
-          {safeScore}%
+        <span className="text-xs sm:text-sm font-black font-mono tabular-nums tracking-tight text-[#141413] dark:text-[#FAF8EC] leading-none">
+          <AnimatedNumber value={safeScore} suffix="%" />
         </span>
         {size >= 64 && (
-          <span className="text-[8px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 scale-90">
+          <span className="text-[8px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] scale-90">
             {label}
           </span>
         )}

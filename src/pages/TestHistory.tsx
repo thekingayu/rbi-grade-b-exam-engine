@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { collection, query, where, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
 import { format } from 'date-fns';
-import { 
-  Clock, FileText, ArrowLeft, Download, SlidersHorizontal, 
-  Search, ArrowRight, Check, X, GitCompare, RefreshCw 
+import {
+  FileText, ArrowLeft, Download, Search, Check, X, GitCompare, RefreshCw
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import { motion } from 'motion/react';
+import { MotionPage, MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
 
 export function TestHistory({ user }: { user: User }) {
   const [tests, setTests] = useState<TestAttempt[]>([]);
@@ -157,9 +158,9 @@ export function TestHistory({ user }: { user: User }) {
   if (loading) {
     return (
       <div className="py-20 flex items-center justify-center">
-        <FuturisticScreenLoader 
-          title="Exam Attempt Archive" 
-          subtitle="RETRIEVING HISTORICAL TELEMETRY..." 
+        <FuturisticScreenLoader
+          title="Exam Attempt Archive"
+          subtitle="RETRIEVING HISTORICAL TELEMETRY..."
           color="teal"
         />
       </div>
@@ -167,90 +168,97 @@ export function TestHistory({ user }: { user: User }) {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
+    <MotionPage className="space-y-6 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <button 
+          <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-2 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#66665E] dark:text-[#A3A399] hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] mb-2 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
-          <h1 className="text-2xl sm:text-3xl font-serif font-black text-slate-900 dark:text-white">
-            Historical Examination Archive
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] tracking-tight">
+            Historical Examination{' '}
+            <span className="font-editorial-italic font-normal text-[#0D47FF] dark:text-[#ECD5FF]">
+              Archive
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs sm:text-sm text-[#40403B] dark:text-[#A3A399] mt-0.5">
             Complete record of preliminary mocks, sectional speed drills, and descriptive writing evaluations.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {selectedForCompare.length === 2 && (
-            <button
+            <motion.button
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => setShowCompareModal(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 cursor-pointer shadow-md transition-all animate-pulse"
+              className="min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <GitCompare className="w-3.5 h-3.5" />
+              <GitCompare className="w-3.5 h-3.5 shrink-0" />
               <span>Compare Selected (2)</span>
-            </button>
+            </motion.button>
           )}
 
           <button
             onClick={() => setShowReassignModal(true)}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:border-[#141413] dark:hover:border-[#ECD5FF] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
             <span>Reassign Legacy Tests</span>
           </button>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/20 flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 shrink-0" />
             <span>Export CSV</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#070B19]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+      <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#66665E] dark:text-[#A3A399] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by subject or mode..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-teal-500"
+            className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-xs text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#66665E] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <span className="text-xs font-mono text-slate-400">Subject:</span>
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <span className="text-xs font-mono font-bold text-[#66665E] dark:text-[#A3A399] uppercase shrink-0">Subject:</span>
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
+            className="flex-1 sm:flex-initial min-h-[40px] text-xs font-bold px-3 py-2 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] cursor-pointer"
           >
-            <option value="all" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">All Subjects ({tests.length})</option>
+            <option value="all">All Subjects ({tests.length})</option>
             {subjects.map(s => (
-              <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{s.name}</option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </div>
       </div>
 
       {/* Tests Table */}
-      <div className="relative bg-white/70 dark:bg-[#070B19]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-        <div className="divide-y divide-slate-200/60 dark:divide-white/10">
+      <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl overflow-hidden">
+        <div className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A]">
           {filteredTests.length === 0 ? (
             <div className="p-12 text-center">
-              <FileText className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-              <p className="font-serif font-bold text-lg text-slate-900 dark:text-white">No exams found</p>
-              <p className="text-xs text-slate-500 mt-1">Adjust search parameters or launch a new exam.</p>
+              <FileText className="w-10 h-10 text-[#66665E] dark:text-[#A3A399] mx-auto mb-2" />
+              <p className="font-heading font-bold text-lg text-[#141413] dark:text-[#FAF8EC]">No exams found</p>
+              <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1">Adjust search parameters or launch a new exam.</p>
             </div>
           ) : (
             filteredTests.map(test => {
@@ -276,28 +284,27 @@ export function TestHistory({ user }: { user: User }) {
               const isCheckedForCompare = selectedForCompare.includes(test.id);
 
               return (
-                <div key={test.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                <div key={test.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50 transition-colors">
                   <div className="flex items-center gap-3.5">
                     {/* Checkbox for Compare */}
                     <input
                       type="checkbox"
                       checked={isCheckedForCompare}
                       onChange={() => {
-                        setSelectedForCompare(prev => 
-                          isCheckedForCompare 
+                        setSelectedForCompare(prev =>
+                          isCheckedForCompare
                             ? prev.filter(id => id !== test.id)
                             : prev.length < 2 ? [...prev, test.id] : [prev[1], test.id]
                         );
                       }}
-                      className="w-4 h-4 accent-indigo-600 rounded cursor-pointer shrink-0"
+                      className="w-4 h-4 accent-[#0D47FF] rounded cursor-pointer shrink-0"
                       title="Select to compare (max 2)"
                     />
 
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[#141413]/15 dark:border-[#2E2E2A]"
                       style={{
                         backgroundColor: `${subMatch.accentColor}18`,
-                        borderColor: `${subMatch.accentColor}35`,
                         color: subMatch.accentColor
                       }}
                     >
@@ -306,35 +313,35 @@ export function TestHistory({ user }: { user: User }) {
 
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span 
-                          className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border"
+                        <span
+                          className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md border"
                           style={{
                             color: subMatch.accentColor,
-                            borderColor: `${subMatch.accentColor}35`,
-                            backgroundColor: `${subMatch.accentColor}10`
+                            borderColor: `${subMatch.accentColor}45`,
+                            backgroundColor: `${subMatch.accentColor}12`
                           }}
                         >
                           {subMatch.name}
                         </span>
                         {test.mode && (
-                          <span className="text-[10px] font-mono text-slate-400">
+                          <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                             · {test.mode}
                           </span>
                         )}
-                        <span className="text-[10px] font-mono text-slate-400">
+                        <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                           · {format(test.createdAt, 'MMM d, yyyy · h:mm a')}
                         </span>
                       </div>
 
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base mt-1">
+                      <h4 className="font-bold text-[#141413] dark:text-[#FAF8EC] text-sm sm:text-base mt-1">
                         {test.status === 'in-progress' ? 'In-Progress Exam' : `Exam Assessment (${test.questions?.length || 0} Questions)`}
                       </h4>
 
                       {test.status === 'completed' && (
-                        <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                          {mcqQs.length > 0 && <span>MCQ: <strong className="text-teal-600 dark:text-teal-400">{tMcqAcc}%</strong></span>}
-                          {descQs.length > 0 && <span>Desc: <strong className="text-indigo-600 dark:text-indigo-400">{tDescAcc}%</strong></span>}
-                          <span>Total: <strong className="text-slate-900 dark:text-white font-serif">{totalPct}%</strong></span>
+                        <div className="flex items-center gap-3 text-xs text-[#66665E] dark:text-[#A3A399] mt-1 tabular-nums">
+                          {mcqQs.length > 0 && <span>MCQ: <strong className="text-[#0D47FF] dark:text-[#ECD5FF]">{tMcqAcc}%</strong></span>}
+                          {descQs.length > 0 && <span>Desc: <strong className="text-[#141413] dark:text-[#FFD426]">{tDescAcc}%</strong></span>}
+                          <span>Total: <strong className="text-[#141413] dark:text-[#FAF8EC] font-heading">{totalPct}%</strong></span>
                         </div>
                       )}
                     </div>
@@ -344,7 +351,7 @@ export function TestHistory({ user }: { user: User }) {
                     {test.status === 'completed' ? (
                       <Link
                         to={`/results/${test.id}`}
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 text-slate-800 dark:text-slate-200 transition-colors"
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
                       >
                         View Report
                       </Link>
@@ -352,13 +359,13 @@ export function TestHistory({ user }: { user: User }) {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleTerminate(test.id)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
                         >
                           Terminate
                         </button>
                         <Link
                           to={`/exam/${test.id}`}
-                          className="px-4 py-2 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-xs"
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413]"
                         >
                           Resume
                         </Link>
@@ -373,25 +380,23 @@ export function TestHistory({ user }: { user: User }) {
       </div>
 
       {/* Compare Modal */}
-      {showCompareModal && compareTest1 && compareTest2 && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in"
-          onClick={() => setShowCompareModal(false)}
-        >
-          <div 
-            className="w-full max-w-2xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+      <MotionModal
+        isOpen={!!(showCompareModal && compareTest1 && compareTest2)}
+        onClose={() => setShowCompareModal(false)}
+        maxWidthClass="max-w-2xl"
+      >
+        {compareTest1 && compareTest2 && (
+          <div className="w-full rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[2px] border-[#141413] dark:border-[#ECD5FF] p-5 sm:p-6 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 space-y-4 max-h-[88vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-3">
               <div className="flex items-center gap-2">
-                <GitCompare className="w-5 h-5 text-indigo-500" />
-                <h3 className="font-serif font-black text-lg text-slate-900 dark:text-white">
+                <GitCompare className="w-5 h-5 text-[#0D47FF] dark:text-[#ECD5FF]" />
+                <h3 className="font-heading font-extrabold text-lg text-[#141413] dark:text-[#FAF8EC]">
                   Side-by-Side Attempt Comparison
                 </h3>
               </div>
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                className="p-1.5 rounded-lg text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] cursor-pointer"
                 aria-label="Close compare modal"
               >
                 <X className="w-5 h-5" />
@@ -403,114 +408,111 @@ export function TestHistory({ user }: { user: User }) {
                 const max = t.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
                 const score = Math.round(((t.totalScore || 0) / max) * 100);
                 return (
-                  <div key={t.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-2">
-                    <span className="text-[10px] font-mono text-slate-400 block uppercase">Attempt {i + 1}</span>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">{t.subjectName || 'Exam'}</p>
-                    <p className="text-3xl font-serif font-black text-teal-600 dark:text-teal-300">{score}%</p>
-                    <p className="text-xs text-slate-500 font-mono">{format(t.createdAt, 'MMM d, yyyy')}</p>
-                    <p className="text-xs text-slate-500">{t.questions?.length} Questions · {t.mode || 'Standard'}</p>
+                  <div key={t.id} className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+                    <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] block uppercase">Attempt {i + 1}</span>
+                    <p className="font-bold text-sm text-[#141413] dark:text-[#FAF8EC]">{t.subjectName || 'Exam'}</p>
+                    <p className="text-3xl font-heading font-extrabold text-[#0D47FF] dark:text-[#ECD5FF] tabular-nums">{score}%</p>
+                    <p className="text-xs text-[#66665E] dark:text-[#A3A399] font-mono">{format(t.createdAt, 'MMM d, yyyy')}</p>
+                    <p className="text-xs text-[#66665E] dark:text-[#A3A399]">{t.questions?.length} Questions · {t.mode || 'Standard'}</p>
                   </div>
                 );
               })}
             </div>
 
-            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-indigo-900 dark:text-indigo-200 text-center">
+            <div className="p-4 rounded-2xl bg-[#ECD5FF] border border-[#141413] text-xs font-bold text-[#141413] text-center tabular-nums">
               Delta: {Math.abs(
                 Math.round(((compareTest1.totalScore || 0) / (compareTest1.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1)) * 100) -
                 Math.round(((compareTest2.totalScore || 0) / (compareTest2.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1)) * 100)
               )}% score differential between attempts.
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </MotionModal>
 
       {/* Bulk Reassign Modal */}
-      {showReassignModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in"
-          onClick={() => setShowReassignModal(false)}
-        >
-          <div 
-            className="w-full max-w-xl rounded-3xl bg-white dark:bg-[#0A0F1C] border border-slate-200 dark:border-white/10 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-              <h3 className="font-serif font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <RefreshCw className="w-5 h-5 text-teal-600" />
-                <span>Reassign Legacy Tests to Subject</span>
-              </h3>
-              <button
-                onClick={() => setShowReassignModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
-                aria-label="Close reassign modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <MotionModal
+        isOpen={showReassignModal}
+        onClose={() => setShowReassignModal(false)}
+        maxWidthClass="max-w-xl"
+      >
+        <div className="w-full rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[2px] border-[#141413] dark:border-[#ECD5FF] p-5 sm:p-6 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 space-y-4 max-h-[88vh] overflow-y-auto">
+          <div className="flex items-center justify-between border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-3">
+            <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+              <span>Reassign Legacy Tests to Subject</span>
+            </h3>
+            <button
+              onClick={() => setShowReassignModal(false)}
+              className="p-1.5 rounded-lg text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] cursor-pointer"
+              aria-label="Close reassign modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            <p className="text-xs text-slate-500">
-              Select any past tests (including previously unassigned ones) and choose the target subject to re-index them into the correct dashboard metrics.
-            </p>
+          <p className="text-xs text-[#40403B] dark:text-[#A3A399]">
+            Select any past tests (including previously unassigned ones) and choose the target subject to re-index them into the correct dashboard metrics.
+          </p>
 
-            <div>
-              <label className="text-xs font-mono uppercase tracking-wider text-slate-400 block mb-1">
-                Target Subject
-              </label>
-              <select
-                value={targetReassignSubjectId}
-                onChange={(e) => setTargetReassignSubjectId(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
-              >
-                {subjects.map(s => (
-                  <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-1.5 font-medium">
-                    {s.name} ({s.phase})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block mb-1">
+              Target Subject
+            </label>
+            <select
+              value={targetReassignSubjectId}
+              onChange={(e) => setTargetReassignSubjectId(e.target.value)}
+              className="w-full min-h-[42px] p-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] cursor-pointer"
+            >
+              {subjects.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.phase})
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="max-h-60 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-white/10 rounded-xl p-2">
-              {tests.map(t => {
-                const isSelected = selectedForReassign.includes(t.id);
-                return (
-                  <div
-                    key={t.id}
-                    onClick={() => {
-                      setSelectedForReassign(prev =>
-                        isSelected ? prev.filter(id => id !== t.id) : [...prev, t.id]
-                      );
-                    }}
-                    className={`p-2.5 rounded-lg border text-xs cursor-pointer flex items-center justify-between ${
-                      isSelected
-                        ? 'bg-teal-500/15 border-teal-500 text-teal-900 dark:text-teal-200'
-                        : 'border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <span>{format(t.createdAt, 'MMM d, yyyy')} · {t.subjectName || 'Unassigned'}</span>
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-teal-600 text-white' : 'border-slate-300'}`}>
-                      {isSelected && <Check className="w-3 h-3" />}
-                    </div>
+          <div className="max-h-60 overflow-y-auto space-y-1.5 border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#141413] rounded-xl p-2">
+            {tests.map(t => {
+              const isSelected = selectedForReassign.includes(t.id);
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => {
+                    setSelectedForReassign(prev =>
+                      isSelected ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                    );
+                  }}
+                  className={`p-2.5 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition-colors ${
+                    isSelected
+                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413] font-bold'
+                      : 'border-[#E5E1CE] dark:border-[#2E2E2A] text-[#40403B] dark:text-[#D5D5C8]'
+                  }`}
+                >
+                  <span>{format(t.createdAt, 'MMM d, yyyy')} · {t.subjectName || 'Unassigned'}</span>
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#0D47FF] border-[#141413] text-white' : 'border-[#66665E]'}`}>
+                    {isSelected && <Check className="w-3 h-3" />}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
+          </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono text-slate-400">
-                {selectedForReassign.length} tests selected
-              </span>
-              <button
-                onClick={handleBulkReassign}
-                disabled={isReassigning || selectedForReassign.length === 0}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-md cursor-pointer disabled:opacity-50"
-              >
-                {isReassigning ? 'Reassigning...' : 'Confirm Reassignment'}
-              </button>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
+              {selectedForReassign.length} tests selected
+            </span>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleBulkReassign}
+              disabled={isReassigning || selectedForReassign.length === 0}
+              className="min-h-[40px] px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] cursor-pointer disabled:opacity-50"
+            >
+              {isReassigning ? 'Reassigning...' : 'Confirm Reassignment'}
+            </motion.button>
           </div>
         </div>
-      )}
+      </MotionModal>
 
-    </div>
+    </MotionPage>
   );
 }

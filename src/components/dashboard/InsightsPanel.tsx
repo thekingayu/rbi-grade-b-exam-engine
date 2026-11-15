@@ -1,10 +1,12 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { Subject, TestAttempt } from '../../types';
 import { 
   AlertTriangle, TrendingUp, Clock, Zap, Target, 
-  CheckCircle2, Compass, Award 
+  Compass 
 } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { MotionStaggerGrid, MotionStaggerItem, SPRING_SNAPPY } from '../MotionPrimitives';
 
 interface InsightsPanelProps {
   subjects: Subject[];
@@ -102,7 +104,7 @@ export function InsightsPanel({ subjects, tests }: InsightsPanelProps) {
         insights.push({
           id: `unattempted-${s.id}`,
           type: 'action',
-          icon: <Compass className="w-4 h-4 text-cyan-500" />,
+          icon: <Compass className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />,
           title: `Diagnostic Pending: ${s.name}`,
           description: `No attempts recorded yet. Take an initial diagnostic mock to benchmark baseline performance.`,
           subjectSlug: s.slug
@@ -145,7 +147,7 @@ export function InsightsPanel({ subjects, tests }: InsightsPanelProps) {
       {
         id: 'start-smart',
         type: 'action',
-        icon: <Zap className="w-4 h-4 text-teal-500" />,
+        icon: <Zap className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />,
         title: 'Phase 1 & Phase 2 Balance',
         description: 'Alternate daily between General Awareness static GK and ESI macro-policy descriptive writing.',
       },
@@ -159,31 +161,39 @@ export function InsightsPanel({ subjects, tests }: InsightsPanelProps) {
     );
   }
 
-  const typeStyles = {
-    warning: 'border-rose-500/25 bg-rose-500/5 text-rose-900 dark:text-rose-100',
-    positive: 'border-emerald-500/25 bg-emerald-500/5 text-emerald-900 dark:text-emerald-100',
-    action: 'border-cyan-500/25 bg-cyan-500/5 text-cyan-900 dark:text-cyan-100',
-    neutral: 'border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] text-slate-800 dark:text-slate-200'
+  const dotColor = {
+    warning: 'bg-rose-500',
+    positive: 'bg-emerald-500',
+    action: 'bg-[#0D47FF]',
+    neutral: 'bg-[#141413]'
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {insights.slice(0, 4).map(item => (
-        <div
-          key={item.id}
-          className={`relative p-4 rounded-2xl border backdrop-blur-xl flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-sm ${typeStyles[item.type]}`}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 rounded-lg bg-white/70 dark:bg-white/10 flex items-center justify-center shrink-0 shadow-xs">
-              {item.icon}
+        <MotionStaggerItem key={item.id} className="h-full">
+          <motion.div
+            whileHover={{ y: -3 }}
+            transition={SPRING_SNAPPY}
+            className="relative h-full p-4 rounded-2xl border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] flex flex-col justify-between transition-colors hover:border-[#141413] dark:hover:border-[#ECD5FF] hover:shadow-[3px_3px_0px_#141413] dark:hover:shadow-[3px_3px_0px_#ECD5FF]"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-center shrink-0">
+                    {item.icon}
+                  </div>
+                  <h4 className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</h4>
+                </div>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor[item.type]}`} />
+              </div>
+              <p className="text-xs text-[#55554F] dark:text-[#A3A399] line-clamp-2 leading-relaxed">
+                {item.description}
+              </p>
             </div>
-            <h4 className="font-bold text-xs sm:text-sm line-clamp-1">{item.title}</h4>
-          </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-            {item.description}
-          </p>
-        </div>
+          </motion.div>
+        </MotionStaggerItem>
       ))}
-    </div>
+    </MotionStaggerGrid>
   );
 }
