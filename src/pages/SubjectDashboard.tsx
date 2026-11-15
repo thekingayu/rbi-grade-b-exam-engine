@@ -347,7 +347,7 @@ export function SubjectDashboard({ user }: { user: User }) {
               whileTap={{ scale: 0.97 }}
               transition={SPRING_SNAPPY}
               onClick={() => navigate(`/new?subject=${currentSubject.slug}`)}
-              className="min-h-[46px] inline-flex items-center justify-center gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] px-6 py-3 rounded-xl font-bold text-xs sm:text-sm transition-colors cursor-pointer"
+              className="min-h-[46px] inline-flex items-center justify-center gap-2 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] px-4 sm:px-6 py-3 rounded-xl font-bold text-xs sm:text-sm text-center transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4 text-white shrink-0" />
               <span>Start Exam in {currentSubject.name}</span>
@@ -370,7 +370,7 @@ export function SubjectDashboard({ user }: { user: User }) {
       <MotionSection className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
         {/* Score Trend */}
-        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col h-[300px] sm:h-[380px] overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
@@ -418,7 +418,7 @@ export function SubjectDashboard({ user }: { user: User }) {
         </div>
 
         {/* Topic Accuracy Bar */}
-        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[380px] overflow-hidden">
+        <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col h-[300px] sm:h-[380px] overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
@@ -435,10 +435,10 @@ export function SubjectDashboard({ user }: { user: User }) {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topicChartData} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                <BarChart data={topicChartData} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" horizontal={false} />
                   <XAxis type="number" stroke="#66665E" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
-                  <YAxis dataKey="name" type="category" stroke="#66665E" fontSize={10} tickLine={false} axisLine={false} width={110} />
+                  <YAxis dataKey="name" type="category" stroke="#66665E" fontSize={10} tickLine={false} axisLine={false} width={90} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -478,6 +478,10 @@ export function SubjectDashboard({ user }: { user: User }) {
             <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-[#FFD426] text-[#141413] border border-[#141413]">Improving 40-70%</span>
             <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">Strong &gt; 70%</span>
           </div>
+        </div>
+
+        <div className="sm:hidden px-4 py-2 text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] border-b border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC]/60 dark:bg-[#141413]/40">
+          Swipe table horizontally →
         </div>
 
         <div className="overflow-x-auto overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>

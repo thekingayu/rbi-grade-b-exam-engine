@@ -158,18 +158,18 @@ export function Dashboard({ user }: { user: User }) {
   const railProgress = Math.min(94, Math.max(14, 14 + testsTaken * 6));
 
   return (
-    <MotionPage className="space-y-8 max-w-7xl mx-auto pt-2 pb-16 relative z-10">
+    <MotionPage className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pt-1 sm:pt-2 pb-12 sm:pb-16 relative z-10">
       
       {/* 1. Editorial Hero Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 sm:gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399] mb-2">
+          <p className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399] mb-1.5 sm:mb-2">
             RESERVE BANK OF INDIA · OFFICER CADRE {targetYear} · {daysRemaining} DAYS TO EXAM
           </p>
-          <h1 className="text-3xl sm:text-5xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] tracking-tight leading-[1.08]">
+          <h1 className="text-2xl sm:text-5xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] tracking-tight leading-[1.08]">
             Welcome back, <span className="font-editorial-italic text-[#0D47FF] dark:text-[#ECD5FF] font-normal">{displayName.split(' ')[0]}.</span>
           </h1>
-          <p className="text-[#55554F] dark:text-[#A3A399] text-sm sm:text-base font-normal mt-2 max-w-2xl">
+          <p className="text-[#55554F] dark:text-[#A3A399] text-xs sm:text-base font-normal mt-1.5 sm:mt-2 max-w-2xl">
             Centralized preparation telemetry across all Phase 1 and Phase 2 curriculum verticals.
           </p>
         </div>
@@ -205,25 +205,27 @@ export function Dashboard({ user }: { user: User }) {
             </Link>
           </motion.div>
 
-          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-            <Link 
-              to="/syllabus" 
-              className="inline-flex items-center justify-center gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-5 py-3 min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-sm cursor-pointer shrink-0 whitespace-nowrap"
-            >
-              <BookOpen className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
-              <span>Syllabus & PDF</span>
-            </Link>
-          </motion.div>
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="min-w-0">
+              <Link 
+                to="/syllabus" 
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-3 sm:px-5 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <BookOpen className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+                <span>Syllabus & PDF</span>
+              </Link>
+            </motion.div>
 
-          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY}>
-            <Link 
-              to="/new" 
-              className="inline-flex items-center justify-center gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] px-6 py-3 min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-sm sm:text-base cursor-pointer shrink-0 whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 text-white shrink-0" />
-              <span>Start New Exam</span>
-            </Link>
-          </motion.div>
+            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={SPRING_SNAPPY} className="min-w-0">
+              <Link 
+                to="/new" 
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2.5 bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] px-3 sm:px-6 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-base cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 text-white shrink-0" />
+                <span>Start New Exam</span>
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </div>
 
@@ -270,8 +272,8 @@ export function Dashboard({ user }: { user: User }) {
       </MotionSection>
 
       {/* 4. KPI Row */}
-      <MotionStaggerGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <MotionStaggerItem className="ink-card-featured group rounded-2xl p-4 flex flex-col justify-between min-h-[120px] col-span-2 md:col-span-1">
+      <MotionStaggerGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
+        <MotionStaggerItem className="ink-card-featured group rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[104px] sm:min-h-[120px] col-span-2 md:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#0D47FF] dark:text-[#ECD5FF] font-bold">
               PERSONAL BEST
@@ -517,7 +519,7 @@ function KpiMiniCard({
     <motion.div
       whileHover={{ y: -2 }}
       transition={SPRING_SNAPPY}
-      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-4 flex flex-col justify-between min-h-[120px] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors"
+      className="h-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[104px] sm:min-h-[120px] hover:border-[#141413] dark:hover:border-[#ECD5FF] transition-colors"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] font-bold truncate">

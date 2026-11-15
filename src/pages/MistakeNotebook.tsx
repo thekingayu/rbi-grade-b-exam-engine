@@ -82,7 +82,7 @@ export function MistakeNotebook({ user: _user }: { user: User }) {
       </div>
 
       {/* Leitner Box Progress Tracker */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         {[
           { box: 1, label: 'Box 1: Daily', interval: 'Every 24h', color: '#E11D48' },
           { box: 2, label: 'Box 2: 3-Day', interval: 'Every 3 days', color: '#D97706' },
@@ -100,7 +100,9 @@ export function MistakeNotebook({ user: _user }: { user: User }) {
               whileTap={{ scale: 0.97 }}
               transition={SPRING_SNAPPY}
               onClick={() => setSelectedBoxFilter(isSelected ? 'all' : b.box)}
-              className={`p-3.5 sm:p-4 rounded-2xl border-[1.5px] text-left transition-colors cursor-pointer flex flex-col justify-between min-h-[86px] ${
+              className={`p-3 sm:p-4 rounded-2xl border-[1.5px] text-left transition-colors cursor-pointer flex flex-col justify-between min-h-[78px] sm:min-h-[86px] ${
+                b.box === 5 ? 'col-span-2 sm:col-span-1' : ''
+              } ${
                 isSelected
                   ? 'bg-[#141413] text-[#FAF8EC] border-[#141413] dark:border-[#ECD5FF] shadow-[4px_4px_0px_#0D47FF]'
                   : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] hover:border-[#141413] dark:hover:border-[#ECD5FF]'
@@ -246,24 +248,24 @@ export function MistakeNotebook({ user: _user }: { user: User }) {
                         </div>
                       )}
 
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2">
                         <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                           Reviews: {m.reviewCount} · Due: {m.nextReviewDue ? formatDistanceToNow(m.nextReviewDue, { addSuffix: true }) : 'Now'}
                         </span>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <button
                             onClick={() => updateMistakeBox(m.id, false)}
-                            className="min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30 cursor-pointer"
+                            className="flex-1 sm:flex-initial justify-center min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30 cursor-pointer"
                           >
                             Demote to Box 1
                           </button>
                           <motion.button
                             whileTap={{ scale: 0.96 }}
                             onClick={() => updateMistakeBox(m.id, true)}
-                            className="min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer flex items-center gap-1"
+                            className="flex-1 sm:flex-initial justify-center min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer flex items-center gap-1"
                           >
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3.5 h-3.5 shrink-0" />
                             <span>Promote to Box {Math.min(5, m.leitnerBox + 1)}</span>
                           </motion.button>
                         </div>

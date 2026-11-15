@@ -105,7 +105,7 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
     <MotionStaggerGrid className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
       
       {/* 1. Score Trend */}
-      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[400px] overflow-hidden">
+      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-4 sm:p-6 flex flex-col h-[300px] sm:h-[400px] overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="font-heading font-bold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
@@ -169,7 +169,7 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
       </MotionStaggerItem>
 
       {/* 2. Subject Comparison Radar */}
-      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-5 sm:p-6 flex flex-col h-[340px] sm:h-[400px] overflow-hidden">
+      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-4 sm:p-6 flex flex-col h-[300px] sm:h-[400px] overflow-hidden">
         <div className="flex items-center justify-between mb-2 gap-2">
           <div>
             <h3 className="font-heading font-bold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
@@ -220,7 +220,7 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
       </MotionStaggerItem>
 
       {/* 3. Static vs Dynamic Marks Donut */}
-      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-5 sm:p-6 flex flex-col h-[350px] sm:h-[400px] overflow-hidden">
+      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-4 sm:p-6 flex flex-col h-[320px] sm:h-[400px] overflow-hidden">
         <div className="flex items-center justify-between mb-2 gap-2">
           <div>
             <h3 className="font-heading font-bold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
@@ -243,8 +243,8 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
                 data={donutData}
                 cx="50%"
                 cy="50%"
-                innerRadius={62}
-                outerRadius={94}
+                innerRadius="52%"
+                outerRadius="78%"
                 paddingAngle={4}
                 dataKey="value"
                 stroke="#141413"
@@ -272,7 +272,7 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
           </ResponsiveContainer>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-            <span className="text-2xl sm:text-3xl font-heading font-black tabular-nums text-[#141413] dark:text-[#FAF8EC] leading-none">
+            <span className="text-xl sm:text-3xl font-heading font-black tabular-nums text-[#141413] dark:text-[#FAF8EC] leading-none">
               {staticPct}%
             </span>
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] mt-1">
@@ -294,7 +294,7 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
       </MotionStaggerItem>
 
       {/* 4. Time Management Bars */}
-      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-5 sm:p-6 flex flex-col h-[350px] sm:h-[400px] overflow-hidden">
+      <MotionStaggerItem className="relative bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors rounded-2xl p-4 sm:p-6 flex flex-col h-[320px] sm:h-[400px] overflow-hidden">
         <div className="flex items-center justify-between mb-2 gap-2">
           <div>
             <h3 className="font-heading font-bold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">

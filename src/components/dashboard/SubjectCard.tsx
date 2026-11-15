@@ -88,7 +88,7 @@ export function SubjectCard({ subject, tests }: SubjectCardProps) {
     >
       <Link
         to={`/subject/${subject.slug}`}
-        className="group relative h-full flex flex-col justify-between bg-[#FFFFFF] dark:bg-[#1C1C1A] rounded-2xl p-5 sm:p-6 border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] hover:shadow-[4px_4px_0px_#141413] dark:hover:shadow-[4px_4px_0px_#ECD5FF] transition-all duration-200 overflow-hidden cursor-pointer"
+        className="group relative h-full flex flex-col justify-between bg-[#FFFFFF] dark:bg-[#1C1C1A] rounded-2xl p-4 sm:p-6 border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] hover:shadow-[4px_4px_0px_#141413] dark:hover:shadow-[4px_4px_0px_#ECD5FF] transition-all duration-200 overflow-hidden cursor-pointer"
       >
         {/* Clean solid top color rule */}
         <div 
@@ -179,7 +179,7 @@ export function SubjectCard({ subject, tests }: SubjectCardProps) {
           <div className="flex flex-col gap-1 text-[11px] font-medium text-[#55554F] dark:text-[#A3A399]">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[#66665E] dark:text-[#8E8E85]">Priority Topic:</span>
-              <span className="font-bold text-[#141413] dark:text-[#FAF8EC] truncate max-w-[170px]" title={weakestTopic}>
+              <span className="font-bold text-[#141413] dark:text-[#FAF8EC] truncate max-w-[140px] sm:max-w-[170px]" title={weakestTopic}>
                 {weakestTopic}
               </span>
             </div>

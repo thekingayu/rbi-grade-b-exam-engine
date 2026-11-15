@@ -620,7 +620,7 @@ export function NewTest({ user }: { user: User }) {
             <div className="space-y-4">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#141413]/35 dark:border-[#ECD5FF]/35 hover:border-[#0D47FF] rounded-3xl p-8 sm:p-12 text-center bg-[#FFFFFF] dark:bg-[#1C1C1A] transition-colors cursor-pointer group"
+                className="border-2 border-dashed border-[#141413]/35 dark:border-[#ECD5FF]/35 hover:border-[#0D47FF] rounded-3xl p-5 sm:p-12 text-center bg-[#FFFFFF] dark:bg-[#1C1C1A] transition-colors cursor-pointer group"
               >
                 <input
                   ref={fileInputRef}
@@ -630,10 +630,10 @@ export function NewTest({ user }: { user: User }) {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div className="w-16 h-16 rounded-2xl bg-[#ECD5FF] text-[#141413] border-[1.5px] border-[#141413] flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                  <UploadCloud className="w-8 h-8" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#ECD5FF] text-[#141413] border-[1.5px] border-[#141413] flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform">
+                  <UploadCloud className="w-6 h-6 sm:w-8 sm:h-8" />
                 </div>
-                <h3 className="font-heading font-bold text-lg text-[#141413] dark:text-[#FAF8EC]">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC]">
                   Drop your study notes or images here or click to browse
                 </h3>
                 <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-1 max-w-md mx-auto">
@@ -919,33 +919,33 @@ export function NewTest({ user }: { user: User }) {
             
             {/* MCQs */}
             {selectedSubject.questionTypeMix.mcq && (
-              <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
-                <div className="flex items-center justify-between pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+              <div className="p-3.5 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
                   <span className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Multiple Choice Questions
                   </span>
-                  <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#ECD5FF] border border-[#141413] tabular-nums">
+                  <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#ECD5FF] border border-[#141413] tabular-nums shrink-0">
                     Total MCQ: {config.mcqStatic + config.mcqDynamic} Qs
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {/* Primary / Core Section Number Input */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 pr-2 space-y-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                    <div className="min-w-0 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#FFD426]/30 text-[#141413] dark:text-[#FFD426] border border-[#141413]/30 dark:border-[#FFD426]/40">
                           Track 1 · Static PYQ Archetype
                         </span>
                       )}
-                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">
                         {categoryConfig.primaryMcqLabel}
                       </span>
-                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
+                      <span className="text-[11px] sm:text-[10px] text-[#66665E] dark:text-[#A3A399] block sm:line-clamp-1">
                         {categoryConfig.primaryMcqSubtext}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqStatic: Math.max(0, config.mcqStatic - 1) })}
@@ -975,21 +975,21 @@ export function NewTest({ user }: { user: User }) {
                   </div>
 
                   {/* Secondary / Advanced Section Number Input */}
-                  <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
-                    <div className="min-w-0 pr-2 space-y-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                    <div className="min-w-0 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#ECD5FF]/60 dark:bg-[#ECD5FF]/15 text-[#141413] dark:text-[#ECD5FF] border border-[#141413]/25 dark:border-[#ECD5FF]/30">
                           Track 2 · Dynamic Recent Events (2024–2026)
                         </span>
                       )}
-                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">
                         {categoryConfig.secondaryMcqLabel}
                       </span>
-                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
+                      <span className="text-[11px] sm:text-[10px] text-[#66665E] dark:text-[#A3A399] block sm:line-clamp-1">
                         {categoryConfig.secondaryMcqSubtext}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, mcqDynamic: Math.max(0, config.mcqDynamic - 1) })}
@@ -1023,33 +1023,33 @@ export function NewTest({ user }: { user: User }) {
 
             {/* Descriptive */}
             {selectedSubject.questionTypeMix.descriptive && (
-              <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
-                <div className="flex items-center justify-between pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+              <div className="p-3.5 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
                   <span className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC]">
                     Phase 2 Analytical Descriptive
                   </span>
-                  <span className="text-xs font-mono text-[#FFFFFF] font-bold px-2.5 py-1 rounded-md bg-[#0D47FF] border border-[#141413] tabular-nums">
+                  <span className="text-xs font-mono text-[#FFFFFF] font-bold px-2.5 py-1 rounded-md bg-[#0D47FF] border border-[#141413] tabular-nums shrink-0">
                     Total Desc: {config.descStatic + config.descDynamic} Qs
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {/* Static Descriptive Number Input */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 pr-2 space-y-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                    <div className="min-w-0 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#FFD426]/30 text-[#141413] dark:text-[#FFD426] border border-[#141413]/30 dark:border-[#FFD426]/40">
                           Track 1 · Static Theory (10 Marks / 400w)
                         </span>
                       )}
-                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">
                         {categoryConfig.primaryDescLabel || 'Static Analytical Essays'}
                       </span>
-                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
+                      <span className="text-[11px] sm:text-[10px] text-[#66665E] dark:text-[#A3A399] block sm:line-clamp-1">
                         {categoryConfig.primaryDescSubtext || 'Theory & framework prompts'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descStatic: Math.max(0, config.descStatic - 1) })}
@@ -1079,21 +1079,21 @@ export function NewTest({ user }: { user: User }) {
                   </div>
 
                   {/* Dynamic Descriptive Number Input */}
-                  <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
-                    <div className="min-w-0 pr-2 space-y-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                    <div className="min-w-0 space-y-0.5">
                       {['general-awareness', 'esi', 'fm'].includes(selectedSubject.slug) && (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-[#ECD5FF]/60 dark:bg-[#ECD5FF]/15 text-[#141413] dark:text-[#ECD5FF] border border-[#141413]/25 dark:border-[#ECD5FF]/30">
                           Track 2 · Dynamic Dilemma (15 Marks / 600w)
                         </span>
                       )}
-                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
+                      <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">
                         {categoryConfig.secondaryDescLabel || 'Dynamic Policy Questions'}
                       </span>
-                      <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
+                      <span className="text-[11px] sm:text-[10px] text-[#66665E] dark:text-[#A3A399] block sm:line-clamp-1">
                         {categoryConfig.secondaryDescSubtext || 'Contemporary dilemmas & policy roadmap'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, descDynamic: Math.max(0, config.descDynamic - 1) })}
@@ -1126,7 +1126,7 @@ export function NewTest({ user }: { user: User }) {
             )}
 
             {/* Authentic Previous Year Questions (PYQ) Section */}
-            <div className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4 ${
+            <div className={`p-3.5 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-4 ${
               selectedSubject.questionTypeMix.descriptive ? 'sm:col-span-2' : ''
             }`}>
               <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
@@ -1138,21 +1138,21 @@ export function NewTest({ user }: { user: User }) {
                     Official Papers 2018–2025
                   </span>
                 </div>
-                <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#FFD426] border border-[#141413] tabular-nums">
+                <span className="text-xs font-mono text-[#141413] font-bold px-2.5 py-1 rounded-md bg-[#FFD426] border border-[#141413] tabular-nums shrink-0">
                   Total PYQ: {config.pyqCount || 0} Qs
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 pr-2">
-                  <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block truncate">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                <div className="min-w-0 space-y-0.5">
+                  <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">
                     Exact Previous Year Questions (PYQ)
                   </span>
-                  <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] line-clamp-1">
+                  <span className="text-[11px] sm:text-[10px] text-[#66665E] dark:text-[#A3A399] block sm:line-clamp-1">
                     Authentic questions asked in official RBI Grade B matching syllabus / notes with exact past difficulty
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                   <button
                     type="button"
                     onClick={() => setConfig({ ...config, pyqCount: Math.max(0, (config.pyqCount || 0) - 1) })}
@@ -1240,7 +1240,7 @@ export function NewTest({ user }: { user: User }) {
           </div>
 
           {/* Live Summary Card */}
-          <div className="p-5 sm:p-7 rounded-2xl bg-[#141413] text-[#FAF8EC] border-[2px] border-[#141413] dark:border-[#ECD5FF] shadow-[6px_6px_0px_#0D47FF] dark:shadow-[6px_6px_0px_#ECD5FF]/35 space-y-5">
+          <div className="p-4 sm:p-7 rounded-2xl bg-[#141413] text-[#FAF8EC] border-[2px] border-[#141413] dark:border-[#ECD5FF] shadow-[6px_6px_0px_#0D47FF] dark:shadow-[6px_6px_0px_#ECD5FF]/35 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/15 pb-4">
               <div className="min-w-0">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-[#FFD426] font-bold block">

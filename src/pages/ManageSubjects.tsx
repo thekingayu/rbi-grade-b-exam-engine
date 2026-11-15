@@ -64,7 +64,7 @@ export function ManageSubjects({ user: _user }: { user: User }) {
               resetSubjectsToDefault();
             }
           }}
-          className="min-h-[38px] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] px-3.5 py-2 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer self-start sm:self-center transition-colors"
+          className="w-full sm:w-auto min-h-[38px] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] px-3.5 py-2 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer text-center transition-colors"
         >
           Reset to Factory Defaults
         </button>
@@ -114,7 +114,7 @@ export function ManageSubjects({ user: _user }: { user: User }) {
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setEditingSubject(s)}
-                className="min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center gap-1.5 cursor-pointer self-start md:self-center transition-colors shrink-0"
+                className="w-full md:w-auto min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center gap-1.5 cursor-pointer self-stretch md:self-center transition-colors shrink-0"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 <span>Edit Pattern</span>

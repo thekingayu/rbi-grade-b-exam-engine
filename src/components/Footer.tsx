@@ -15,36 +15,36 @@ export function Footer() {
   };
 
   return (
-    <footer className="mt-auto relative z-20 border-t border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] pb-24 lg:pb-20 transition-colors duration-300">
-      <MotionSection className="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 pb-10 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+    <footer className="mt-auto relative z-20 border-t border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] pb-20 lg:pb-16 transition-colors duration-300">
+      <MotionSection className="max-w-7xl mx-auto px-4 sm:px-8 py-5 sm:py-10 lg:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-8 lg:gap-10 pb-4 sm:pb-8 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
           {/* Column 1: Wordmark & Architecture summary */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-5 space-y-2 sm:space-y-4">
             <Link to="/" className="inline-flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-lg bg-[#ECD5FF] border-[1.5px] border-[#141413] flex items-center justify-center text-[#141413] transition-transform group-hover:scale-105 group-hover:-rotate-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#ECD5FF] border-[1.5px] border-[#141413] flex items-center justify-center text-[#141413] transition-transform group-hover:scale-105 group-hover:-rotate-3">
                 <BookOpen className="w-4 h-4" />
               </div>
               <div>
-                <div className="font-heading text-lg font-black tracking-tight leading-none">
+                <div className="font-heading text-base sm:text-lg font-black tracking-tight leading-none">
                   RBI GRADE B × Engine
                 </div>
-                <div className="text-[10px] font-mono tracking-widest uppercase text-[#66665E] dark:text-[#A3A399] mt-1">
-                  OFFICER PREPARATION CADRE · CYCLE 2026–27
+                <div className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-[#66665E] dark:text-[#A3A399] mt-0.5 sm:mt-1">
+                  OFFICER CADRE · CYCLE 2026–27
                 </div>
               </div>
             </Link>
 
-            <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] leading-relaxed max-w-md">
+            <p className="hidden sm:block text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] leading-relaxed max-w-md">
               Structured preparation workspace calibrated strictly to Reserve Bank of India Phase I &amp; Phase II standards—featuring Dual-Track question synthesis, PYQs, and spaced-repetition mistaking tracking.
             </p>
           </div>
 
           {/* Column 2: Quick Navigation */}
-          <div className="md:col-span-3 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+          <div className="md:col-span-3 space-y-1.5 sm:space-y-3">
+            <h4 className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
               Workspace Routes
             </h4>
-            <ul className="space-y-1.5 text-xs sm:text-sm font-medium">
+            <ul className="grid grid-cols-2 sm:grid-cols-3 md:block gap-x-3 gap-y-0.5 md:space-y-1.5 text-xs sm:text-sm font-medium">
               {[
                 { name: 'Command Center', path: '/' },
                 { name: 'Launch New Exam', path: '/new' },
@@ -55,10 +55,10 @@ export function Footer() {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="group inline-flex items-center justify-between w-full py-1.5 text-[#141413] dark:text-[#FAF8EC] hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] transition-colors"
+                    className="group inline-flex items-center justify-between w-full py-1 sm:py-1.5 text-[#141413] dark:text-[#FAF8EC] hover:text-[#0D47FF] dark:hover:text-[#ECD5FF] transition-colors"
                   >
-                    <span className="transition-transform group-hover:translate-x-1">{link.name}</span>
-                    <span className="font-mono text-[10px] text-[#66665E] dark:text-[#A3A399] transition-transform group-hover:translate-x-1">→</span>
+                    <span className="truncate transition-transform group-hover:translate-x-1">{link.name}</span>
+                    <span className="font-mono text-[10px] text-[#66665E] dark:text-[#A3A399] transition-transform group-hover:translate-x-1 shrink-0 ml-1">→</span>
                   </Link>
                 </li>
               ))}
@@ -66,31 +66,31 @@ export function Footer() {
           </div>
 
           {/* Column 3: Official Paper Weightage */}
-          <div className="md:col-span-4 space-y-3">
+          <div className="md:col-span-4 space-y-1.5 sm:space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
+              <h4 className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
                 RBI Syllabus Matrix
               </h4>
-              <span className="font-mono text-[10px] font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
+              <span className="font-mono text-[9px] sm:text-[10px] font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
                 375 MERIT MARKS
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {[
                 { label: 'General Awareness', weight: '80 Qs' },
                 { label: 'Quant & Reasoning', weight: '30 + 60 Qs' },
                 { label: 'English Language', weight: '30 Qs' },
                 { label: 'Phase II: ESI', weight: 'Paper I' },
                 { label: 'Phase II: Writing', weight: 'Paper II' },
-                { label: 'Phase II: Finance & Mgmt', weight: 'Paper III' }
+                { label: 'Phase II: FM', weight: 'Paper III' }
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="p-2.5 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/40 transition-colors"
+                  className="px-2.5 py-1.5 sm:p-2.5 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/40 transition-colors flex items-center justify-between gap-1.5 sm:block"
                 >
-                  <div className="text-[11px] font-semibold truncate">{item.label}</div>
-                  <div className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
+                  <div className="text-[10px] sm:text-[11px] font-semibold truncate">{item.label}</div>
+                  <div className="text-[9px] sm:text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] shrink-0">
                     {item.weight}
                   </div>
                 </div>
@@ -100,17 +100,17 @@ export function Footer() {
         </div>
 
         {/* Bottom Copyright & Creator Credit */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#66665E] dark:text-[#A3A399]">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
+        <div className="pt-3.5 sm:pt-5 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs text-[#66665E] dark:text-[#A3A399]">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
             <span className="font-medium text-[#141413] dark:text-[#FAF8EC]">
               &copy; {new Date().getFullYear()} RBI Grade B Engine.
             </span>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
             <span>Made with Love</span>
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
+            <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
             <span className="font-heading font-bold text-[#141413] dark:text-white">Ayush</span>
           </div>
 
@@ -118,11 +118,11 @@ export function Footer() {
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.94 }}
             onClick={scrollToTop}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-[11px] font-mono font-bold uppercase tracking-wider cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-wider cursor-pointer"
             aria-label="Back to top"
           >
             <span>Top</span>
-            <ArrowUp className="w-3.5 h-3.5" />
+            <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </motion.button>
         </div>
       </MotionSection>

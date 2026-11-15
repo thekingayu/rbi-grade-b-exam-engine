@@ -4,7 +4,7 @@ import { auth } from '../firebase';
 import { useSubject } from '../context/SubjectContext';
 import { 
   Camera, Mail, Target, Check, AlertCircle, Save, Sparkles, 
-  ArrowLeft, LogOut, KeyRound, Download
+  ArrowLeft, LogOut, KeyRound, Download, RefreshCw, Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { calculateDaysRemaining } from '../utils/date';
@@ -71,7 +71,10 @@ export function Profile({ user }: { user: User }) {
     updateUserProfile, 
     targetExamDate, 
     targetScoreGoal, 
-    mistakes 
+    mistakes,
+    syncStatus,
+    lastSyncedAt,
+    refreshSync
   } = useSubject();
 
   const [displayName, setDisplayName] = useState(
@@ -107,10 +110,14 @@ export function Profile({ user }: { user: User }) {
 
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [photoSyncState, setPhotoSyncState] = useState<'idle' | 'syncing' | 'synced'>('idle');
+  const [refreshingSync, setRefreshingSync] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastHydratedTsRef = useRef<number | null>(null);
+  const photoSyncTimerRef = useRef<number | null>(null);
 
   const passNumber = useMemo(() => {
     const uidSlice = (user.uid || '0389').slice(-4);
@@ -120,18 +127,23 @@ export function Profile({ user }: { user: User }) {
   }, [user.uid]);
 
   useEffect(() => {
-    if (userProfile) {
-      if (userProfile.displayName) setDisplayName(userProfile.displayName);
-      if (userProfile.photoURL !== undefined) setPhotoURL(userProfile.photoURL || '');
-      if (userProfile.stream) setStream(userProfile.stream);
-      if (userProfile.category) setCategory(userProfile.category);
-      if (userProfile.attemptCount) setAttemptCount(userProfile.attemptCount);
-      if (userProfile.dailyStudyHours) setDailyStudyHours(userProfile.dailyStudyHours);
-      if (userProfile.educationBackground) setEducationBackground(userProfile.educationBackground);
-      if (userProfile.bio) setBio(userProfile.bio);
-      if (userProfile.phone) setPhone(userProfile.phone);
+    if (!userProfile) return;
+    const incomingTs = typeof userProfile.updatedAt === 'number' ? userProfile.updatedAt : 0;
+    if (lastHydratedTsRef.current !== null && lastHydratedTsRef.current === incomingTs) {
+      return;
     }
-  }, [userProfile]);
+    lastHydratedTsRef.current = incomingTs;
+
+    setDisplayName(userProfile.displayName || user.displayName || user.email?.split('@')[0] || 'Cadre Officer');
+    setPhotoURL(userProfile.photoURL !== undefined ? (userProfile.photoURL || '') : (user.photoURL || ''));
+    setStream(userProfile.stream || 'General');
+    setCategory(userProfile.category || 'General');
+    setAttemptCount(userProfile.attemptCount || '1st Attempt');
+    setDailyStudyHours(Number(userProfile.dailyStudyHours) || 4);
+    setEducationBackground(userProfile.educationBackground ?? 'Commerce / Economics');
+    setBio(userProfile.bio ?? 'Aspiring RBI Grade B Officer · Preparing for Phase 1 & Phase 2 examination');
+    setPhone(userProfile.phone ?? '');
+  }, [userProfile, user.displayName, user.email, user.photoURL]);
 
   useEffect(() => {
     setTempExamDate(targetExamDate);
@@ -176,9 +188,79 @@ export function Profile({ user }: { user: User }) {
     targetExamDate, targetScoreGoal
   ]);
 
-  // Handle custom image upload with client-side canvas compression
+  useEffect(() => {
+    return () => {
+      if (photoSyncTimerRef.current) {
+        window.clearTimeout(photoSyncTimerRef.current);
+      }
+    };
+  }, []);
+
+  const commitPhotoChange = async (nextPhotoURL: string) => {
+    setPhotoURL(nextPhotoURL);
+    setErrorMsg(null);
+    setPhotoSyncState('syncing');
+    if (photoSyncTimerRef.current) {
+      window.clearTimeout(photoSyncTimerRef.current);
+    }
+    try {
+      await updateUserProfile({ photoURL: nextPhotoURL });
+      setPhotoSyncState('synced');
+      photoSyncTimerRef.current = window.setTimeout(() => {
+        setPhotoSyncState('idle');
+      }, 3000);
+    } catch (err: any) {
+      console.error('Error syncing avatar:', err);
+      setPhotoSyncState('idle');
+      setErrorMsg(err?.message || 'Could not sync profile picture to cloud. Please try again.');
+    }
+  };
+
+  const compressImageForFirestore = (img: HTMLImageElement): string | null => {
+    const maxBytesChars = 180_000;
+    const dimensions = [256, 192, 144];
+    const qualities = [0.82, 0.68, 0.52];
+
+    for (const maxDim of dimensions) {
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+      if (!width || !height) return null;
+
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.max(1, Math.round((height * maxDim) / width));
+          width = maxDim;
+        }
+      } else if (height > maxDim) {
+        width = Math.max(1, Math.round((width * maxDim) / height));
+        height = maxDim;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      for (const quality of qualities) {
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        if (compressed.length <= maxBytesChars) {
+          return compressed;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // Handle custom image upload with progressive canvas compression & instant cloud sync
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -205,43 +287,31 @@ export function Profile({ user }: { user: User }) {
       };
       img.onload = () => {
         try {
-          const maxDim = 256;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > maxDim) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            }
-          } else {
-            if (height > maxDim) {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
+          const compressed = compressImageForFirestore(img);
+          if (!compressed) {
+            setErrorMsg('Could not compress image under 180 KB for cross-device sync. Please choose a smaller photo.');
+            return;
           }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.82);
-            setPhotoURL(compressed);
-            setErrorMsg(null);
-          } else {
-            setPhotoURL(rawDataUrl);
-            setErrorMsg(null);
-          }
+          void commitPhotoChange(compressed);
         } catch {
-          setPhotoURL(rawDataUrl);
-          setErrorMsg(null);
+          setErrorMsg('Could not process image in browser. Please try a standard JPG or PNG.');
         }
       };
       img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleManualRefreshSync = async () => {
+    setRefreshingSync(true);
+    setErrorMsg(null);
+    try {
+      await refreshSync();
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Unable to refresh cloud sync.');
+    } finally {
+      setRefreshingSync(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -288,10 +358,10 @@ export function Profile({ user }: { user: User }) {
   };
 
   return (
-    <MotionPage className="max-w-6xl mx-auto space-y-8 pb-16">
+    <MotionPage className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12 sm:pb-16">
       
-      {/* Top Breadcrumb */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+      {/* Top Breadcrumb & Sync Status */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
         <Link 
           to="/" 
           className="inline-flex items-center gap-2 text-xs font-bold text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] transition-colors"
@@ -300,15 +370,49 @@ export function Profile({ user }: { user: User }) {
           <span>Back to Command Center</span>
         </Link>
 
-        <span className="text-[10px] font-mono tracking-widest uppercase text-[#66665E] dark:text-[#A3A399] font-bold">
-          OFFICER DOSSIER · CLOUD SYNCED
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono tracking-wider uppercase font-bold ${
+            syncStatus === 'error'
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+              : syncStatus === 'syncing'
+                ? 'bg-[#FFD426]/25 border-[#141413]/30 text-[#141413] dark:text-[#FFD426]'
+                : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399]'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              syncStatus === 'error'
+                ? 'bg-rose-500'
+                : syncStatus === 'syncing'
+                  ? 'bg-[#0D47FF] animate-pulse'
+                  : 'bg-emerald-500'
+            }`} />
+            <span>
+              {syncStatus === 'syncing'
+                ? 'Syncing Cloud...'
+                : syncStatus === 'error'
+                  ? 'Sync Issue'
+                  : lastSyncedAt
+                    ? `Synced · ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Cloud Synced'}
+            </span>
+          </span>
+
+          <button
+            type="button"
+            onClick={handleManualRefreshSync}
+            disabled={refreshingSync || syncStatus === 'syncing'}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:border-[#141413] dark:hover:border-[#ECD5FF] text-[10px] font-mono font-bold uppercase text-[#141413] dark:text-[#FAF8EC] transition-colors cursor-pointer disabled:opacity-60"
+            title="Fetch latest profile and prep data from server"
+          >
+            <RefreshCw className={`w-3 h-3 ${refreshingSync ? 'animate-spin' : ''}`} />
+            <span>Refresh Sync</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Dossier + Hanging Lavender Pass Showcase */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         {/* Left: Interactive Charcoal Officer Lanyard Showcase */}
-        <div className="lg:col-span-5 rounded-3xl bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-5 sm:px-6 pb-8 pt-0 flex flex-col items-center justify-between text-[#FAF8EC] overflow-hidden">
+        <div className="lg:col-span-5 rounded-3xl bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-4 sm:px-6 pb-6 sm:pb-8 pt-0 flex flex-col items-center justify-between text-[#FAF8EC] overflow-hidden">
           <OfficerLanyardPass
             name={displayName}
             stream={stream}
@@ -323,7 +427,7 @@ export function Profile({ user }: { user: User }) {
             whileTap={{ scale: 0.97 }}
             transition={SPRING_SNAPPY}
             onClick={() => downloadOfficerPassSVG(displayName, stream, passNumber)}
-            className="mt-5 min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ECD5FF] hover:bg-[#DFBDFC] text-[#141413] border-[1.5px] border-[#141413] text-xs font-bold transition-colors cursor-pointer"
+            className="mt-5 min-h-[40px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#ECD5FF] hover:bg-[#DFBDFC] text-[#141413] border-[1.5px] border-[#141413] text-xs font-bold transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download Official Pass (SVG)</span>
@@ -331,55 +435,78 @@ export function Profile({ user }: { user: User }) {
         </div>
 
         {/* Right: Main Profile Header Card */}
-        <div className="lg:col-span-7 ink-card-featured rounded-3xl p-5 sm:p-8 flex flex-col justify-between gap-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div className="lg:col-span-7 ink-card-featured rounded-3xl p-4 sm:p-8 flex flex-col justify-between gap-5 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
             {/* Photo Upload */}
-            <div className="relative group shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.75px] border-[#141413] dark:border-[#ECD5FF] overflow-hidden flex items-center justify-center relative">
-                {photoURL ? (
-                  photoURL.startsWith('http') || photoURL.startsWith('data:') ? (
-                    <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div className="relative group">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.75px] border-[#141413] dark:border-[#ECD5FF] overflow-hidden flex items-center justify-center relative">
+                  {photoURL ? (
+                    photoURL.startsWith('http') || photoURL.startsWith('data:') ? (
+                      <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl">{photoURL}</span>
+                    )
                   ) : (
-                    <span className="text-4xl">{photoURL}</span>
-                  )
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#141413] dark:text-[#FAF8EC] font-black text-2xl font-heading">
-                    {displayName.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                    <div className="w-full h-full flex items-center justify-center text-[#141413] dark:text-[#FAF8EC] font-black text-2xl font-heading">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
 
-                <button
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-[#141413]/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+                    title="Upload profile photo"
+                  >
+                    <Camera className="w-5 h-5 mb-1 text-[#ECD5FF]" />
+                    <span className="text-[10px] font-bold">Change</span>
+                  </button>
+                </div>
+
+                <motion.button
                   type="button"
+                  whileTap={{ scale: 0.92 }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-[#141413]/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
-                  title="Upload profile photo"
+                  className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] transition-colors cursor-pointer"
+                  title="Upload new image from device"
                 >
-                  <Camera className="w-5 h-5 mb-1 text-[#ECD5FF]" />
-                  <span className="text-[10px] font-bold">Change</span>
-                </button>
+                  <Camera className="w-3.5 h-3.5" />
+                </motion.button>
+
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handlePhotoUpload} 
+                  className="hidden" 
+                />
               </div>
 
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.92 }}
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] transition-colors cursor-pointer"
-                title="Upload new image from device"
-              >
-                <Camera className="w-3.5 h-3.5" />
-              </motion.button>
+              {photoURL && (
+                <button
+                  type="button"
+                  onClick={() => void commitPhotoChange('')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] hover:border-rose-400 text-[10px] font-bold text-[#66665E] dark:text-[#A3A399] hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove Photo</span>
+                </button>
+              )}
 
-              <input 
-                ref={fileInputRef}
-                type="file" 
-                accept="image/*" 
-                onChange={handlePhotoUpload} 
-                className="hidden" 
-              />
+              {photoSyncState !== 'idle' && (
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                  photoSyncState === 'syncing'
+                    ? 'bg-[#FFD426]/30 text-[#141413] dark:text-[#FFD426]'
+                    : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                }`}>
+                  {photoSyncState === 'syncing' ? 'Syncing photo...' : 'Synced across devices ✓'}
+                </span>
+              )}
             </div>
 
             {/* Officer Details */}
-            <div className="flex-1 text-center sm:text-left min-w-0">
+            <div className="flex-1 text-center sm:text-left min-w-0 w-full">
               <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF] mb-1">
                 RBI GRADE B · {stream} STREAM · {category}
               </p>
@@ -393,14 +520,14 @@ export function Profile({ user }: { user: User }) {
                 <span className="truncate">{user.email}</span>
               </p>
 
-              <p className="text-xs text-[#55554F] dark:text-[#A3A399] mt-3 leading-relaxed font-medium">
+              <p className="text-xs text-[#55554F] dark:text-[#A3A399] mt-3 leading-relaxed font-medium break-words">
                 "{bio}"
               </p>
             </div>
           </div>
 
           {/* 4 Quick Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
             <div className="p-3 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A]">
               <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399] uppercase block mb-0.5 font-bold">Exam Target</span>
               <span className="text-sm font-black tabular-nums text-[#141413] dark:text-[#FAF8EC]">
@@ -430,20 +557,20 @@ export function Profile({ user }: { user: User }) {
       </div>
 
       {/* Preset Cadre Avatars Selector */}
-      <MotionSection className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-5 sm:p-7">
-        <div className="flex items-center justify-between mb-4">
+      <MotionSection className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-4 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-base font-heading font-bold text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
               <span>Preset Officer Cadre Avatars</span>
             </h3>
             <p className="text-xs text-[#66665E] dark:text-[#A3A399] mt-0.5">
-              Choose an official avatar emblem or upload your custom photo above.
+              Selecting an emblem or uploading a custom photo syncs immediately across all devices.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-3">
           {PRESET_AVATARS.map((av) => {
             const isSelected = photoURL === av.iconText;
             return (
@@ -453,14 +580,14 @@ export function Profile({ user }: { user: User }) {
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.96 }}
                 transition={SPRING_SNAPPY}
-                onClick={() => setPhotoURL(av.iconText)}
+                onClick={() => void commitPhotoChange(av.iconText)}
                 className={`p-3 rounded-2xl border text-center transition-colors cursor-pointer flex flex-col items-center gap-2 ${
                   isSelected 
                     ? 'bg-[#ECD5FF] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] text-[#141413]' 
                     : 'bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-xl ${av.bgClass} border border-[#141413] flex items-center justify-center text-2xl`}>
+                <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl ${av.bgClass} border border-[#141413] flex items-center justify-center text-2xl`}>
                   {av.iconText}
                 </div>
                 <div className="min-w-0 w-full">
@@ -481,7 +608,7 @@ export function Profile({ user }: { user: User }) {
       <form onSubmit={handleSave} className="space-y-6">
         
         {/* Identity & Preparation Parameters */}
-        <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-6 sm:p-8 space-y-6">
+        <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-4">
             <h3 className="text-lg font-heading font-bold text-[#141413] dark:text-[#FAF8EC]">
               Cadre Identity & Background
@@ -600,7 +727,7 @@ export function Profile({ user }: { user: User }) {
         </div>
 
         {/* Exam Goals & Sync */}
-        <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-6 sm:p-8 space-y-6">
+        <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] p-4 sm:p-8 space-y-5 sm:space-y-6">
           <div className="border-b border-[#E5E1CE] dark:border-[#2E2E2A] pb-4">
             <h3 className="text-lg font-heading font-bold text-[#141413] dark:text-[#FAF8EC] flex items-center gap-2">
               <Target className="w-5 h-5 text-[#0D47FF] dark:text-[#ECD5FF]" />

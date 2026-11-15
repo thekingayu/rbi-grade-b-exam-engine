@@ -16,6 +16,7 @@ export interface UserProfile {
   targetExamYear?: string;
   targetExamDate?: string;
   targetScoreGoal?: number;
+  syllabusProgress?: Record<string, boolean>;
   updatedAt?: number;
 }
 

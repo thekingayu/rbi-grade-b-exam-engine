@@ -440,8 +440,8 @@ export function Results({ user }: { user: User }) {
                         </div>
                         <div className="space-y-3.5">
                           <div>
-                            <div className="flex justify-between items-center text-xs mb-1.5">
-                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={primaryMcqLabel}>
+                            <div className="flex justify-between items-center text-xs mb-1.5 gap-2">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate min-w-0 flex-1" title={primaryMcqLabel}>
                                 {primaryMcqLabel}
                               </span>
                               <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{mcqStaticScore}/{mcqStaticMax}</span>
@@ -456,8 +456,8 @@ export function Results({ user }: { user: User }) {
                             </div>
                           </div>
                           <div>
-                            <div className="flex justify-between items-center text-xs mb-1.5">
-                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={secondaryMcqLabel}>
+                            <div className="flex justify-between items-center text-xs mb-1.5 gap-2">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate min-w-0 flex-1" title={secondaryMcqLabel}>
                                 {secondaryMcqLabel}
                               </span>
                               <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{mcqDynamicScore}/{mcqDynamicMax}</span>
@@ -488,8 +488,8 @@ export function Results({ user }: { user: User }) {
                         </div>
                         <div className="space-y-3.5">
                           <div>
-                            <div className="flex justify-between items-center text-xs mb-1.5">
-                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={primaryDescLabel}>
+                            <div className="flex justify-between items-center text-xs mb-1.5 gap-2">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate min-w-0 flex-1" title={primaryDescLabel}>
                                 {primaryDescLabel}
                               </span>
                               <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{descStaticScore}/{descStaticMax}</span>
@@ -504,8 +504,8 @@ export function Results({ user }: { user: User }) {
                             </div>
                           </div>
                           <div>
-                            <div className="flex justify-between items-center text-xs mb-1.5">
-                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate max-w-[170px]" title={secondaryDescLabel}>
+                            <div className="flex justify-between items-center text-xs mb-1.5 gap-2">
+                              <span className="text-[#5C5A52] dark:text-[#A8A396] font-medium truncate min-w-0 flex-1" title={secondaryDescLabel}>
                                 {secondaryDescLabel}
                               </span>
                               <span className="font-mono font-bold text-[#141413] dark:text-[#FAF8EC] shrink-0 tabular-nums">{descDynamicScore}/{descDynamicMax}</span>
@@ -619,7 +619,7 @@ export function Results({ user }: { user: User }) {
                               <div 
                                 key={optIdx}
                                 className={clsx(
-                                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border-[1.5px] transition-colors",
+                                  "flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2.5 sm:gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm border-[1.5px] transition-colors",
                                   isCorrectPick
                                     ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 font-semibold"
                                     : isUserPick && !isCorrectPick
@@ -637,12 +637,12 @@ export function Results({ user }: { user: User }) {
                                 )}>
                                   {optLetter}
                                 </span>
-                                <span className="flex-1">{opt}</span>
+                                <span className="flex-1 min-w-0 break-words">{opt}</span>
                                 {isCorrectPick && (
-                                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-bold ml-2">✓ Correct Answer</span>
+                                  <span className="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-400 font-bold shrink-0 whitespace-nowrap ml-8 sm:ml-2">✓ Correct Answer</span>
                                 )}
                                 {isUserPick && !isCorrectPick && (
-                                  <span className="text-xs text-rose-700 dark:text-rose-400 font-bold ml-2">✗ Your Choice</span>
+                                  <span className="text-[11px] sm:text-xs text-rose-700 dark:text-rose-400 font-bold shrink-0 whitespace-nowrap ml-8 sm:ml-2">✗ Your Choice</span>
                                 )}
                               </div>
                             );
@@ -767,7 +767,7 @@ export function Results({ user }: { user: User }) {
                             </span>
                           )}
                         </div>
-                        <div className="p-4 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-xl text-[#141413] dark:text-[#FAF8EC] whitespace-pre-wrap text-sm h-96 overflow-y-auto leading-relaxed">
+                        <div className="p-3.5 sm:p-4 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-xl text-[#141413] dark:text-[#FAF8EC] whitespace-pre-wrap text-sm h-56 sm:h-96 overflow-y-auto leading-relaxed">
                           {userAns || <span className="italic text-[#5C5A52] dark:text-[#A8A396]">No answer provided.</span>}
                         </div>
                       </div>

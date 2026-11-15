@@ -262,7 +262,7 @@ export function Exam({ user }: { user: User }) {
       <AtmosphericBackground />
 
       {/* Top Bar */}
-      <header className="relative z-20 h-16 sm:h-[72px] bg-[#FAF8EC]/95 dark:bg-[#141413]/95 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 sm:gap-4">
+      <header className="relative z-20 h-14 sm:h-[72px] bg-[#FAF8EC]/95 dark:bg-[#141413]/95 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 sm:gap-4">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#ECD5FF] border-[1.5px] border-[#141413] flex items-center justify-center text-[#141413] shrink-0">
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -291,10 +291,10 @@ export function Exam({ user }: { user: User }) {
         <div
           ref={mainScrollRef}
           data-lenis-prevent
-          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-8 overscroll-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6 pb-32">
+          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-8 sm:pb-14">
             
             <AnimatePresence mode="wait">
               <motion.div
@@ -385,7 +385,7 @@ export function Exam({ user }: { user: User }) {
                         value={answers[currentQId] || ''}
                         onChange={(e) => handleAnswerChange(e.target.value)}
                         placeholder="Type your structured answer here adhering to RBI Grade B Phase II guidelines..."
-                        className="w-full h-72 sm:h-96 p-4 sm:p-6 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] outline-none text-[#141413] dark:text-[#FAF8EC] resize-y text-sm sm:text-lg leading-relaxed"
+                        className="w-full h-56 sm:h-96 p-3.5 sm:p-6 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] outline-none text-[#141413] dark:text-[#FAF8EC] resize-y text-sm sm:text-lg leading-relaxed"
                       />
                       <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
                         <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
@@ -464,11 +464,11 @@ export function Exam({ user }: { user: User }) {
         {/* Sidebar Palette */}
         <div className={clsx(
           "w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#1C1C1A] flex flex-col shrink-0 z-20 transition-all duration-300 min-h-0",
-          showMobilePalette ? "max-h-72 lg:max-h-none" : "max-h-16 lg:max-h-none"
+          showMobilePalette ? "max-h-[44vh] lg:max-h-none" : "max-h-[58px] lg:max-h-none"
         )}>
           <div
             onClick={() => setShowMobilePalette(!showMobilePalette)}
-            className="p-3.5 sm:p-5 lg:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] shrink-0 flex items-center justify-between cursor-pointer lg:cursor-default select-none"
+            className="p-3 sm:p-5 lg:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] shrink-0 flex items-center justify-between cursor-pointer lg:cursor-default select-none"
           >
             <div>
               <div className="flex items-center gap-2">
@@ -486,7 +486,10 @@ export function Exam({ user }: { user: User }) {
             
             <button
               type="button"
-              onClick={() => setShowMobilePalette(!showMobilePalette)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobilePalette(!showMobilePalette);
+              }}
               className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center gap-1.5 text-[#141413] dark:text-[#FAF8EC] cursor-pointer"
             >
               {showMobilePalette ? 'Collapse' : 'Expand Grid'}
@@ -497,12 +500,18 @@ export function Exam({ user }: { user: User }) {
           <div
             data-lenis-prevent
             className={clsx(
-              "flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 overscroll-contain",
+              "flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-6 overscroll-contain",
               !showMobilePalette && "hidden lg:block"
             )}
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-5 gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-3 mb-3 lg:hidden text-[10px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#0D47FF] border border-[#141413]"></div> Answered</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#FFD426] border border-[#141413]"></div> Marked</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#A3A399]"></div> Unanswered</div>
+            </div>
+
+            <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2 sm:gap-2.5">
               {test.questions.map((q, i) => {
                 const qId = q.id || i.toString();
                 const isAnswered = isQuestionAnswered(i);
@@ -519,7 +528,7 @@ export function Exam({ user }: { user: User }) {
                       }
                     }}
                     className={clsx(
-                      'h-10 w-10 sm:h-11 sm:w-11 rounded-xl font-mono font-bold text-sm flex items-center justify-center transition-all cursor-pointer tabular-nums border-[1.5px]',
+                      'h-10 sm:h-11 w-full max-w-[44px] mx-auto rounded-xl font-mono font-bold text-sm flex items-center justify-center transition-all cursor-pointer tabular-nums border-[1.5px]',
                       isCurrent ? 'ring-2 ring-[#141413] ring-offset-2 dark:ring-[#ECD5FF] dark:ring-offset-[#1C1C1A] scale-105 z-10' : '',
                       isMarked ? 'bg-[#FFD426] text-[#141413] border-[#141413]' :
                       isAnswered ? 'bg-[#0D47FF] text-white border-[#141413]' :

@@ -228,14 +228,14 @@ export function Login() {
 
       {/* 2. SIGNATURE DARK EDITORIAL AUTH STAGE + HANGING LAVENDER LANYARD PASS */}
       <section id="portal-stage" className="w-full bg-[#141413] text-[#FAF8EC] border-b border-[#2E2E2A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-16 sm:pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-4 pb-10 sm:pt-6 sm:pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* LEFT COLUMN: Editorial Headline + Form */}
             <motion.div
               initial={{ opacity: 0, y: 28, scale: 0.985 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.68, ease: EASE_OUT_EXPO }}
-              className="lg:col-span-7 pt-4 sm:pt-10 space-y-6 will-change-transform"
+              className="lg:col-span-7 pt-1 sm:pt-10 space-y-5 sm:space-y-6 will-change-transform"
             >
               <div className="space-y-3">
                 <span className="block font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#A3A399]">
@@ -458,9 +458,9 @@ export function Login() {
       {/* 3. STATION SIGNBOARDS: THREE-STAGE EXAMINATION ARCHITECTURE */}
       <section
         id="rounds-section"
-        className="w-full bg-[#FAF8EC] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] py-14 sm:py-20 border-b border-[#E5E1CE] dark:border-[#2E2E2A]"
+        className="w-full bg-[#FAF8EC] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] py-10 sm:py-20 border-b border-[#E5E1CE] dark:border-[#2E2E2A]"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10 sm:space-y-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 sm:space-y-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -581,7 +581,7 @@ export function Login() {
       {/* 5. HIGHLIGHTED BENCHMARK CARDS + SOFT LAVENDER CALLOUT STRIP */}
       <section
         id="benchmarks-section"
-        className="w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-14 space-y-5"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-14 space-y-4 sm:space-y-5"
       >
         <motion.div
           initial={{ opacity: 0, y: 16 }}

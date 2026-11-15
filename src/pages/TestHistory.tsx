@@ -190,14 +190,14 @@ export function TestHistory({ user }: { user: User }) {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {selectedForCompare.length === 2 && (
             <motion.button
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => setShowCompareModal(true)}
-              className="min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="w-full sm:w-auto min-h-[38px] px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               <GitCompare className="w-3.5 h-3.5 shrink-0" />
               <span>Compare Selected (2)</span>
@@ -206,7 +206,7 @@ export function TestHistory({ user }: { user: User }) {
 
           <button
             onClick={() => setShowReassignModal(true)}
-            className="min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:border-[#141413] dark:hover:border-[#ECD5FF] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="flex-1 sm:flex-initial min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:border-[#141413] dark:hover:border-[#ECD5FF] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
           >
             <RefreshCw className="w-3.5 h-3.5 shrink-0" />
             <span>Reassign Legacy Tests</span>
@@ -215,7 +215,7 @@ export function TestHistory({ user }: { user: User }) {
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={handleExportCSV}
-            className="min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="flex-1 sm:flex-initial min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5 shrink-0" />
             <span>Export CSV</span>
@@ -284,8 +284,8 @@ export function TestHistory({ user }: { user: User }) {
               const isCheckedForCompare = selectedForCompare.includes(test.id);
 
               return (
-                <div key={test.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50 transition-colors">
-                  <div className="flex items-center gap-3.5">
+                <div key={test.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4 hover:bg-[#FAF8EC]/60 dark:hover:bg-[#141413]/50 transition-colors">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                     {/* Checkbox for Compare */}
                     <input
                       type="checkbox"
@@ -297,7 +297,7 @@ export function TestHistory({ user }: { user: User }) {
                             : prev.length < 2 ? [...prev, test.id] : [prev[1], test.id]
                         );
                       }}
-                      className="w-4 h-4 accent-[#0D47FF] rounded cursor-pointer shrink-0"
+                      className="w-4 h-4 mt-1 sm:mt-0 accent-[#0D47FF] rounded cursor-pointer shrink-0"
                       title="Select to compare (max 2)"
                     />
 
@@ -311,8 +311,8 @@ export function TestHistory({ user }: { user: User }) {
                       <SubjectIcon name={subMatch.icon} className="w-5 h-5" />
                     </div>
 
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <span
                           className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md border"
                           style={{
@@ -338,7 +338,7 @@ export function TestHistory({ user }: { user: User }) {
                       </h4>
 
                       {test.status === 'completed' && (
-                        <div className="flex items-center gap-3 text-xs text-[#66665E] dark:text-[#A3A399] mt-1 tabular-nums">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#66665E] dark:text-[#A3A399] mt-1 tabular-nums">
                           {mcqQs.length > 0 && <span>MCQ: <strong className="text-[#0D47FF] dark:text-[#ECD5FF]">{tMcqAcc}%</strong></span>}
                           {descQs.length > 0 && <span>Desc: <strong className="text-[#141413] dark:text-[#FFD426]">{tDescAcc}%</strong></span>}
                           <span>Total: <strong className="text-[#141413] dark:text-[#FAF8EC] font-heading">{totalPct}%</strong></span>
@@ -347,25 +347,25 @@ export function TestHistory({ user }: { user: User }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between md:justify-end gap-3">
+                  <div className="flex items-center justify-end gap-2.5 w-full md:w-auto shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[#E5E1CE]/60 dark:border-[#2E2E2A]/60">
                     {test.status === 'completed' ? (
                       <Link
                         to={`/results/${test.id}`}
-                        className="px-4 py-2 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
+                        className="w-full sm:w-auto text-center px-4 py-2 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
                       >
                         View Report
                       </Link>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => handleTerminate(test.id)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
+                          className="flex-1 sm:flex-initial text-center px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
                         >
                           Terminate
                         </button>
                         <Link
                           to={`/exam/${test.id}`}
-                          className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413]"
+                          className="flex-1 sm:flex-initial text-center px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border border-[#141413] shadow-[2px_2px_0px_#141413]"
                         >
                           Resume
                         </Link>

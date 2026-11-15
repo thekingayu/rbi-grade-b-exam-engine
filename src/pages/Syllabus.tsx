@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { User } from 'firebase/auth';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useSubject } from '../context/SubjectContext';
 import {
   Download, CheckSquare, Square, Search,
   ArrowRight, Award, Compass, Sparkles,
@@ -587,23 +588,13 @@ const SYLLABUS_SECTIONS: SyllabusSection[] = [
 
 export function Syllabus({ user }: { user: User }) {
   const navigate = useNavigate();
+  const { syllabusProgress: completedTopics, updateSyllabusProgress } = useSubject();
   const [activeTab, setActiveTab] = useState<'all' | 'phase1' | 'phase2' | 'priorities'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [completedTopics, setCompletedTopics] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('rbi_syllabus_progress');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
 
   const toggleTopic = (id: string) => {
-    setCompletedTopics(prev => {
-      const updated = { ...prev, [id]: !prev[id] };
-      localStorage.setItem('rbi_syllabus_progress', JSON.stringify(updated));
-      return updated;
-    });
+    const updated = { ...completedTopics, [id]: !completedTopics[id] };
+    updateSyllabusProgress(updated);
   };
 
   const allTopicsCount = SYLLABUS_SECTIONS.reduce((sum, s) => sum + s.topics.length, 0);
@@ -709,8 +700,12 @@ export function Syllabus({ user }: { user: User }) {
           </span>
         </div>
 
+        <div className="sm:hidden text-[11px] font-mono text-[#66665E] dark:text-[#A3A399]">
+          Swipe table horizontally →
+        </div>
+
         <div className="overflow-x-auto rounded-xl border border-[#E5E1CE] dark:border-[#2E2E2A]">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full min-w-[540px] text-left text-xs border-collapse">
             <thead>
               <tr className="bg-[#FAF8EC] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] font-mono uppercase tracking-wider">
                 <th className="py-3 px-3.5">Stage</th>

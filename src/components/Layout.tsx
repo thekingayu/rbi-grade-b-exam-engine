@@ -156,7 +156,7 @@ export function Layout({ user }: { user: User }) {
               <div className="relative min-w-0">
                 <button
                   onClick={() => setShowSubjectMenu(!showSubjectMenu)}
-                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer max-w-[110px] sm:max-w-[180px]"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[34px] sm:min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer max-w-[96px] sm:max-w-[180px]"
                   aria-expanded={showSubjectMenu}
                   aria-label="Switch subject scope"
                 >
@@ -279,7 +279,7 @@ export function Layout({ user }: { user: User }) {
               <motion.button
                 whileTap={{ scale: 0.93 }}
                 onClick={() => setShowCommandPalette(true)}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 h-9 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 text-xs font-mono text-[#66665E] dark:text-[#A3A399] cursor-pointer"
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 h-8 sm:h-9 rounded-lg bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 text-xs font-mono text-[#66665E] dark:text-[#A3A399] cursor-pointer"
                 title="Command Palette (Ctrl/Cmd+K)"
                 aria-label="Open quick navigation palette"
               >
@@ -290,7 +290,7 @@ export function Layout({ user }: { user: User }) {
               <motion.button
                 whileTap={{ scale: 0.93 }}
                 onClick={() => setShowPomodoro(!showPomodoro)}
-                className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-colors cursor-pointer ${
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center border transition-colors cursor-pointer ${
                   showPomodoro
                     ? 'bg-[#FFD426] text-[#141413] border-[#141413]'
                     : 'bg-[#F3F0E0] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] hover:border-[#141413]'
@@ -304,7 +304,7 @@ export function Layout({ user }: { user: User }) {
               <motion.button
                 whileTap={{ scale: 0.93, rotate: 15 }}
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? <Sun className="w-4 h-4 text-[#FFD426]" /> : <Moon className="w-4 h-4 text-[#141413]" />}
@@ -313,14 +313,14 @@ export function Layout({ user }: { user: User }) {
               {/* Profile Link */}
               <Link
                 to="/profile"
-                className={`flex items-center gap-2 pl-1 pr-1.5 sm:pl-1.5 sm:pr-2.5 h-9 rounded-lg border transition-colors shrink-0 ${
+                className={`flex items-center gap-2 pl-1 pr-1 sm:pl-1.5 sm:pr-2.5 h-8 sm:h-9 rounded-lg border transition-colors shrink-0 ${
                   location.pathname === '/profile'
                     ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
                     : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60'
                 }`}
                 title="Officer Dossier & Lanyard Pass"
               >
-                <div className="w-7 h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
                   {currentPhoto ? (
                     currentPhoto.startsWith('http') || currentPhoto.startsWith('data:') ? (
                       <img src={currentPhoto} alt={currentDisplayName} className="w-full h-full object-cover" />
@@ -491,7 +491,7 @@ export function Layout({ user }: { user: User }) {
           )}
         </AnimatePresence>
 
-        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 w-full relative">
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-8 sm:pb-12 w-full relative">
           <AnimatePresence
             mode="wait"
             initial={false}
