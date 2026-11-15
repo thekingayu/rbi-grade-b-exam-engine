@@ -233,21 +233,44 @@ export function MotionModal({
   children: React.ReactNode;
   maxWidthClass?: string;
 }) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.__lenis?.stop();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+      window.__lenis?.start();
+    };
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          data-lenis-prevent
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141413]/75 backdrop-blur-xs"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-[#141413]/75 backdrop-blur-sm overflow-hidden overscroll-contain"
           onClick={onClose}
+          role="dialog"
+          aria-modal="true"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.86, y: 26 }}
+            data-lenis-prevent
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 16 }}
+            exit={{ opacity: 0, scale: 0.92, y: 12 }}
             transition={{
               ...SPRING_BOUNCY,
               opacity: { duration: 0.18 },
