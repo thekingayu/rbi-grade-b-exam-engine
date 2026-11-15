@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSubject } from '../context/SubjectContext';
@@ -78,7 +79,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
     onClose();
   };
 
-  return (
+  const content = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -87,7 +88,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
-          className="fixed inset-0 z-[99999] flex items-start justify-center pt-10 sm:pt-20 p-3 sm:p-4 bg-[#141413]/75 backdrop-blur-sm overflow-hidden overscroll-contain"
+          className="fixed inset-0 z-[99999] flex items-start justify-center pt-10 sm:pt-20 p-3 sm:p-4 bg-[#FAF8EC]/72 dark:bg-[#141413]/78 backdrop-blur-md overflow-hidden overscroll-contain"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
@@ -198,4 +199,7 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(content, document.body);
 }

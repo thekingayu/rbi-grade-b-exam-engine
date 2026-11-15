@@ -153,7 +153,7 @@ export function ManageSubjects({ user: _user }: { user: User }) {
           <div
             data-lenis-prevent
             onWheel={(e) => e.stopPropagation()}
-            className="w-full rounded-3xl bg-[#FAF8EC] dark:bg-[#191917] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/60 overflow-hidden flex flex-col max-h-[88vh]"
+            className="w-full rounded-3xl bg-[#FAF8EC] dark:bg-[#191917] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/60 overflow-hidden flex flex-col max-h-[86dvh]"
           >
             {/* Dynamic Color Top Accent Hairline */}
             <div

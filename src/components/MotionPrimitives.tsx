@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import gsap from 'gsap';
 
@@ -252,7 +253,7 @@ export function MotionModal({
     };
   }, [isOpen, onClose]);
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -261,29 +262,34 @@ export function MotionModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-[#141413]/75 backdrop-blur-sm overflow-hidden overscroll-contain"
+          className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain touch-pan-y bg-[#FAF8EC]/72 dark:bg-[#141413]/78 backdrop-blur-md"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
         >
-          <motion.div
-            data-lenis-prevent
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 12 }}
-            transition={{
-              ...SPRING_BOUNCY,
-              opacity: { duration: 0.18 },
-            }}
-            className={`w-full ${maxWidthClass} will-change-transform`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {children}
-          </motion.div>
+          <div className="min-h-full w-full flex items-center justify-center p-3 sm:p-6">
+            <motion.div
+              data-lenis-prevent
+              initial={{ opacity: 0, scale: 0.92, y: 18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              transition={{
+                ...SPRING_BOUNCY,
+                opacity: { duration: 0.18 },
+              }}
+              className={`w-full ${maxWidthClass} will-change-transform`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {children}
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalContent, document.body);
 }
 
 /**

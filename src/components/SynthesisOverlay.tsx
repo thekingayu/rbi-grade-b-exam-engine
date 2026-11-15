@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ShieldCheck, Cpu } from 'lucide-react';
 import gsap from 'gsap';
@@ -134,16 +135,17 @@ export function SynthesisOverlay({
     };
   }, [isOpen]);
 
-  return (
+  const overlay = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          data-lenis-prevent
           key="synthesis-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#141413]/80 p-4 select-none"
+          className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#FAF8EC]/78 dark:bg-[#141413]/82 backdrop-blur-md p-4 select-none"
           role="dialog"
           aria-modal="true"
           aria-labelledby="synthesis-dialog-title"
@@ -290,4 +292,7 @@ export function SynthesisOverlay({
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(overlay, document.body);
 }
