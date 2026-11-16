@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
-import { Clock, ChevronLeft, ChevronRight, Flag, BookOpen, RotateCcw, ChevronUp, ChevronDown, Award } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Flag, BookOpen, RotateCcw, ChevronUp, ChevronDown, Award, Lock, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAndPersistTest } from '../services/evaluation';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { FuturisticSpinner, FuturisticProgressBar, FuturisticScreenLoader } from '../components/FuturisticLoader';
-import { MotionModal, SPRING_SNAPPY, EASE_OUT_EXPO } from '../components/MotionPrimitives';
+import { MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -39,8 +39,14 @@ export function Exam({ user }: { user: User }) {
   const [markedForReview, setMarkedForReview] = useState<Record<string, boolean>>({});
   
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [sectionTimers, setSectionTimers] = useState<number[]>([]);
+  const [showSectionConfirm, setShowSectionConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const hasSections = Array.isArray(test?.sections) && test!.sections!.length > 0;
+  const isSectionalLocked = Boolean(hasSections && test?.sectionalTimingEnabled);
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -49,19 +55,66 @@ export function Exam({ user }: { user: User }) {
       const snap = await getDoc(docRef);
       if (snap.exists()) {
         const data = snap.data() as TestAttempt;
-        setTest({ ...data, id: snap.id });
+        const fullTest = { ...data, id: snap.id };
+        setTest(fullTest);
         if (data.answers) {
           setAnswers(data.answers);
           answersRef.current = data.answers;
         }
         hasLoadedRef.current = true;
-        
-        let currentLeft = data.durationSeconds;
-        if (data.status === 'in-progress' && data.startedAt) {
-          const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
-          currentLeft = Math.max(0, data.durationSeconds - elapsed);
+
+        const sections = Array.isArray(data.sections) ? data.sections : [];
+        if (sections.length > 0 && data.sectionalTimingEnabled) {
+          const storageKey = `rbi_cbt_state_${snap.id}`;
+          let restoredIdx = 0;
+          let restoredTimers = sections.map(s => s.durationSeconds);
+
+          try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (
+                typeof parsed.activeSectionIndex === 'number' &&
+                Array.isArray(parsed.sectionTimers) &&
+                parsed.sectionTimers.length === sections.length
+              ) {
+                restoredIdx = Math.min(Math.max(0, parsed.activeSectionIndex), sections.length - 1);
+                restoredTimers = parsed.sectionTimers.map((t: any) => Math.max(0, Number(t) || 0));
+
+                if (data.status === 'in-progress' && typeof parsed.lastSavedAt === 'number') {
+                  let elapsed = Math.max(0, Math.floor((Date.now() - parsed.lastSavedAt) / 1000));
+                  while (elapsed > 0 && restoredIdx < sections.length) {
+                    if (restoredTimers[restoredIdx] > elapsed) {
+                      restoredTimers[restoredIdx] -= elapsed;
+                      elapsed = 0;
+                    } else {
+                      elapsed -= restoredTimers[restoredIdx];
+                      restoredTimers[restoredIdx] = 0;
+                      if (restoredIdx < sections.length - 1) {
+                        restoredIdx += 1;
+                      } else {
+                        elapsed = 0;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            // Fallback to fresh section timers
+          }
+
+          setActiveSectionIndex(restoredIdx);
+          setSectionTimers(restoredTimers);
+          setCurrentIndex(sections[restoredIdx]?.startIndex || 0);
+        } else {
+          let currentLeft = data.durationSeconds;
+          if (data.status === 'in-progress' && data.startedAt) {
+            const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
+            currentLeft = Math.max(0, data.durationSeconds - elapsed);
+          }
+          setTimeLeft(currentLeft);
         }
-        setTimeLeft(currentLeft);
 
         if (data.status === 'setup') {
           await updateDoc(docRef, { status: 'in-progress', startedAt: Date.now(), userId: user.uid });
@@ -70,10 +123,28 @@ export function Exam({ user }: { user: User }) {
       setLoading(false);
     };
     fetchTest();
-  }, [testId]);
+  }, [testId, user.uid]);
 
+  // Persist sectional CBT state cleanly to localStorage
   useEffect(() => {
-    if (timeLeft <= 0 || loading || !test) return;
+    if (!test || !isSectionalLocked || sectionTimers.length === 0) return;
+    try {
+      localStorage.setItem(
+        `rbi_cbt_state_${test.id}`,
+        JSON.stringify({
+          activeSectionIndex,
+          sectionTimers,
+          lastSavedAt: Date.now()
+        })
+      );
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [test, isSectionalLocked, activeSectionIndex, sectionTimers]);
+
+  // Global Flexible Clock countdown
+  useEffect(() => {
+    if (isSectionalLocked || timeLeft <= 0 || loading || !test || submitting) return;
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -85,7 +156,39 @@ export function Exam({ user }: { user: User }) {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, loading, test]);
+  }, [isSectionalLocked, timeLeft, loading, test, submitting]);
+
+  // Sectional Clock countdown (auto-locks finished section & unlocks next section)
+  useEffect(() => {
+    if (!isSectionalLocked || loading || !test || submitting) return;
+    const sections = test.sections || [];
+    if (sections.length === 0) return;
+
+    const currentSecRemaining = sectionTimers[activeSectionIndex] ?? 0;
+    if (currentSecRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setSectionTimers(prev => {
+        const next = [...prev];
+        const curr = next[activeSectionIndex] ?? 0;
+        if (curr <= 1) {
+          next[activeSectionIndex] = 0;
+          if (activeSectionIndex < sections.length - 1) {
+            const nextSecIdx = activeSectionIndex + 1;
+            setActiveSectionIndex(nextSecIdx);
+            setCurrentIndex(sections[nextSecIdx].startIndex);
+          } else {
+            handleSubmit();
+          }
+        } else {
+          next[activeSectionIndex] = curr - 1;
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isSectionalLocked, loading, test, activeSectionIndex, submitting, sectionTimers.length]);
 
   useEffect(() => {
     if (!testId || loading || !hasLoadedRef.current) return;
@@ -94,7 +197,16 @@ export function Exam({ user }: { user: User }) {
     };
     const t = setTimeout(save, 1500);
     return () => clearTimeout(t);
-  }, [answers, testId, loading]);
+  }, [answers, testId, loading, user.uid]);
+
+  const displayedSectionIndex = useMemo(() => {
+    if (!hasSections || !test?.sections) return 0;
+    if (isSectionalLocked) return activeSectionIndex;
+    const idx = test.sections.findIndex(s => currentIndex >= s.startIndex && currentIndex <= s.endIndex);
+    return idx !== -1 ? idx : 0;
+  }, [hasSections, test, isSectionalLocked, activeSectionIndex, currentIndex]);
+
+  const activeSectionMeta = hasSections && test?.sections ? test.sections[displayedSectionIndex] : null;
 
   const handleAnswerChange = (val: string) => {
     if (!test) return;
@@ -135,23 +247,43 @@ export function Exam({ user }: { user: User }) {
     setMarkedForReview(prev => ({ ...prev, [qId]: !prev[qId] }));
   };
 
+  const minAllowedIndex = isSectionalLocked && activeSectionMeta ? activeSectionMeta.startIndex : 0;
+  const maxAllowedIndex = isSectionalLocked && activeSectionMeta
+    ? activeSectionMeta.endIndex
+    : (test ? test.questions.length - 1 : 0);
+
   const handleNext = () => {
-    if (test && currentIndex < test.questions.length - 1) {
+    if (test && currentIndex < maxAllowedIndex) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
+    if (currentIndex > minAllowedIndex) {
       setCurrentIndex(currentIndex - 1);
     }
+  };
+
+  const handleAdvanceSection = () => {
+    if (!test?.sections || activeSectionIndex >= test.sections.length - 1) return;
+    const nextSecIdx = activeSectionIndex + 1;
+    setActiveSectionIndex(nextSecIdx);
+    setCurrentIndex(test.sections[nextSecIdx].startIndex);
+    setShowSectionConfirm(false);
   };
 
   const handleSubmit = async () => {
     if (!test || submitting) return;
     setSubmitting(true);
     setShowConfirm(false);
+    setShowSectionConfirm(false);
     setEvalProgress({ message: 'Scoring multiple-choice questions...', percent: 15 });
+
+    try {
+      localStorage.removeItem(`rbi_cbt_state_${test.id}`);
+    } catch {
+      // Ignore
+    }
     
     // Combine answers from test.answers, current answers state, and answersRef to ensure 0 lost answers
     const cleanAnswers: Record<string, string> = {};
@@ -247,6 +379,35 @@ export function Exam({ user }: { user: User }) {
   };
 
   const attemptedCount = test.questions.filter((_, i) => isQuestionAnswered(i)).length;
+  const activeTimerSeconds = isSectionalLocked
+    ? (sectionTimers[activeSectionIndex] ?? 0)
+    : timeLeft;
+
+  const paletteStartIndex = activeSectionMeta ? activeSectionMeta.startIndex : 0;
+  const paletteEndIndex = activeSectionMeta ? activeSectionMeta.endIndex : test.questions.length - 1;
+  const paletteIndices: number[] = [];
+  for (let i = paletteStartIndex; i <= paletteEndIndex; i++) {
+    paletteIndices.push(i);
+  }
+
+  const sectionQuestionNumber = activeSectionMeta
+    ? (currentIndex - activeSectionMeta.startIndex + 1)
+    : (currentIndex + 1);
+  const sectionQuestionTotal = activeSectionMeta
+    ? activeSectionMeta.questionCount
+    : test.questions.length;
+
+  const isEnglishWritingQuestion =
+    currentQ.sectionId === 'sub_english_writing' ||
+    currentQ.subjectSlug === 'english-writing' ||
+    test.subjectSlug === 'english-writing';
+
+  const mcqMarkLabel = currentQ.maxMarks
+    ? `+${currentQ.maxMarks} Mark${currentQ.maxMarks > 1 ? 's' : ''}`
+    : '+1 Mark';
+  const mcqNegVal = test.negativeMarks === 0
+    ? 0
+    : Number((0.25 * (currentQ.maxMarks || 1)).toFixed(2));
 
   return (
     <motion.div
@@ -262,29 +423,99 @@ export function Exam({ user }: { user: User }) {
       <AtmosphericBackground />
 
       {/* Top Bar */}
-      <header className="relative z-20 h-14 sm:h-[72px] bg-[#FAF8EC]/95 dark:bg-[#141413]/95 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 sm:gap-4">
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      <header className="relative z-20 h-14 sm:h-[68px] bg-[#FAF8EC]/95 dark:bg-[#141413]/95 border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#ECD5FF] border-[1.5px] border-[#141413] flex items-center justify-center text-[#141413] shrink-0">
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="font-heading text-sm sm:text-xl font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] truncate">
-            RBI GRADE B <span className="text-[#0D47FF] dark:text-[#ECD5FF]">× Engine</span>
-          </span>
+          <div className="min-w-0">
+            <span className="font-heading text-xs sm:text-lg font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] truncate block">
+              RBI GRADE B <span className="hidden xs:inline text-[#0D47FF] dark:text-[#ECD5FF]">× Engine</span>
+            </span>
+            {test.isFullPhaseExam && (
+              <span className="hidden sm:block text-[10px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] truncate">
+                {test.subjectName}
+              </span>
+            )}
+          </div>
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl font-mono text-xs sm:text-base font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
-            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
-            <span className={timeLeft < 300 ? 'text-rose-600 dark:text-rose-400' : ''}>{formatTime(timeLeft)}</span>
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div
+            className="flex items-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-mono text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums whitespace-nowrap"
+            title={isSectionalLocked ? `Section timer: ${activeSectionMeta?.name || ''}` : 'Remaining exam clock'}
+          >
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+            {isSectionalLocked && activeSectionMeta && (
+              <span className="hidden md:inline text-[10px] uppercase text-[#66665E] dark:text-[#A3A399] mr-0.5">
+                {activeSectionMeta.shortName}:
+              </span>
+            )}
+            <span className={activeTimerSeconds < 300 ? 'text-rose-600 dark:text-rose-400' : ''}>
+              {formatTime(activeTimerSeconds)}
+            </span>
           </div>
           <button
             onClick={() => setShowConfirm(true)}
-            className="bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] active:translate-y-[1px] px-3.5 sm:px-6 py-1.5 sm:py-2.5 rounded-xl font-bold transition-all whitespace-nowrap text-xs sm:text-sm cursor-pointer"
+            className="bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] active:translate-y-[1px] px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl font-bold transition-all whitespace-nowrap text-xs sm:text-sm cursor-pointer"
           >
             Submit
           </button>
         </div>
       </header>
+
+      {/* Multi-Section / Multi-Paper Bar for Full-Length Phase 1 & Phase 2 */}
+      {hasSections && test.sections && (
+        <div className="relative z-20 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-b border-[#E5E1CE] dark:border-[#2E2E2A] px-3 sm:px-6 py-2 shrink-0 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {test.sections.map((sec, sIdx) => {
+            const isActive = sIdx === displayedSectionIndex;
+            const isLocked = isSectionalLocked && sIdx !== activeSectionIndex;
+            const isCompletedLocked = isSectionalLocked && sIdx < activeSectionIndex;
+            let secAnswered = 0;
+            for (let qIdx = sec.startIndex; qIdx <= sec.endIndex; qIdx++) {
+              if (isQuestionAnswered(qIdx)) secAnswered++;
+            }
+
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                disabled={isLocked}
+                onClick={() => {
+                  if (!isLocked) {
+                    setCurrentIndex(sec.startIndex);
+                  }
+                }}
+                className={clsx(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition-all shrink-0',
+                  isActive
+                    ? 'bg-[#ECD5FF] text-[#141413] border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer'
+                    : isLocked
+                      ? 'bg-[#FAF8EC]/60 dark:bg-[#141413]/50 text-[#66665E]/70 dark:text-[#A3A399]/60 border-[#E5E1CE] dark:border-[#2E2E2A] opacity-65 cursor-not-allowed'
+                      : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] cursor-pointer'
+                )}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: sec.accentColor }}
+                />
+                <span>{sec.shortName}</span>
+                <span className={clsx(
+                  'text-[10px] font-mono px-1.5 py-0.5 rounded tabular-nums',
+                  isActive
+                    ? 'bg-[#FFFFFF]/80 text-[#141413]'
+                    : 'bg-[#FFFFFF] dark:bg-[#1C1C1A] text-[#66665E] dark:text-[#A3A399]'
+                )}>
+                  {secAnswered}/{sec.questionCount}
+                </span>
+                {isLocked && (
+                  <Lock className={clsx('w-3 h-3 shrink-0', isCompletedLocked ? 'text-emerald-600' : 'text-[#66665E]')} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
         {/* Main Content */}
@@ -307,14 +538,29 @@ export function Exam({ user }: { user: User }) {
               >
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {activeSectionMeta && (
+                    <span
+                      className="px-3 py-1 border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-xs font-mono font-bold uppercase tracking-wider rounded-md"
+                      style={{
+                        backgroundColor: `${activeSectionMeta.accentColor}20`,
+                        color: activeSectionMeta.accentColor
+                      }}
+                    >
+                      {activeSectionMeta.shortName}
+                    </span>
+                  )}
                   <span className="px-3 py-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
-                    Question {currentIndex + 1} of {test.questions.length}
+                    {activeSectionMeta
+                      ? `Q ${sectionQuestionNumber} of ${sectionQuestionTotal} (#${currentIndex + 1})`
+                      : `Question ${currentIndex + 1} of ${test.questions.length}`}
                   </span>
                   <span className="px-3 py-1 bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md">
                     {currentQ.sourceTag}
                   </span>
-                  <span className="px-3 py-1 bg-[#FAF8EC] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] text-xs font-mono font-bold uppercase tracking-wider rounded-md">
-                    {currentQ.type}
+                  <span className="px-3 py-1 bg-[#FAF8EC] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
+                    {currentQ.type === 'MCQ'
+                      ? `${mcqMarkLabel}${mcqNegVal > 0 ? ` (-${mcqNegVal})` : ''}`
+                      : `${currentQ.type} · ${currentQ.maxMarks || 15}M`}
                   </span>
                   {currentQ.isPyq && (
                     <span className="px-3 py-1 bg-[#FFD426] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md flex items-center gap-1.5">
@@ -385,12 +631,18 @@ export function Exam({ user }: { user: User }) {
                       <textarea
                         value={answers[currentQId] || ''}
                         onChange={(e) => handleAnswerChange(e.target.value)}
-                        placeholder="Type your structured answer here adhering to RBI Grade B Phase II guidelines..."
+                        placeholder={
+                          isEnglishWritingQuestion
+                            ? 'Draft your Paper II response focusing on coherence, formal register, clarity, and structure...'
+                            : 'Type your structured answer here adhering to RBI Grade B Phase II guidelines...'
+                        }
                         className="w-full h-56 sm:h-96 p-3.5 sm:p-6 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] outline-none text-[#141413] dark:text-[#FAF8EC] resize-y text-sm sm:text-lg leading-relaxed"
                       />
                       <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
                         <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
-                          Phase II Standard: Statutory provisions • Regulatory circulars • Policy implications
+                          {isEnglishWritingQuestion
+                            ? 'Paper II Standard: Clarity • Tone • Vocabulary • Analytical Precision'
+                            : 'Phase II Standard: Statutory provisions • Regulatory circulars • Policy implications'}
                         </span>
                         <span className="text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] px-3 py-1 rounded-md font-mono tabular-nums">
                           {answers[currentQId]?.trim().split(/\s+/).filter(w => w.length > 0).length || 0} / {currentQ.wordLimit || 250} words
@@ -436,11 +688,11 @@ export function Exam({ user }: { user: User }) {
                 </motion.button>
               </div>
               
-              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
                 <motion.button
                   whileTap={{ scale: 0.94 }}
                   onClick={handlePrev}
-                  disabled={currentIndex === 0}
+                  disabled={currentIndex <= minAllowedIndex}
                   aria-label="Previous question"
                   className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
@@ -450,12 +702,22 @@ export function Exam({ user }: { user: User }) {
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={handleNext}
-                  disabled={currentIndex === test.questions.length - 1}
-                  className="flex-1 sm:flex-none min-h-[48px] sm:min-h-[54px] flex items-center justify-center gap-2 px-6 sm:px-8 py-3 rounded-xl font-bold text-[#FAF8EC] bg-[#141413] hover:bg-[#0D47FF] dark:bg-[#0D47FF] dark:hover:bg-[#0936CC] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#0D47FF] dark:shadow-[3px_3px_0px_#ECD5FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm sm:text-base"
+                  disabled={currentIndex >= maxAllowedIndex}
+                  className="flex-1 sm:flex-none min-h-[48px] sm:min-h-[54px] flex items-center justify-center gap-2 px-5 sm:px-7 py-3 rounded-xl font-bold text-[#FAF8EC] bg-[#141413] hover:bg-[#0D47FF] dark:bg-[#0D47FF] dark:hover:bg-[#0936CC] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#0D47FF] dark:shadow-[3px_3px_0px_#ECD5FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm sm:text-base"
                 >
                   <span>Save & Next</span>
                   <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
+                {isSectionalLocked && test.sections && activeSectionIndex < test.sections.length - 1 && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowSectionConfirm(true)}
+                    className="w-full sm:w-auto min-h-[48px] sm:min-h-[54px] flex items-center justify-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-bold text-[#141413] bg-[#ECD5FF] hover:bg-[#FFD426] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] transition-colors cursor-pointer text-xs sm:text-sm"
+                  >
+                    <span>Next Section</span>
+                    <ArrowRight className="w-4 h-4 shrink-0" />
+                  </motion.button>
+                )}
               </div>
             </div>
 
@@ -465,20 +727,27 @@ export function Exam({ user }: { user: User }) {
         {/* Sidebar Palette */}
         <div className={clsx(
           "w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FFFFFF] dark:bg-[#1C1C1A] flex flex-col shrink-0 z-20 transition-all duration-300 min-h-0",
-          showMobilePalette ? "max-h-[44vh] lg:max-h-none" : "max-h-[58px] lg:max-h-none"
+          showMobilePalette ? "max-h-[44vh] lg:max-h-none" : "max-h-[60px] lg:max-h-none"
         )}>
           <div
             onClick={() => setShowMobilePalette(!showMobilePalette)}
             className="p-3 sm:p-5 lg:p-6 border-b border-[#E5E1CE] dark:border-[#2E2E2A] shrink-0 flex items-center justify-between cursor-pointer lg:cursor-default select-none"
           >
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base lg:text-lg font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">Question Palette</h3>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-[#ECD5FF] font-bold font-mono text-[#141413] border border-[#141413] tabular-nums">
-                  {currentIndex + 1} / {test.questions.length}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base lg:text-lg font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] truncate">
+                  {activeSectionMeta ? activeSectionMeta.shortName : 'Question Palette'}
+                </h3>
+                <span className="text-xs px-2 py-0.5 rounded-md bg-[#ECD5FF] font-bold font-mono text-[#141413] border border-[#141413] tabular-nums shrink-0">
+                  {sectionQuestionNumber} / {sectionQuestionTotal}
                 </span>
               </div>
-              <div className="hidden lg:grid lg:grid-cols-2 gap-3 sm:gap-4 mt-5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+              {hasSections && (
+                <p className="text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] mt-1 tabular-nums">
+                  Overall Attempted: {attemptedCount} / {test.questions.length}
+                </p>
+              )}
+              <div className="hidden lg:grid lg:grid-cols-2 gap-3 sm:gap-4 mt-4 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
                 <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-sm bg-[#0D47FF] border border-[#141413]"></div> Answered</div>
                 <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-sm bg-[#FFD426] border border-[#141413]"></div> Marked</div>
                 <div className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-sm bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#141413] dark:border-[#A3A399]"></div> Unanswered</div>
@@ -491,7 +760,7 @@ export function Exam({ user }: { user: User }) {
                 e.stopPropagation();
                 setShowMobilePalette(!showMobilePalette);
               }}
-              className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center gap-1.5 text-[#141413] dark:text-[#FAF8EC] cursor-pointer"
+              className="lg:hidden text-xs font-bold px-3 py-1.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center gap-1.5 text-[#141413] dark:text-[#FAF8EC] cursor-pointer shrink-0"
             >
               {showMobilePalette ? 'Collapse' : 'Expand Grid'}
               {showMobilePalette ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
@@ -513,17 +782,20 @@ export function Exam({ user }: { user: User }) {
             </div>
 
             <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2 sm:gap-2.5">
-              {test.questions.map((q, i) => {
-                const qId = q.id || i.toString();
-                const isAnswered = isQuestionAnswered(i);
-                const isMarked = !!markedForReview[qId] || (q.id ? !!markedForReview[i.toString()] : false);
-                const isCurrent = i === currentIndex;
+              {paletteIndices.map((globalIdx) => {
+                const q = test.questions[globalIdx];
+                if (!q) return null;
+                const qId = q.id || globalIdx.toString();
+                const isAnswered = isQuestionAnswered(globalIdx);
+                const isMarked = !!markedForReview[qId] || (q.id ? !!markedForReview[globalIdx.toString()] : false);
+                const isCurrent = globalIdx === currentIndex;
+                const displayNumber = activeSectionMeta ? (globalIdx - activeSectionMeta.startIndex + 1) : (globalIdx + 1);
                 
                 return (
                   <button
-                    key={i}
+                    key={globalIdx}
                     onClick={() => {
-                      setCurrentIndex(i);
+                      setCurrentIndex(globalIdx);
                       if (window.innerWidth < 1024) {
                         setShowMobilePalette(false);
                       }
@@ -536,7 +808,7 @@ export function Exam({ user }: { user: User }) {
                       'bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]'
                     )}
                   >
-                    {i + 1}
+                    {displayNumber}
                   </button>
                 );
               })}
@@ -544,6 +816,41 @@ export function Exam({ user }: { user: User }) {
           </div>
         </div>
       </div>
+
+      {/* Advance Section Confirmation Modal (Sectional Lock Mode) */}
+      <MotionModal
+        isOpen={showSectionConfirm}
+        onClose={() => setShowSectionConfirm(false)}
+        maxWidthClass="max-w-sm"
+      >
+        <div className="bg-[#FAF8EC] dark:bg-[#1C1C1A] rounded-3xl w-full p-6 sm:p-8 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 border-[2px] border-[#141413] dark:border-[#ECD5FF]">
+          <h3 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] mb-2">
+            Advance to Next Section?
+          </h3>
+          <p className="text-[#40403B] dark:text-[#A3A399] font-medium mb-6 leading-relaxed text-sm">
+            Under RBI Grade B Sectional Lock, <strong className="text-[#141413] dark:text-[#FAF8EC]">{activeSectionMeta?.name}</strong> will be locked immediately and you will unlock{' '}
+            <strong className="text-[#0D47FF] dark:text-[#ECD5FF]">
+              {test.sections?.[activeSectionIndex + 1]?.name}
+            </strong>.
+          </p>
+          <div className="flex flex-col gap-3">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleAdvanceSection}
+              className="w-full min-h-[46px] py-3 font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <span>Lock & Proceed</span>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+            <button
+              onClick={() => setShowSectionConfirm(false)}
+              className="w-full min-h-[44px] py-2.5 font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] rounded-xl transition-colors cursor-pointer"
+            >
+              Stay in Current Section
+            </button>
+          </div>
+        </div>
+      </MotionModal>
 
       {/* Confirmation Modal */}
       <MotionModal

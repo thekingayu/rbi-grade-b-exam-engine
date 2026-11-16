@@ -8,10 +8,14 @@ import {
   UploadCloud, File, X, ChevronRight, ChevronLeft, Check, 
   Search, SlidersHorizontal, Clock, ShieldAlert, Sparkles,
   BookOpen, RotateCcw, Layers, ArrowLeft, ArrowRight,
-  FileText, CheckCircle2, AlertCircle
+  FileText, CheckCircle2, AlertCircle, Award, Compass, Lock, Timer
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
-import { Subject, ExamMode } from '../types';
+import { Subject, ExamMode, ExamSectionMeta, Question } from '../types';
+import {
+  FULL_PHASE_BLUEPRINTS,
+  FullPhaseBlueprint
+} from '../data/fullPhaseBlueprints';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { SynthesisOverlay } from '../components/SynthesisOverlay';
 import { sanitizeForFirestore } from '../utils/firestore';
@@ -21,6 +25,7 @@ import {
   MotionStaggerGrid,
   MotionStaggerItem,
   AnimatedNumber,
+  SPRING_BOUNCY,
   SPRING_SNAPPY,
   SPRING_TACTILE,
   EASE_OUT_EXPO,
@@ -39,8 +44,29 @@ const getShortFileName = (name: string, max = 20) => {
 
 export function NewTest({ user }: { user: User }) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { subjects, notes, mistakes } = useSubject();
+
+  // Full-Length Phase 1 / Phase 2 Mock Mode ('phase1' | 'phase2' | null)
+  const [fullPhaseKey, setFullPhaseKey] = useState<'phase1' | 'phase2' | null>(() => {
+    const param = searchParams.get('fullMock');
+    if (param === 'phase1' || param === 'phase2') return param;
+    return null;
+  });
+  const [fullPhaseConfig, setFullPhaseConfig] = useState({
+    difficulty: 'Hard' as 'Easy' | 'Moderate' | 'Hard',
+    sectionalTimingEnabled: true,
+    negativeMarkingEnabled: true,
+    customFocus: ''
+  });
+
+  // Sync URL query param ?fullMock=phase1|phase2 if user navigates directly from Dashboard
+  useEffect(() => {
+    const param = searchParams.get('fullMock');
+    if (param === 'phase1' || param === 'phase2') {
+      setFullPhaseKey(param);
+    }
+  }, [searchParams]);
 
   // Wizard step: 1 = Choose Subject, 2 = Choose Source / Upload Notes, 3 = Configure & Launch
   const [step, setStep] = useState<number>(() => {
@@ -133,6 +159,8 @@ export function NewTest({ user }: { user: User }) {
   // Upload & Generation state
   const [uploading, setUploading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingDetail, setLoadingDetail] = useState<string | undefined>(undefined);
+  const [synthesisPercent, setSynthesisPercent] = useState<number | undefined>(undefined);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,6 +172,8 @@ export function NewTest({ user }: { user: User }) {
     }
     setUploading(false);
     setLoadingMessage('');
+    setLoadingDetail(undefined);
+    setSynthesisPercent(undefined);
   };
 
   useEffect(() => {
@@ -414,6 +444,257 @@ export function NewTest({ user }: { user: User }) {
     }
   };
 
+  // GENERATE FULL-LENGTH PHASE 1 OR PHASE 2 EXAM HANDLER
+  const handleGenerateFullPhaseExam = async () => {
+    if (!fullPhaseKey) return;
+    const blueprint: FullPhaseBlueprint = FULL_PHASE_BLUEPRINTS[fullPhaseKey];
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    setUploadError(null);
+    setUploading(true);
+    setSynthesisPercent(4);
+    setLoadingMessage(`Initializing ${blueprint.phase} Full-Length Blueprint...`);
+    setLoadingDetail(
+      blueprint.key === 'phase1'
+        ? 'Preparing 4 Preliminary sections totaling 200 questions & 200 marks'
+        : 'Preparing all 3 Mains papers (ESI, English Writing, FM) totaling 300 marks'
+    );
+
+    try {
+      const customNote = fullPhaseConfig.customFocus.trim();
+      const baseContext = customNote
+        ? `Complete Official RBI Grade B ${blueprint.phase} Examination Simulation.\nPRIORITY CANDIDATE EMPHASIS:\n${customNote}`
+        : `Complete Official RBI Grade B ${blueprint.phase} Examination Simulation adhering strictly to latest RBI circulars, statutory banking frameworks, Union Budget 2025-26, Economic Survey, and authentic PYQ archetypes.`;
+
+      const batchJobs: Array<{
+        section: FullPhaseBlueprint['sections'][number];
+        batch: FullPhaseBlueprint['sections'][number]['batches'][number];
+        sectionOrder: number;
+      }> = [];
+
+      blueprint.sections.forEach((sec, secIdx) => {
+        sec.batches.forEach((batch) => {
+          batchJobs.push({ section: sec, batch, sectionOrder: secIdx });
+        });
+      });
+
+      const totalBatches = batchJobs.length;
+      let completedBatches = 0;
+
+      const batchResults: Array<{
+        sectionOrder: number;
+        batchIndex: number;
+        questions: Question[];
+      }> = [];
+
+      const runSingleBatch = async (
+        job: (typeof batchJobs)[number]
+      ): Promise<Question[]> => {
+        const { section, batch } = job;
+        const subjectObj = subjects.find(s => s.id === section.id || s.slug === section.slug);
+        const catCfg = subjectObj?.questionCategories;
+
+        const callGenerate = async (overrideCounts?: {
+          mcqStatic: number;
+          mcqDynamic: number;
+          pyqCount: number;
+          mcqOneMarkCount?: number;
+          mcqTwoMarkCount?: number;
+        }) => {
+          const mcqStatic = overrideCounts ? overrideCounts.mcqStatic : batch.mcqStatic;
+          const mcqDynamic = overrideCounts ? overrideCounts.mcqDynamic : batch.mcqDynamic;
+          const pyqCount = overrideCounts ? overrideCounts.pyqCount : batch.pyqCount;
+
+          const res = await fetch('/api/generate-questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              extractedText: `${baseContext}\nSection: ${section.name}\nScope: ${batch.batchFocus}`,
+              config: {
+                subject: section.name,
+                subjectSlug: section.slug,
+                mode: blueprint.key === 'phase1' ? 'Full Mock' : 'Full Mock',
+                difficulty: fullPhaseConfig.difficulty,
+                mcqStatic,
+                mcqDynamic,
+                descStatic: overrideCounts ? 0 : batch.descStatic,
+                descDynamic: overrideCounts ? 0 : batch.descDynamic,
+                pyqCount,
+                mcqOneMarkCount: overrideCounts ? overrideCounts.mcqOneMarkCount : batch.mcqOneMarkCount,
+                mcqTwoMarkCount: overrideCounts ? overrideCounts.mcqTwoMarkCount : batch.mcqTwoMarkCount,
+                batchFocus: batch.batchFocus,
+                primaryMcqLabel: catCfg?.primaryMcqLabel || 'Core Theory & Concepts',
+                secondaryMcqLabel: catCfg?.secondaryMcqLabel || 'Applied & Current Affairs',
+                primaryDescLabel: catCfg?.primaryDescLabel || 'Static Descriptive',
+                secondaryDescLabel: catCfg?.secondaryDescLabel || 'Dynamic Policy Descriptive'
+              }
+            }),
+            signal: abortController.signal
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed generating batch for ${section.name}`);
+          }
+          const data = await res.json();
+          return Array.isArray(data.questions) ? data.questions : [];
+        };
+
+        let generated = await callGenerate();
+
+        // Top-up once if an MCQ batch under-delivered by >= 2 questions so section totals match authentic counts
+        const expectedMcqs = batch.mcqStatic + batch.mcqDynamic + batch.pyqCount;
+        if (expectedMcqs > 0) {
+          const gotMcqs = generated.filter((q: any) => q.type === 'MCQ').length;
+          const deficit = expectedMcqs - gotMcqs;
+          if (deficit >= 2 && !abortController.signal.aborted) {
+            try {
+              const extra = await callGenerate({
+                mcqStatic: batch.mcqStatic >= batch.mcqDynamic ? deficit : 0,
+                mcqDynamic: batch.mcqStatic >= batch.mcqDynamic ? 0 : deficit,
+                pyqCount: 0,
+                mcqOneMarkCount: 0,
+                mcqTwoMarkCount: batch.mcqTwoMarkCount && !batch.mcqOneMarkCount ? deficit : 0
+              });
+              generated = [...generated, ...extra.slice(0, deficit)];
+            } catch {
+              // Proceed with generated questions if top-up fails
+            }
+          }
+        }
+
+        return generated.map((q: any, localIdx: number): Question => ({
+          ...q,
+          id: `sec_${section.slug}_b${batch.batchIndex}_q${localIdx + 1}`,
+          subjectId: section.id,
+          subjectSlug: section.slug,
+          sectionId: section.id,
+          sectionName: section.name,
+          topic: q.topic || section.name,
+          difficulty: fullPhaseConfig.difficulty,
+          isPyq: Boolean(q.isPyq),
+          pyqYear: q.pyqYear ? String(q.pyqYear) : (q.isPyq ? 'RBI Grade B' : undefined),
+          maxMarks: q.type === 'MCQ'
+            ? (Number(q.maxMarks) === 2 ? 2 : 1)
+            : (Number(q.maxMarks) || 15)
+        }));
+      };
+
+      // Execute batches with concurrency of 3 so synthesis completes rapidly & reliably without timeouts
+      const CONCURRENCY = 3;
+      for (let i = 0; i < batchJobs.length; i += CONCURRENCY) {
+        if (abortController.signal.aborted) return;
+        const slice = batchJobs.slice(i, i + CONCURRENCY);
+        const activeLabel = slice.map(s => s.section.shortName).filter((v, idx, a) => a.indexOf(v) === idx).join(' + ');
+        setLoadingMessage(`Synthesizing ${blueprint.phase}: ${activeLabel}...`);
+
+        const sliceResults = await Promise.all(
+          slice.map(async (job) => {
+            const qs = await runSingleBatch(job);
+            completedBatches += 1;
+            const pct = Math.min(94, Math.round((completedBatches / totalBatches) * 90) + 5);
+            setSynthesisPercent(pct);
+            setLoadingDetail(
+              `Completed batch ${completedBatches} of ${totalBatches} · ${job.section.name} (${qs.length} questions ready)`
+            );
+            return {
+              sectionOrder: job.sectionOrder,
+              batchIndex: job.batch.batchIndex,
+              questions: qs
+            };
+          })
+        );
+        batchResults.push(...sliceResults);
+      }
+
+      if (abortController.signal.aborted) return;
+
+      // Assemble ordered questions and accurate ExamSectionMeta ranges
+      batchResults.sort((a, b) =>
+        a.sectionOrder !== b.sectionOrder ? a.sectionOrder - b.sectionOrder : a.batchIndex - b.batchIndex
+      );
+
+      const finalQuestions: Question[] = [];
+      const sectionsMeta: ExamSectionMeta[] = [];
+
+      blueprint.sections.forEach((sec, secIdx) => {
+        const secBatches = batchResults.filter(r => r.sectionOrder === secIdx);
+        const secQuestions = secBatches.flatMap(b => b.questions);
+        const startIndex = finalQuestions.length;
+        secQuestions.forEach((q, idxInSec) => {
+          finalQuestions.push({
+            ...q,
+            id: `fp_${blueprint.key}_${sec.slug}_${idxInSec + 1}`
+          });
+        });
+        const endIndex = finalQuestions.length - 1;
+        const actualSecMarks = secQuestions.reduce((sum, q) => sum + (q.maxMarks || 0), 0);
+
+        sectionsMeta.push({
+          id: sec.id,
+          slug: sec.slug,
+          name: sec.name,
+          shortName: sec.shortName,
+          accentColor: sec.accentColor,
+          durationSeconds: sec.durationMinutes * 60,
+          questionCount: secQuestions.length,
+          maxMarks: actualSecMarks,
+          startIndex,
+          endIndex
+        });
+      });
+
+      setSynthesisPercent(98);
+      setLoadingMessage(`Saving ${blueprint.phase} Examination (${finalQuestions.length} Questions)...`);
+
+      const durationSeconds = blueprint.totalDurationMinutes * 60;
+      const testPayload = sanitizeForFirestore({
+        userId: user.uid,
+        createdAt: Date.now(),
+        status: 'setup',
+        subjectId: blueprint.id,
+        subjectSlug: blueprint.slug,
+        subjectName: blueprint.title,
+        mode: blueprint.key === 'phase1' ? 'Full Phase 1 Mock' : 'Full Phase 2 Mock',
+        targetTopic: `Complete ${blueprint.phase} Syllabus`,
+        isFullPhaseExam: true,
+        phaseExamType: blueprint.phase,
+        sections: sectionsMeta,
+        sectionalTimingEnabled: fullPhaseConfig.sectionalTimingEnabled,
+        config: {
+          mcqStatic: finalQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Static').length,
+          mcqDynamic: finalQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Dynamic').length,
+          descStatic: finalQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Static').length,
+          descDynamic: finalQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Dynamic').length,
+          pyqCount: finalQuestions.filter(q => q.isPyq).length,
+          mode: blueprint.key === 'phase1' ? 'Full Phase 1 Mock' : 'Full Phase 2 Mock',
+          targetTopic: `Complete ${blueprint.phase} Official Simulation`,
+          difficulty: fullPhaseConfig.difficulty,
+          timerEnabled: true,
+          negativeMarkingEnabled: fullPhaseConfig.negativeMarkingEnabled
+        },
+        sourceNoteFileRefs: [],
+        extractedNotesText: baseContext.substring(0, 4000),
+        durationSeconds,
+        negativeMarks: fullPhaseConfig.negativeMarkingEnabled ? 0.25 : 0,
+        questions: finalQuestions
+      });
+
+      const docRef = await addDoc(collection(db, 'tests'), testPayload);
+      setSynthesisPercent(100);
+      navigate(`/exam/${docRef.id}`);
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      console.error('Full-phase generation error:', err);
+      setUploadError(err.message || `Failed to generate ${blueprint.title}. Please try again.`);
+      setUploading(false);
+      setSynthesisPercent(undefined);
+      setLoadingDetail(undefined);
+    }
+  };
+
+  const activeBlueprint = fullPhaseKey ? FULL_PHASE_BLUEPRINTS[fullPhaseKey] : null;
+
   return (
     <MotionPage className="max-w-5xl mx-auto space-y-6 pt-2 pb-16 relative z-10">
       
@@ -427,71 +708,339 @@ export function NewTest({ user }: { user: User }) {
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="font-bold text-[#141413] dark:text-[#FAF8EC] uppercase tabular-nums">
-              Step {step} of 3
+              {activeBlueprint ? `${activeBlueprint.phase} Full-Length Simulation` : `Step ${step} of 3`}
             </span>
           </div>
           <AnimatePresence mode="wait">
             <motion.h1
-              key={`step-heading-${step}-${selectedSubject.id}`}
+              key={activeBlueprint ? `fp-heading-${activeBlueprint.key}` : `step-heading-${step}-${selectedSubject.id}`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
               className="text-xl sm:text-3xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] leading-tight"
             >
-              {step === 1 && "Choose Examination Subject"}
-              {step === 2 && `Provide Source Material · ${selectedSubject.name}`}
-              {step === 3 && `Configure & Launch · ${selectedSubject.name}`}
+              {activeBlueprint && activeBlueprint.title}
+              {!activeBlueprint && step === 1 && "Choose Subject or Full-Length Exam"}
+              {!activeBlueprint && step === 2 && `Provide Source Material · ${selectedSubject.name}`}
+              {!activeBlueprint && step === 3 && `Configure & Launch · ${selectedSubject.name}`}
             </motion.h1>
           </AnimatePresence>
         </div>
 
-        {/* 3-Step Editorial Stepper */}
-        <div className="flex items-center justify-between sm:justify-start gap-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] p-1.5 rounded-2xl border border-[#E5E1CE] dark:border-[#2E2E2A] w-full sm:w-auto overflow-x-auto no-scrollbar shrink-0">
-          {[
-            { s: 1, label: 'Subject' },
-            { s: 2, label: 'Source' },
-            { s: 3, label: 'Settings' }
-          ].map(item => {
-            const isCurrent = step === item.s;
-            return (
-              <button
-                key={item.s}
-                type="button"
-                onClick={() => {
-                  if (item.s < step) setStep(item.s);
-                }}
-                disabled={item.s > step}
-                className={`relative flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors shrink-0 z-10 min-h-[38px] ${
-                  isCurrent
-                    ? 'text-white'
-                    : item.s < step
-                      ? 'text-[#0D47FF] dark:text-[#ECD5FF] hover:bg-[#FAF8EC] dark:hover:bg-[#141413] cursor-pointer'
-                      : 'text-[#8E8E85] dark:text-[#66665E] cursor-not-allowed'
-                }`}
-              >
-                {isCurrent && (
-                  <motion.span
-                    layoutId="wizard-step-pill"
-                    transition={SPRING_SNAPPY}
-                    className="absolute inset-0 rounded-xl bg-[#0D47FF] border border-[#141413] -z-10"
-                  />
-                )}
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
-                  isCurrent ? 'bg-white/20 text-white' : 'bg-[#F3F0E0] dark:bg-[#242421]'
-                }`}>
-                  {item.s < step ? <Check className="w-3 h-3 text-current" /> : item.s}
-                </span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Switch between Full-Length Exam & Subject-wise Stepper */}
+        {activeBlueprint ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFullPhaseKey(null);
+              setUploadError(null);
+              if (searchParams.get('fullMock')) {
+                searchParams.delete('fullMock');
+                setSearchParams(searchParams, { replace: true });
+              }
+            }}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] hover:border-[#0D47FF] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] cursor-pointer shrink-0 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to All Exam Modes</span>
+          </button>
+        ) : (
+          <div className="flex items-center justify-between sm:justify-start gap-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] p-1.5 rounded-2xl border border-[#E5E1CE] dark:border-[#2E2E2A] w-full sm:w-auto overflow-x-auto no-scrollbar shrink-0">
+            {[
+              { s: 1, label: 'Subject' },
+              { s: 2, label: 'Source' },
+              { s: 3, label: 'Settings' }
+            ].map(item => {
+              const isCurrent = step === item.s;
+              return (
+                <button
+                  key={item.s}
+                  type="button"
+                  onClick={() => {
+                    if (item.s < step) setStep(item.s);
+                  }}
+                  disabled={item.s > step}
+                  className={`relative flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors shrink-0 z-10 min-h-[38px] ${
+                    isCurrent
+                      ? 'text-white'
+                      : item.s < step
+                        ? 'text-[#0D47FF] dark:text-[#ECD5FF] hover:bg-[#FAF8EC] dark:hover:bg-[#141413] cursor-pointer'
+                        : 'text-[#8E8E85] dark:text-[#66665E] cursor-not-allowed'
+                  }`}
+                >
+                  {isCurrent && (
+                    <motion.span
+                      layoutId="wizard-step-pill"
+                      transition={SPRING_SNAPPY}
+                      className="absolute inset-0 rounded-xl bg-[#0D47FF] border border-[#141413] -z-10"
+                    />
+                  )}
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${
+                    isCurrent ? 'bg-white/20 text-white' : 'bg-[#F3F0E0] dark:bg-[#242421]'
+                  }`}>
+                    {item.s < step ? <Check className="w-3 h-3 text-current" /> : item.s}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
+      {/* FULL-LENGTH PHASE 1 / PHASE 2 CONFIGURATOR */}
+      {activeBlueprint && (
+        <motion.div
+          key={`full-phase-config-${activeBlueprint.key}`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
+          className="space-y-6"
+        >
+          {/* Paper / Section Blueprint Breakdown */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/60 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF]/25 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider text-white border border-[#141413]"
+                  style={{ backgroundColor: activeBlueprint.accentColor }}
+                >
+                  {activeBlueprint.badge}
+                </span>
+              </div>
+              <span className="text-xs font-mono font-bold text-[#66665E] dark:text-[#A3A399]">
+                Total Duration: {activeBlueprint.totalDurationMinutes} Mins
+              </span>
+            </div>
+
+            <div className={`grid grid-cols-1 gap-3 ${activeBlueprint.sections.length === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {activeBlueprint.sections.map((sec, idx) => (
+                <div
+                  key={sec.id}
+                  className="p-4 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col justify-between gap-3 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: sec.accentColor }} />
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-mono font-bold uppercase text-[#66665E] dark:text-[#A3A399]">
+                        Section {idx + 1}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] tabular-nums">
+                        {sec.durationMinutes}m
+                      </span>
+                    </div>
+                    <h3 className="font-heading font-extrabold text-sm text-[#141413] dark:text-[#FAF8EC] leading-snug">
+                      {sec.name}
+                    </h3>
+                    <p className="text-[11px] text-[#55554F] dark:text-[#A3A399] mt-1 leading-relaxed">
+                      {sec.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between text-[11px] font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
+                    <span>
+                      {sec.mcqCount > 0 ? `${sec.mcqCount} MCQ` : ''}
+                      {sec.mcqCount > 0 && sec.descCount > 0 ? ' + ' : ''}
+                      {sec.descCount > 0 ? `${sec.descCount} Desc` : ''}
+                    </span>
+                    <span className="text-[#0D47FF] dark:text-[#ECD5FF]">{sec.totalMarks} Marks</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Configuration Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Difficulty */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                  Difficulty Benchmark
+                </span>
+                {fullPhaseConfig.difficulty === 'Hard' && (
+                  <span className="text-[9px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                    Peak Rigor
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {(['Easy', 'Moderate', 'Hard'] as const).map(diff => (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => setFullPhaseConfig({ ...fullPhaseConfig, difficulty: diff })}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                      fullPhaseConfig.difficulty === diff
+                        ? diff === 'Hard'
+                          ? 'bg-[#141413] dark:bg-[#FFD426] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#FFD426]'
+                          : 'bg-[#141413] dark:bg-[#ECD5FF] text-[#FAF8EC] dark:text-[#141413] border-[#141413] dark:border-[#ECD5FF]'
+                        : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#40403B] dark:text-[#A3A399] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                    }`}
+                  >
+                    {diff === 'Hard' ? 'Hard (Extreme)' : diff}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] leading-snug text-[#66665E] dark:text-[#A3A399]">
+                {fullPhaseConfig.difficulty === 'Hard'
+                  ? 'Maximum RBI Grade B shift calibre · dense puzzles, pair-counting GA & chained FM/ESI numericals.'
+                  : fullPhaseConfig.difficulty === 'Moderate'
+                    ? 'Standard official RBI Grade B difficulty across all sections.'
+                    : 'Foundational speed & conceptual build-up mock.'}
+              </p>
+            </div>
+
+            {/* Clock Discipline Mode */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                  CBT Clock Mode
+                </span>
+                <Timer className="w-3.5 h-3.5 text-[#0D47FF] dark:text-[#ECD5FF]" />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setFullPhaseConfig({ ...fullPhaseConfig, sectionalTimingEnabled: true })}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                    fullPhaseConfig.sectionalTimingEnabled
+                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
+                      : 'bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#55554F] dark:text-[#A3A399]'
+                  }`}
+                >
+                  Sectional Lock
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFullPhaseConfig({ ...fullPhaseConfig, sectionalTimingEnabled: false })}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                    !fullPhaseConfig.sectionalTimingEnabled
+                      ? 'bg-[#ECD5FF] border-[#141413] text-[#141413]'
+                      : 'bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#55554F] dark:text-[#A3A399]'
+                  }`}
+                >
+                  Flexible Clock
+                </button>
+              </div>
+              <p className="text-[10px] leading-snug text-[#66665E] dark:text-[#A3A399]">
+                {fullPhaseConfig.sectionalTimingEnabled
+                  ? 'Official RBI CBT lock: individual section/paper clocks auto-advance when timer expires.'
+                  : 'Unified full exam clock: jump freely across any section or paper at any time.'}
+              </p>
+            </div>
+
+            {/* Negative Marking */}
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col justify-between gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="text-xs font-bold text-[#141413] dark:text-[#FAF8EC] block">Official Negative Marking</span>
+                  <span className="text-[10px] text-[#66665E] dark:text-[#A3A399] block mt-0.5">
+                    {activeBlueprint.negativeMarkingNote}
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={fullPhaseConfig.negativeMarkingEnabled}
+                  onChange={(e) => setFullPhaseConfig({ ...fullPhaseConfig, negativeMarkingEnabled: e.target.checked })}
+                  className="w-4 h-4 accent-[#0D47FF] cursor-pointer mt-0.5 shrink-0"
+                />
+              </div>
+              <div className="text-[10px] font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] pt-2 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+                {fullPhaseConfig.negativeMarkingEnabled ? 'ACTIVE (-25% Penalty on Wrong MCQs)' : 'PRACTICE MODE (0 Negative Marks)'}
+              </div>
+            </div>
+          </div>
+
+          {/* Optional Candidate Topic / Circular Focus */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] space-y-2">
+            <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
+              Optional Custom Emphasis / Current Affairs Window (Leave blank for Complete Official Blueprint)
+            </label>
+            <input
+              type="text"
+              value={fullPhaseConfig.customFocus}
+              onChange={(e) => setFullPhaseConfig({ ...fullPhaseConfig, customFocus: e.target.value })}
+              placeholder="e.g., Focus extra weight on RBI Monetary Policy Dec 2025, Basel III LCR norms & Financial Inclusion schemes..."
+              className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#8E8E85] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF]"
+            />
+          </div>
+
+          {/* Dark Summary Launch Bar */}
+          <div className="p-5 sm:p-7 rounded-2xl bg-[#141413] text-[#FAF8EC] border-[2px] border-[#141413] dark:border-[#ECD5FF] shadow-[6px_6px_0px_#0D47FF] dark:shadow-[6px_6px_0px_#ECD5FF]/35 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/15 pb-4">
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#FFD426] font-bold block">
+                  COMPLETE EXAMINATION READY TO SYNTHESIZE
+                </span>
+                <h3 className="text-lg sm:text-2xl font-heading font-extrabold text-[#FAF8EC]">
+                  {activeBlueprint.title}
+                </h3>
+                <p className="text-xs text-[#A3A399] mt-0.5">
+                  {activeBlueprint.sections.length} {activeBlueprint.key === 'phase1' ? 'Timed Sections' : 'Complete Papers'} · {fullPhaseConfig.sectionalTimingEnabled ? 'Sectional Auto-Advance Clock' : 'Flexible Unified Clock'} · {fullPhaseConfig.difficulty} Standard
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6 text-center sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-white/15 shrink-0">
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block">Questions</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#ECD5FF]">
+                    {activeBlueprint.totalQuestions}
+                  </span>
+                </div>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block">Duration</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#FFD426]">
+                    {activeBlueprint.totalDurationMinutes}m
+                  </span>
+                </div>
+                <div className="p-2 sm:p-0 rounded-xl bg-white/5 sm:bg-transparent border sm:border-0 border-white/10">
+                  <span className="text-[10px] font-mono uppercase text-[#A3A399] block">Max Marks</span>
+                  <span className="text-xl sm:text-2xl font-heading font-extrabold tabular-nums text-[#FAF8EC]">
+                    {activeBlueprint.totalMarks}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {uploadError && (
+              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-400/50 text-rose-200 text-xs flex items-start sm:items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0 text-rose-300" />
+                <span className="leading-relaxed break-words">{uploadError}</span>
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setFullPhaseKey(null)}
+                className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl text-xs font-bold text-[#A3A399] hover:text-[#FAF8EC] bg-white/5 sm:bg-transparent hover:bg-white/10 transition-colors text-center cursor-pointer"
+              >
+                Switch to Subject-Wise Test
+              </button>
+
+              <motion.button
+                type="button"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={SPRING_SNAPPY}
+                onClick={handleGenerateFullPhaseExam}
+                disabled={uploading}
+                className="w-full sm:w-auto min-h-[48px] px-8 py-3.5 rounded-xl font-bold text-sm bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#FAF8EC] shadow-[3px_3px_0px_#ECD5FF] transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span>Synthesize & Start Full {activeBlueprint.phase} Exam</span>
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* STEP 1: CHOOSE SUBJECT */}
-      {step === 1 && (
+      {!activeBlueprint && step === 1 && (
         <motion.div
           key="wizard-step-1"
           initial={{ opacity: 0, y: 12 }}
@@ -500,17 +1049,88 @@ export function NewTest({ user }: { user: User }) {
           transition={{ duration: 0.22, ease: EASE_OUT_EXPO }}
           className="space-y-6"
         >
-          
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#66665E] dark:text-[#A3A399] absolute left-4 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by subject, chapter, or phase (e.g. 'General Awareness', 'Monetary Policy', 'ESI')..."
-              value={subjectSearch}
-              onChange={(e) => setSubjectSearch(e.target.value)}
-              className="w-full min-h-[46px] pl-11 pr-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#8E8E85] text-sm focus:outline-none focus:border-[#0D47FF] transition-colors"
-            />
+          {/* Featured Full-Length Official RBI Grade B Mock Exams */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF]" />
+                <h2 className="font-heading font-extrabold text-base sm:text-lg text-[#141413] dark:text-[#FAF8EC]">
+                  Full-Length Official RBI Grade B Mock Simulations
+                </h2>
+              </div>
+              <span className="font-mono text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-md bg-[#FFD426] text-[#141413] border border-[#141413]">
+                Complete CBT Paper
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(['phase1', 'phase2'] as const).map(key => {
+                const bp = FULL_PHASE_BLUEPRINTS[key];
+                return (
+                  <motion.div
+                    key={bp.id}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={SPRING_BOUNCY}
+                    onClick={() => setFullPhaseKey(key)}
+                    className="group relative p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/70 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF]/35 hover:shadow-[6px_6px_0px_#0D47FF] dark:hover:shadow-[6px_6px_0px_#FFD426] transition-all cursor-pointer flex flex-col justify-between gap-4 overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: bp.accentColor }} />
+                    <div className="space-y-2.5 pt-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md text-white border border-[#141413]"
+                          style={{ backgroundColor: bp.accentColor }}
+                        >
+                          {bp.badge}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-[#66665E] dark:text-[#A3A399] tabular-nums">
+                          {bp.totalDurationMinutes} Mins
+                        </span>
+                      </div>
+                      <h3 className="font-heading font-black text-lg sm:text-xl text-[#141413] dark:text-[#FAF8EC] group-hover:text-[#0D47FF] dark:group-hover:text-[#ECD5FF] transition-colors">
+                        {bp.title}
+                      </h3>
+                      <p className="text-xs text-[#40403B] dark:text-[#A3A399] leading-relaxed">
+                        {bp.subtitle}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {bp.sections.map(s => (
+                          <span
+                            key={s.id}
+                            className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC]"
+                          >
+                            {s.shortName} · {s.totalMarks}m
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between text-xs font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
+                      <span>Configure & Start Full {bp.phase} Exam</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-[#E5E1CE] dark:border-[#2E2E2A]">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399] mb-3">
+              OR PICK AN INDIVIDUAL SUBJECT WORKBENCH
+            </p>
+            {/* Search bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-[#66665E] dark:text-[#A3A399] absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search by subject, chapter, or phase (e.g. 'General Awareness', 'Monetary Policy', 'ESI')..."
+                value={subjectSearch}
+                onChange={(e) => setSubjectSearch(e.target.value)}
+                className="w-full min-h-[46px] pl-11 pr-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] placeholder:text-[#8E8E85] text-sm focus:outline-none focus:border-[#0D47FF] transition-colors"
+              />
+            </div>
           </div>
 
           {/* Phase 1 Subjects */}
@@ -567,7 +1187,7 @@ export function NewTest({ user }: { user: User }) {
       )}
 
       {/* STEP 2: CHOOSE SOURCE / UPLOAD NOTES */}
-      {step === 2 && (
+      {!activeBlueprint && step === 2 && (
         <motion.div
           key="wizard-step-2"
           initial={{ opacity: 0, y: 12 }}
@@ -799,7 +1419,7 @@ export function NewTest({ user }: { user: User }) {
       )}
 
       {/* STEP 3: CONFIGURE & LAUNCH */}
-      {step === 3 && (
+      {!activeBlueprint && step === 3 && (
         <motion.div
           key="wizard-step-3"
           initial={{ opacity: 0, y: 12 }}
@@ -1332,7 +1952,9 @@ export function NewTest({ user }: { user: User }) {
           isOpen={uploading}
           onCancel={handleCancelAnalysis}
           loadingMessage={loadingMessage}
-          subjectName={selectedSubject?.name || 'Curriculum'}
+          subjectName={activeBlueprint ? activeBlueprint.title : (selectedSubject?.name || 'Curriculum')}
+          progressPercent={synthesisPercent}
+          detailText={loadingDetail}
         />,
         document.body
       )}

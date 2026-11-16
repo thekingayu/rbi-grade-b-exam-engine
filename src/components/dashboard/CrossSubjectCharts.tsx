@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, Activity, Clock } from 'lucide-react';
+import { getFullPhaseDisplayMeta } from '../../data/fullPhaseBlueprints';
 import { MotionStaggerGrid, MotionStaggerItem } from '../MotionPrimitives';
 
 interface CrossSubjectChartsProps {
@@ -32,11 +33,12 @@ export function CrossSubjectCharts({ subjects, tests }: CrossSubjectChartsProps)
     const totalMax = t.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
     const pct = Math.round(((t.totalScore || 0) / totalMax) * 100);
     const subMatch = subjects.find(s => s.id === t.subjectId || s.slug === t.subjectSlug);
+    const phaseMeta = !subMatch ? getFullPhaseDisplayMeta(t.subjectSlug, t.subjectName) : null;
     return {
       name: `T${idx + 1}`,
       score: pct,
-      subject: subMatch?.name || 'General',
-      color: subMatch?.accentColor || ACCENT_COLOR
+      subject: subMatch?.name || phaseMeta?.name || 'General',
+      color: subMatch?.accentColor || phaseMeta?.accentColor || ACCENT_COLOR
     };
   });
 

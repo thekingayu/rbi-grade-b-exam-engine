@@ -20,6 +20,7 @@ import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
 import { isSyncDocument } from '../utils/firestore';
+import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 import {
   MotionPage,
@@ -342,13 +343,22 @@ export function Dashboard({ user }: { user: User }) {
       {/* 5. SUBJECT GRID (THE CENTERPIECE) */}
       <div className="space-y-8">
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
-            <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
-              Phase 1 Subjects · Preliminary Examination
-            </h2>
-            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
-              4 Verticals · 200 Marks
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+                Phase 1 Subjects · Preliminary Examination
+              </h2>
+              <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
+                4 Verticals · 200 Marks · 120 Min
+              </span>
+            </div>
+            <Link
+              to="/new?fullMock=phase1"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] transition-all whitespace-nowrap shrink-0"
+            >
+              <span>Full Phase 1 Mock (200 Qs)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -361,13 +371,22 @@ export function Dashboard({ user }: { user: User }) {
         </div>
 
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
-            <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
-              Phase 2 Subjects · Main Selection & Writing
-            </h2>
-            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
-              3 Papers · 300 Total Marks
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+                Phase 2 Subjects · Main Selection & Writing
+              </h2>
+              <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399] uppercase">
+                3 Papers · 300 Total Marks · 330 Min
+              </span>
+            </div>
+            <Link
+              to="/new?fullMock=phase2"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] transition-all whitespace-nowrap shrink-0"
+            >
+              <span>Full Phase 2 Mock (300 Marks)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
@@ -435,11 +454,13 @@ export function Dashboard({ user }: { user: User }) {
               </div>
             ) : (
               tests.slice(0, 5).map(test => {
-                const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug) || {
-                  name: 'Uncategorised',
-                  accentColor: '#64748B',
-                  icon: 'Layers'
-                };
+                const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug)
+                  || getFullPhaseDisplayMeta(test.subjectSlug, test.subjectName)
+                  || {
+                    name: 'Uncategorised',
+                    accentColor: '#64748B',
+                    icon: 'Layers'
+                  };
 
                 const maxMarks = test.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
                 const pct = Math.round(((test.totalScore || 0) / maxMarks) * 100);

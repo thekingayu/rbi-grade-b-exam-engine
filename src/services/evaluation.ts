@@ -55,6 +55,92 @@ async function callEvaluateDescriptiveWithRetry(question: Question, userAnswer: 
   throw lastErr || new Error('Evaluation failed after retries');
 }
 
+function computePerSubjectScores(
+  testData: TestAttempt,
+  questions: Question[],
+  evals: Record<string, any>
+) {
+  if (!testData.sections || testData.sections.length === 0) return undefined;
+
+  const summaryMap: Record<string, {
+    sectionId: string;
+    slug: string;
+    name: string;
+    shortName: string;
+    accentColor: string;
+    score: number;
+    maxMarks: number;
+    attempted: number;
+    correct: number;
+    incorrect: number;
+    questionCount: number;
+    mcqCount: number;
+    descCount: number;
+  }> = {};
+
+  testData.sections.forEach(sec => {
+    summaryMap[sec.id] = {
+      sectionId: sec.id,
+      slug: sec.slug,
+      name: sec.name,
+      shortName: sec.shortName,
+      accentColor: sec.accentColor,
+      score: 0,
+      maxMarks: 0,
+      attempted: 0,
+      correct: 0,
+      incorrect: 0,
+      questionCount: 0,
+      mcqCount: 0,
+      descCount: 0
+    };
+  });
+
+  questions.forEach((q, idx) => {
+    const secId = q.sectionId || q.subjectId || testData.sections![0].id;
+    if (!summaryMap[secId]) {
+      summaryMap[secId] = {
+        sectionId: secId,
+        slug: q.subjectSlug || secId,
+        name: q.sectionName || 'Section',
+        shortName: q.sectionName || 'Section',
+        accentColor: '#0D47FF',
+        score: 0,
+        maxMarks: 0,
+        attempted: 0,
+        correct: 0,
+        incorrect: 0,
+        questionCount: 0,
+        mcqCount: 0,
+        descCount: 0
+      };
+    }
+
+    const bucket = summaryMap[secId];
+    bucket.questionCount += 1;
+    bucket.maxMarks = Number((bucket.maxMarks + (q.maxMarks || 0)).toFixed(2));
+
+    const qId = q.id || idx.toString();
+    const hasAnswer = !!(q.userAnswer && q.userAnswer.trim() !== '');
+    if (hasAnswer) bucket.attempted += 1;
+
+    if (q.type === 'MCQ') {
+      bucket.mcqCount += 1;
+      bucket.score = Number((bucket.score + (q.score || 0)).toFixed(2));
+      if (hasAnswer) {
+        if (q.isCorrect) bucket.correct += 1;
+        else bucket.incorrect += 1;
+      }
+    } else {
+      bucket.descCount += 1;
+      const descScore = evals[qId]?.totalScore ?? q.score ?? 0;
+      bucket.score = Number((bucket.score + descScore).toFixed(2));
+    }
+  });
+
+  return summaryMap;
+}
+
 /**
  * Evaluates all question responses for a test attempt and permanently stores the complete
  * results in Firestore, marking `isEvaluated: true`.
@@ -66,6 +152,7 @@ export async function evaluateAndPersistTest(
   onProgress?: EvaluationProgressCallback
 ): Promise<TestAttempt> {
   const answersMap: Record<string, string> = { ...(testData.answers || {}) };
+  const negativePenaltyFraction = testData.negativeMarks === 0 ? 0 : 0.25;
 
   // 1. Reconcile and calculate MCQ scores
   onProgress?.('Scoring multiple-choice questions...', 20);
@@ -85,7 +172,7 @@ export async function evaluateAndPersistTest(
 
       if (cleanUserAns) {
         isCorrect = checkMCQCorrect(cleanUserAns, q.correctAnswer, q.options);
-        score = isCorrect ? maxMarks : -0.25 * maxMarks;
+        score = isCorrect ? maxMarks : -negativePenaltyFraction * maxMarks;
       }
 
       totalMcqScore += score;
@@ -114,8 +201,10 @@ export async function evaluateAndPersistTest(
     };
   });
 
-  // 2. Evaluate descriptive answers
-  const descQuestions = evaluatedQuestions.filter(q => q.type === 'Descriptive');
+  // 2. Evaluate descriptive answers (with concurrency of 2 for faster Phase 2 evaluation)
+  const descIndices = evaluatedQuestions
+    .map((q, idx) => (q.type === 'Descriptive' ? idx : -1))
+    .filter(idx => idx !== -1);
   const evals: Record<string, any> = { ...(testData.evaluations || {}) };
   let totalDescScore = 0;
   let descStaticScore = 0;
@@ -123,31 +212,24 @@ export async function evaluateAndPersistTest(
   let allDescriptiveSucceeded = true;
 
   let descProgressCount = 0;
-  for (let i = 0; i < evaluatedQuestions.length; i++) {
-    const q = evaluatedQuestions[i];
-    if (q.type !== 'Descriptive') continue;
+  const evaluateDescAt = async (qIdx: number) => {
+    const q = evaluatedQuestions[qIdx];
+    const qId = q.id || qIdx.toString();
 
-    const qId = q.id || i.toString();
-    descProgressCount++;
-    const progressPct = 20 + Math.round((descProgressCount / Math.max(1, descQuestions.length)) * 50);
-    onProgress?.(`Evaluating descriptive answer ${descProgressCount} of ${descQuestions.length} (RBI Grade B Standard)...`, progressPct);
-
-    // If already evaluated with valid genuine evaluation, preserve it
     if (isDescriptiveEvaluationValid(evals[qId])) {
       const score = Number(evals[qId].totalScore.toFixed(2));
       q.score = score;
-      totalDescScore += score;
-      if (q.sourceTag === 'Static') descStaticScore += score;
-      else descDynamicScore += score;
-      continue;
+      descProgressCount++;
+      const progressPct = 20 + Math.round((descProgressCount / Math.max(1, descIndices.length)) * 55);
+      onProgress?.(`Verified descriptive answer ${descProgressCount} of ${descIndices.length}...`, progressPct);
+      return;
     }
 
-    // If user provided an answer, evaluate with AI
     if (q.userAnswer && q.userAnswer.trim() !== '') {
       try {
         const evalData = await callEvaluateDescriptiveWithRetry(q, q.userAnswer, 3);
         const score = typeof evalData.totalScore === 'number' ? Number(evalData.totalScore.toFixed(2)) : 0;
-        
+
         evals[qId] = {
           totalScore: score,
           evaluationSummary: evalData.evaluationSummary,
@@ -159,9 +241,6 @@ export async function evaluateAndPersistTest(
           suggestions: Array.isArray(evalData.suggestions) ? evalData.suggestions : ["Structure response with headings and citations."]
         };
         q.score = score;
-        totalDescScore += score;
-        if (q.sourceTag === 'Static') descStaticScore += score;
-        else descDynamicScore += score;
       } catch (e) {
         console.error(`Evaluation failed for descriptive question ${qId}`, e);
         allDescriptiveSucceeded = false;
@@ -176,7 +255,6 @@ export async function evaluateAndPersistTest(
         q.score = 0;
       }
     } else {
-      // Unattempted descriptive question
       evals[qId] = {
         totalScore: 0,
         scoreBreakdown: { "Unattempted": 0 },
@@ -185,7 +263,24 @@ export async function evaluateAndPersistTest(
       };
       q.score = 0;
     }
+
+    descProgressCount++;
+    const progressPct = 20 + Math.round((descProgressCount / Math.max(1, descIndices.length)) * 55);
+    onProgress?.(`Evaluating descriptive answer ${descProgressCount} of ${descIndices.length} (RBI Grade B Standard)...`, progressPct);
+  };
+
+  for (let i = 0; i < descIndices.length; i += 2) {
+    const pair = descIndices.slice(i, i + 2);
+    await Promise.all(pair.map(idx => evaluateDescAt(idx)));
   }
+
+  descIndices.forEach(idx => {
+    const q = evaluatedQuestions[idx];
+    const score = q.score || 0;
+    totalDescScore += score;
+    if (q.sourceTag === 'Static') descStaticScore += score;
+    else descDynamicScore += score;
+  });
 
   // 3. Overall feedback generation
   onProgress?.('Synthesizing overall performance analysis & actionable steps...', 85);
@@ -220,7 +315,7 @@ export async function evaluateAndPersistTest(
     }
   }
 
-  // 4. Calculate total and section scores
+  // 4. Calculate total, section, and per-subject scores
   const finalTotalScore = Number((totalMcqScore + totalDescScore).toFixed(2));
   const sectionScores = {
     mcqStatic: Number(mcqStaticScore.toFixed(2)),
@@ -228,6 +323,7 @@ export async function evaluateAndPersistTest(
     descStatic: Number(descStaticScore.toFixed(2)),
     descDynamic: Number(descDynamicScore.toFixed(2))
   };
+  const perSubjectScores = computePerSubjectScores(testData, evaluatedQuestions, evals);
 
   // 5. Store permanently in Firestore
   onProgress?.('Storing finalized evaluation report into database...', 95);
@@ -243,6 +339,7 @@ export async function evaluateAndPersistTest(
     answers: answersMap,
     totalScore: finalTotalScore,
     sectionScores,
+    perSubjectScores,
     evaluations: evals,
     overallFeedback
   });
@@ -251,8 +348,8 @@ export async function evaluateAndPersistTest(
 
   // 6. Automatically extract and store Mistakes into Firestore collection 'mistakes' & local state
   try {
-    const subjectId = testData.subjectId || 'general-awareness';
-    const subjectSlug = testData.subjectSlug || 'general-awareness';
+    const defaultSubjectId = testData.subjectId || 'sub_ga';
+    const defaultSubjectSlug = testData.subjectSlug || 'general-awareness';
 
     const existingMistakesRaw = localStorage.getItem('rbi_mistake_entries_v1');
     let localMistakesArr: any[] = [];
@@ -260,18 +357,25 @@ export async function evaluateAndPersistTest(
       if (existingMistakesRaw) localMistakesArr = JSON.parse(existingMistakesRaw);
     } catch (e) {}
 
+    const { setDoc } = await import('firebase/firestore');
+
     for (let i = 0; i < evaluatedQuestions.length; i++) {
       const q = evaluatedQuestions[i];
       const qId = q.id || i.toString();
       const userAns = q.userAnswer || answersMap[qId] || answersMap[i.toString()] || null;
+      const qSubjectId = q.subjectId || q.sectionId || defaultSubjectId;
+      const qSubjectSlug = q.subjectSlug || defaultSubjectSlug;
 
       let isMistake = false;
       let reason = '';
 
       if (q.type === 'MCQ') {
         if (!userAns || userAns.trim() === '') {
-          isMistake = true;
-          reason = 'Skipped / Unattempted MCQ';
+          // For 200-question full-length mocks, log only incorrect attempts so Mistake Notebook stays high-signal rather than flooding with 100 skipped items
+          if (!testData.isFullPhaseExam) {
+            isMistake = true;
+            reason = 'Skipped / Unattempted MCQ';
+          }
         } else if (q.isCorrect === false) {
           isMistake = true;
           reason = 'Incorrect MCQ Answer';
@@ -295,8 +399,8 @@ export async function evaluateAndPersistTest(
           id: mistakeId,
           userId,
           testId,
-          subjectId,
-          subjectSlug,
+          subjectId: qSubjectId,
+          subjectSlug: qSubjectSlug,
           questionId: qId,
           type: q.type,
           topic: q.topic || 'General Theory',
@@ -312,15 +416,12 @@ export async function evaluateAndPersistTest(
           nextReviewDue: Date.now() + 24 * 60 * 60 * 1000
         });
 
-        // Write to Firestore
         try {
-          const { setDoc } = await import('firebase/firestore');
           await setDoc(doc(db, 'mistakes', mistakeId), mistakeData, { merge: true });
         } catch (mErr) {
           console.error('Failed to write mistake to Firestore:', mErr);
         }
 
-        // Update local storage array
         const dupIdx = localMistakesArr.findIndex((m: any) => m.id === mistakeId || (m.questionId === qId && m.testId === testId));
         if (dupIdx !== -1) {
           localMistakesArr[dupIdx] = mistakeData;
@@ -417,6 +518,7 @@ export async function evaluateSingleDescriptiveQuestion(
     descStatic: Number(descStatic.toFixed(2)),
     descDynamic: Number(descDynamic.toFixed(2))
   };
+  const newPerSubjectScores = computePerSubjectScores(testData, updatedQuestions, updatedEvals);
 
   const docRef = doc(db, 'tests', testId);
   const payload = sanitizeForFirestore({
@@ -425,7 +527,8 @@ export async function evaluateSingleDescriptiveQuestion(
     questions: updatedQuestions,
     evaluations: updatedEvals,
     totalScore: newTotalScore,
-    sectionScores: newSectionScores
+    sectionScores: newSectionScores,
+    perSubjectScores: newPerSubjectScores
   });
 
   await updateDoc(docRef, payload);

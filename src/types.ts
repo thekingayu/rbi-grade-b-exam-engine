@@ -1,6 +1,12 @@
 export type TestStatus = 'setup' | 'in-progress' | 'completed';
 
-export type ExamMode = 'Full Mock' | 'Sectional' | 'Topic Drill' | 'Quick 10-min';
+export type ExamMode =
+  | 'Full Mock'
+  | 'Sectional'
+  | 'Topic Drill'
+  | 'Quick 10-min'
+  | 'Full Phase 1 Mock'
+  | 'Full Phase 2 Mock';
 
 export interface UserProfile {
   displayName?: string;
@@ -124,6 +130,9 @@ export interface Question {
   topic?: string;
   difficulty?: 'Easy' | 'Moderate' | 'Hard';
   subjectId?: string;
+  subjectSlug?: string;
+  sectionId?: string;
+  sectionName?: string;
   text: string;
   options?: string[] | null;
   correctAnswer?: string | null;
@@ -139,6 +148,35 @@ export interface Question {
   confidence?: 'sure' | 'educated_guess' | 'blind_guess';
 }
 
+export interface ExamSectionMeta {
+  id: string;
+  slug: string;
+  name: string;
+  shortName: string;
+  accentColor: string;
+  durationSeconds: number;
+  questionCount: number;
+  maxMarks: number;
+  startIndex: number;
+  endIndex: number;
+}
+
+export interface PerSubjectScoreSummary {
+  sectionId: string;
+  slug: string;
+  name: string;
+  shortName: string;
+  accentColor: string;
+  score: number;
+  maxMarks: number;
+  attempted: number;
+  correct: number;
+  incorrect: number;
+  questionCount: number;
+  mcqCount: number;
+  descCount: number;
+}
+
 export interface TestAttempt {
   id: string;
   userId: string;
@@ -149,6 +187,11 @@ export interface TestAttempt {
   subjectName?: string;
   mode?: ExamMode;
   targetTopic?: string;
+  isFullPhaseExam?: boolean;
+  phaseExamType?: 'Phase 1' | 'Phase 2';
+  sections?: ExamSectionMeta[];
+  sectionalTimingEnabled?: boolean;
+  perSubjectScores?: Record<string, PerSubjectScoreSummary>;
   config: TestConfig;
   sourceNoteFileRefs: string[];
   extractedNotesText: string;

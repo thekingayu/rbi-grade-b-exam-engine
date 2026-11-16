@@ -84,7 +84,14 @@ function getGenAI() {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is missing");
     }
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build'
+        }
+      }
+    });
   }
   return ai;
 }
@@ -92,7 +99,7 @@ function getGenAI() {
 // Resilient Gemini caller with model fallback chain and backoff retry
 async function callGeminiWithRetry(contents: string, systemInstruction?: string): Promise<string> {
   const genai = getGenAI();
-  const models = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
+  const models = ['gemini-4-hydrogen', 'gemini-2.5-flash', 'gemini-3.1-flash-lite'];
   let lastError: any = null;
 
   for (const model of models) {
@@ -226,6 +233,14 @@ function buildSubjectPrompt(subjectSlug: string, subjectName: string, config: an
   const primaryDescLabel = config.primaryDescLabel || 'Category 1 Descriptive';
   const secondaryDescLabel = config.secondaryDescLabel || 'Category 2 Descriptive';
   const topicFocus = config.targetTopic ? `SPECIFIC TOPIC FOCUS: "${config.targetTopic}"` : '';
+  const batchDirective = config.batchFocus
+    ? `\nBATCH MANDATE (STRICT COVERAGE): This batch MUST specifically focus on: ${config.batchFocus}. Do NOT drift into duplicate basic questions covered by other batches.`
+    : '';
+  const weightedMarksDirective = (typeof config.mcqTwoMarkCount === 'number' && config.mcqTwoMarkCount > 0)
+    ? `\nOFFICIAL RBI GRADE B PHASE 2 WEIGHTED MCQ MARKING:
+  - Output EXACTLY ${config.mcqOneMarkCount || 0} concise MCQs with "maxMarks": 1.
+  - Output EXACTLY ${config.mcqTwoMarkCount} deeper analytical / multi-statement / numerical / case-based MCQs with "maxMarks": 2.`
+    : '';
   const examMode = config.mode || 'Sectional';
   const difficulty = config.difficulty || 'Hard';
   const difficultyDirective = getDifficultyDirective(difficulty, subjectSlug);
@@ -566,16 +581,18 @@ DESCRIPTIVE QUESTIONS:
 }`;
   } else if (subjectSlug === 'english-writing') {
     subjectSpecificRules = `
-SUBJECT-SPECIFIC MANDATE (ENGLISH WRITING SKILLS - RBI GRADE B PHASE 2):
-100-mark descriptive examination (90 minutes): 1 Essay (40 Marks / 400 words), 1 Précis (30 Marks / 170 words), and Business Reading Comprehension (30 Marks / 5 analytical questions).
-
-QUESTION SPECIFICATIONS:
-- Category 1: "${primaryDescLabel || 'Official Essay & Speech Précis'}" -> Generate ${desc1Count || 2} questions.
-  Provide:
-  1) An authoritative, thought-provoking 400-word essay prompt on central banking, digital economy, or financial inclusion.
-  2) A 450-word excerpt from an official central banking speech or policy report, requiring a précis of exactly 170 words with a suitable title.
-- Category 2: "${secondaryDescLabel || 'Business Reading Comprehension'}" -> Generate ${desc2Count || 1} questions.
-  Provide a dense 350-word financial analysis passage with 4-5 descriptive analytical comprehension questions.`;
+SUBJECT-SPECIFIC MANDATE (ENGLISH WRITING SKILLS - RBI GRADE B PHASE 2 PAPER II):
+100-mark official descriptive examination (90 minutes) consisting of EXACTLY 3 tasks totaling 100 marks:
+1. QUESTION 1 — ESSAY WRITING (maxMarks: 40, wordLimit: 400, sourceTag: "Static"):
+   - Provide an authoritative central banking / macroeconomic / fintech / institutional governance essay topic.
+   - Set "maxMarks": 40 and "wordLimit": 400.
+2. QUESTION 2 — PRÉCIS WRITING (maxMarks: 30, wordLimit: 170, sourceTag: "Static"):
+   - Inside "text", you MUST include a COMPLETE, cohesive ~420–480 word formal financial/economic speech excerpt or policy report paragraph right inside the prompt followed by instructions to write a précis in ~170 words with an apt title.
+   - Set "maxMarks": 30 and "wordLimit": 170.
+3. QUESTION 3 — READING COMPREHENSION (maxMarks: 30, wordLimit: 350, sourceTag: "Dynamic"):
+   - Inside "text", you MUST include a COMPLETE ~350–400 word dense editorial/financial passage followed by 5 numbered analytical sub-questions (Q1–Q5) requiring concise descriptive answers in the candidate's own words.
+   - Set "maxMarks": 30 and "wordLimit": 350.
+CRITICAL: Output ALL ${totalDescs || 3} tasks cleanly with complete embedded passages for Précis and Reading Comprehension.`;
 
     jsonSchemaExample = `{
   "questions": [
@@ -583,17 +600,48 @@ QUESTION SPECIFICATIONS:
       "type": "Descriptive",
       "sourceTag": "Static",
       "isPyq": false,
-      "topic": "${config.targetTopic || 'Macroeconomic Policy Essay'}",
-      "text": "Write a comprehensive essay in approximately 400 words on the topic:\\n'Central Bank Digital Currencies (CBDCs): Catalysts for Financial Inclusion or Challenges to Commercial Bank Disintermediation?'",
+      "topic": "Paper II · Essay Writing (40 Marks)",
+      "text": "Write an analytical essay of approximately 400 words on:\\n\\n'Central Bank Digital Currencies (CBDCs):Balancing Financial Inclusion Imperatives with Commercial Bank Disintermediation Risks.'",
       "maxMarks": 40,
       "wordLimit": 400,
       "markingScheme": {
-        "Conceptual Depth & Thematic Coherence": 10.0,
-        "Financial Architecture & Disintermediation Risks": 12.0,
-        "Structural Organization & Paragraph Transitions": 10.0,
-        "Grammatical Precision & Formal Register": 8.0
+        "Conceptual Depth & Macroeconomic Analysis": 12.0,
+        "Coherence, Argument Flow & Balance": 12.0,
+        "Grammatical Precision & Formal Register": 10.0,
+        "Introduction & Strategic Conclusion": 6.0
       },
-      "modelAnswer": "### Central Bank Digital Currencies: Balancing Inclusion and Disintermediation\\n\\nThe advent of Central Bank Digital Currencies (CBDCs) represents the most profound reimagining of sovereign money since the abandonment of the gold standard...\\n\\nWholesale and retail CBDC implementations offer distinct utility curves...\\n\\nTo avert deposit disintermediation during financial stress, central banks must calibrate holding caps and non-remunerated architectures...\\n\\nIn conclusion, CBDCs can anchor sovereign trust in the digital era without disrupting private credit creation."
+      "modelAnswer": "### Balancing Inclusion and Financial Stability in CBDC Architecture\\n\\nCentral Bank Digital Currencies represent a structural evolution in sovereign monetary liabilities..."
+    },
+    {
+      "type": "Descriptive",
+      "sourceTag": "Static",
+      "isPyq": false,
+      "topic": "Paper II · Précis Writing (30 Marks)",
+      "text": "Write a précis of the following passage in approximately 170 words, reducing it to one-third of its original length, and provide a suitable title:\\n\\n[Full 450-word formal central banking speech excerpt here...]",
+      "maxMarks": 30,
+      "wordLimit": 170,
+      "markingScheme": {
+        "Accuracy & Central Idea Retention": 10.0,
+        "Brevity & Word-Limit Adherence (170w)": 8.0,
+        "Apt Title & Paraphrasing Quality": 6.0,
+        "Grammatical Clarity & Tone": 6.0
+      },
+      "modelAnswer": "Title: Calibrating Monetary Transmission Amid Global Supply Shocks\\n\\n[Concise 170-word précis summarizing core arguments without verbatim copying...]"
+    },
+    {
+      "type": "Descriptive",
+      "sourceTag": "Dynamic",
+      "isPyq": false,
+      "topic": "Paper II · Reading Comprehension (30 Marks)",
+      "text": "Read the passage carefully and answer all 5 questions that follow in your own words:\\n\\n[Full 380-word economic editorial passage here...]\\n\\n1. What structural vulnerability does the author identify in global liquidity cycles?\\n2. Why are macroprudential buffers emphasized alongside policy rate actions?\\n3. Explain the paradox highlighted in paragraph three.\\n4. What policy trade-off confronts emerging market regulators?\\n5. Suggest a contextual meaning for 'procyclical deleveraging' as used in the passage.",
+      "maxMarks": 30,
+      "wordLimit": 350,
+      "markingScheme": {
+        "Inferential & Factual Comprehension (Q1-Q5)": 16.0,
+        "Paraphrasing & Original Expression": 8.0,
+        "Clarity & Conciseness": 6.0
+      },
+      "modelAnswer": "1. The author highlights how short-term foreign portfolio flows amplify domestic credit procyclicality...\\n2. Macroprudential buffers curb sectoral leverage without tightening economy-wide rates..."
     }
   ]
 }`;
@@ -630,7 +678,7 @@ Every MCQ must have EXACTLY 5 distinct options.`;
 You must construct an exceptionally rigorous mock examination that matches the exact difficulty configuration requested.
 
 SUBJECT: "${subjectName}"
-${topicFocus}
+${topicFocus}${batchDirective}${weightedMarksDirective}
 EXAM MODE: "${examMode}"
 DIFFICULTY LEVEL: "${difficulty}"
 TARGET MCQ COUNT: ${totalMcqs} (${mcq1Count} in "${primaryMcqLabel}", ${mcq2Count} in "${secondaryMcqLabel}"${pyqCount > 0 ? `, ${pyqCount} Authentic PYQs` : ''})
@@ -758,6 +806,12 @@ app.post('/api/generate-questions', async (req, res) => {
           }
         }
 
+        const rawMarks = Number(q.maxMarks);
+        let resolvedMcqMarks = (rawMarks === 2 || (typeof config.mcqTwoMarkCount === 'number' && config.mcqTwoMarkCount > 0 && config.mcqOneMarkCount === 0)) ? 2 : 1;
+        if (typeof config.mcqOneMarkCount === 'number' && typeof config.mcqTwoMarkCount === 'number') {
+          resolvedMcqMarks = index < config.mcqOneMarkCount ? 1 : 2;
+        }
+
         return {
           id: q.id || `q_mcq_${index + 1}`,
           type: 'MCQ' as const,
@@ -770,11 +824,11 @@ app.post('/api/generate-questions', async (req, res) => {
           options: optionsList,
           correctAnswer: resolvedCorrect,
           explanation: fallbackExplanation,
-          maxMarks: 1
+          maxMarks: resolvedMcqMarks
         };
       } else {
         const maxMarks = typeof q.maxMarks === 'number' && q.maxMarks > 0 ? q.maxMarks : 15;
-        const wordLimit = typeof q.wordLimit === 'number' && q.wordLimit > 0 ? q.wordLimit : (maxMarks === 10 ? 400 : 600);
+        const wordLimit = typeof q.wordLimit === 'number' && q.wordLimit > 0 ? q.wordLimit : (maxMarks === 10 ? 400 : maxMarks === 30 ? 170 : maxMarks === 40 ? 400 : 600);
         
         let markingScheme = q.markingScheme;
         if (!markingScheme || typeof markingScheme !== 'object' || Object.keys(markingScheme).length === 0) {
@@ -827,7 +881,12 @@ app.post('/api/evaluate-descriptive', async (req, res) => {
       ? question.markingScheme
       : defaultScheme;
 
-    const prompt = `You are the Chief Examiner and Senior Evaluator for the Reserve Bank of India (RBI) Grade B (Phase II) Examination for Economic & Social Issues (ESI) and Finance & Management (FM).
+    const isEnglishWriting = question?.subjectSlug === 'english-writing' || question?.sectionId === 'sub_english_writing' || maxMarks >= 30;
+
+    const evaluatorPersona = isEnglishWriting
+      ? `You are the Chief Examiner for RBI Grade B Phase II Paper II (English Writing Skills — Essay, Précis Writing & Reading Comprehension).
+Evaluate the candidate's written submission on editorial coherence, formal register, structural flow, grammatical accuracy, paraphrasing originality, and strict word-count discipline (~400w for Essay, ~170w for Précis with title, concise answers for RC). Do NOT penalize an English Précis or RC for omitting RBI statutory sections unless relevant to the source text.`
+      : `You are the Chief Examiner and Senior Evaluator for the Reserve Bank of India (RBI) Grade B (Phase II) Examination for Economic & Social Issues (ESI) and Finance & Management (FM).
 Evaluate the candidate's descriptive answer with the highest standards of central banking rigor, analytical depth, statutory grounding, and institutional accuracy.
 
 EXAMINATION BENCHMARK & RIGOR (RBI GRADE B & BEYOND):
@@ -836,14 +895,16 @@ EXAMINATION BENCHMARK & RIGOR (RBI GRADE B & BEYOND):
    - An answer that merely regurgitates high-school definitions or vague generic points without statutory references (e.g., RBI Act 1934, Banking Regulation Act 1949, FEMA, IBC, Basel III) or concrete monetary mechanics must score low (20-40% of max marks).
    - An average answer that lists basic textbook points but lacks real-world banking context, transmission channels, or recent RBI circulars/committees receives 45-55% marks.
    - A strong answer demonstrating multi-dimensional analysis (statutory authority, balance sheet impact, transmission channels, trade-offs, and systemic implications) receives 60-75% marks.
-   - 75%+ marks are strictly reserved for answers that match or exceed topper quality with precise regulatory grounding, empirical awareness, and a structured policy way forward.
+   - 75%+ marks are strictly reserved for answers that match or exceed topper quality with precise regulatory grounding, empirical awareness, and a structured policy way forward.`;
 
-2. Dimensions & Marking Scheme:
+    const prompt = `${evaluatorPersona}
+
+Dimensions & Marking Scheme:
    You MUST evaluate the answer against these exact criteria and maximum marks:
    ${JSON.stringify(effectiveScheme, null, 2)}
    Ensure each criterion's score in "scoreBreakdown" is realistic and does NOT exceed its allocated maximum marks. The sum of these dimension scores must equal "totalScore".
 
-3. Word Count & Completeness Discipline:
+Word Count & Completeness Discipline:
    - Target word limit is ${wordLimit} words.
    - Evaluate whether all sub-parts and core analytical demands of the question are addressed. Penalize omitted dimensions or severe brevity.
 
@@ -960,16 +1021,33 @@ app.post('/api/generate-overall-feedback', async (req, res) => {
   try {
     const { test } = req.body;
     
-    // Create a summarized version of the test to fit context window efficiently
+    // Create a compact summarized version of the test to fit context window efficiently
+    const sectionMap: Record<string, { name: string; mcqs: number; mcqCorrect: number; descCount: number }> = {};
+    (test.questions || []).forEach((q: any) => {
+      const sec = q.sectionName || test.subjectName || 'General';
+      if (!sectionMap[sec]) sectionMap[sec] = { name: sec, mcqs: 0, mcqCorrect: 0, descCount: 0 };
+      if (q.type === 'MCQ') {
+        sectionMap[sec].mcqs += 1;
+        if (q.isCorrect || q.userAnswer === q.correctAnswer) sectionMap[sec].mcqCorrect += 1;
+      } else {
+        sectionMap[sec].descCount += 1;
+      }
+    });
+
     const summary = {
-      mcqQuestions: test.questions.filter((q: any) => q.type === 'MCQ').map((q: any) => ({
-        sourceTag: q.sourceTag,
-        isCorrect: q.userAnswer === q.correctAnswer
-      })),
-      descriptiveEvaluations: test.questions.filter((q: any) => q.type === 'Descriptive').map((q: any) => {
+      examTitle: test.subjectName || 'RBI Grade B Mock',
+      isFullPhaseExam: Boolean(test.isFullPhaseExam),
+      phaseExamType: test.phaseExamType || null,
+      sectionBreakdown: Object.values(sectionMap),
+      staticMcqCorrect: (test.questions || []).filter((q: any) => q.type === 'MCQ' && q.sourceTag === 'Static' && (q.isCorrect || q.userAnswer === q.correctAnswer)).length,
+      staticMcqTotal: (test.questions || []).filter((q: any) => q.type === 'MCQ' && q.sourceTag === 'Static').length,
+      dynamicMcqCorrect: (test.questions || []).filter((q: any) => q.type === 'MCQ' && q.sourceTag === 'Dynamic' && (q.isCorrect || q.userAnswer === q.correctAnswer)).length,
+      dynamicMcqTotal: (test.questions || []).filter((q: any) => q.type === 'MCQ' && q.sourceTag === 'Dynamic').length,
+      descriptiveEvaluations: (test.questions || []).filter((q: any) => q.type === 'Descriptive').map((q: any) => {
         const qId = q.id || test.questions.indexOf(q).toString();
         const evalData = test.evaluations?.[qId];
         return {
+          sectionName: q.sectionName || q.topic,
           sourceTag: q.sourceTag,
           score: evalData?.totalScore,
           maxMarks: q.maxMarks,
@@ -981,16 +1059,16 @@ app.post('/api/generate-overall-feedback', async (req, res) => {
 
     const prompt = `You are a senior RBI Grade B exam coach. 
 Based on the student's mock exam performance summary below, provide an overall feedback report.
-Focus on identifying broad patterns across MCQs and descriptive answers (e.g., strong in static, weak in dynamic, good structure but lacks content depth).
+Focus on identifying clear patterns across sections/papers, Static vs Dynamic performance, and descriptive execution.
 
 Performance Summary:
 ${JSON.stringify(summary, null, 2)}
 
 Output strict JSON schema:
 {
-  "strengths": ["Strength 1", "Strength 2"],
-  "weaknesses": ["Weakness 1", "Weakness 2"],
-  "nextSteps": ["Actionable step 1", "Actionable step 2"]
+  "strengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "weaknesses": ["Weakness 1", "Weakness 2", "Weakness 3"],
+  "nextSteps": ["Actionable step 1", "Actionable step 2", "Actionable step 3"]
 }`;
 
     const rawJson = await callGeminiWithRetry(prompt);

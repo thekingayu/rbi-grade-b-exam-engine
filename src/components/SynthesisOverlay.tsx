@@ -9,6 +9,8 @@ interface SynthesisOverlayProps {
   onCancel: () => void;
   loadingMessage?: string;
   subjectName?: string;
+  progressPercent?: number;
+  detailText?: string;
 }
 
 const PHASES = [
@@ -22,7 +24,9 @@ export function SynthesisOverlay({
   isOpen,
   onCancel,
   loadingMessage,
-  subjectName = 'Curriculum'
+  subjectName = 'Curriculum',
+  progressPercent,
+  detailText
 }: SynthesisOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const orbitalRing1Ref = useRef<SVGSVGElement>(null);
@@ -244,10 +248,23 @@ export function SynthesisOverlay({
               </div>
 
               {/* Fixed-Dimension Subtitle */}
-              <div className="h-14 w-full max-w-[300px] sm:max-w-[340px] flex items-center justify-center mt-1 px-2 shrink-0 overflow-hidden mx-auto">
+              <div className="h-14 w-full max-w-[300px] sm:max-w-[340px] flex flex-col items-center justify-center mt-1 px-2 shrink-0 overflow-hidden mx-auto gap-1.5">
                 <p className="text-xs text-[#55554F] dark:text-[#A3A399] leading-relaxed text-center font-sans font-normal line-clamp-2">
-                  {PHASES[activePhaseIndex].sub}
+                  {detailText || PHASES[activePhaseIndex].sub}
                 </p>
+                {typeof progressPercent === 'number' && (
+                  <div className="w-full max-w-[260px] flex items-center gap-2">
+                    <div className="flex-1 h-2 rounded-full bg-[#E5E1CE] dark:bg-[#2E2E2A] border border-[#141413]/25 overflow-hidden">
+                      <div
+                        className="h-full bg-[#0D47FF] dark:bg-[#ECD5FF] transition-all duration-300 ease-out"
+                        style={{ width: `${Math.max(4, Math.min(100, progressPercent))}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums w-8 text-right">
+                      {Math.round(progressPercent)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

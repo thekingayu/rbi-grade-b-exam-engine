@@ -11,6 +11,7 @@ import {
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { isSyncDocument } from '../utils/firestore';
+import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
 import { FuturisticScreenLoader } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import { MotionPage, MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
@@ -78,7 +79,9 @@ export function TestHistory({ user }: { user: User }) {
     if (tests.length === 0) return;
     const headers = ['Attempt ID', 'Date', 'Subject', 'Mode', 'Status', 'Score %', 'Time Used (s)', 'Questions Count'];
     const rows = tests.map(t => {
-      const sub = subjects.find(s => s.id === t.subjectId || s.slug === t.subjectSlug)?.name || 'Unassigned';
+      const sub = subjects.find(s => s.id === t.subjectId || s.slug === t.subjectSlug)?.name
+        || getFullPhaseDisplayMeta(t.subjectSlug, t.subjectName)?.name
+        || 'Unassigned';
       const maxMarks = t.questions?.reduce((sum, q) => sum + (q.maxMarks || 0), 0) || 1;
       const scorePct = Math.round(((t.totalScore || 0) / maxMarks) * 100);
       return [
@@ -148,7 +151,10 @@ export function TestHistory({ user }: { user: User }) {
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const subName = t.subjectName || subjects.find(s => s.id === t.subjectId || s.slug === t.subjectSlug)?.name || '';
+      const subName = t.subjectName
+        || subjects.find(s => s.id === t.subjectId || s.slug === t.subjectSlug)?.name
+        || getFullPhaseDisplayMeta(t.subjectSlug, t.subjectName)?.name
+        || '';
       return subName.toLowerCase().includes(q) || (t.mode || '').toLowerCase().includes(q);
     }
     return true;
@@ -247,6 +253,8 @@ export function TestHistory({ user }: { user: User }) {
             className="flex-1 sm:flex-initial min-h-[40px] text-xs font-bold px-3 py-2 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] focus:outline-none focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] cursor-pointer"
           >
             <option value="all">All Subjects ({tests.length})</option>
+            <option value="phase-1-full">Full-Length Phase 1 Mock</option>
+            <option value="phase-2-full">Full-Length Phase 2 Mock</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
@@ -265,11 +273,13 @@ export function TestHistory({ user }: { user: User }) {
             </div>
           ) : (
             filteredTests.map(test => {
-              const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug) || {
-                name: 'Uncategorised',
-                accentColor: '#64748B',
-                icon: 'Layers'
-              };
+              const subMatch = subjects.find(s => s.id === test.subjectId || s.slug === test.subjectSlug)
+                || getFullPhaseDisplayMeta(test.subjectSlug, test.subjectName)
+                || {
+                  name: 'Uncategorised',
+                  accentColor: '#64748B',
+                  icon: 'Layers'
+                };
 
               const mcqQs = test.questions?.filter(q => q.type === 'MCQ') || [];
               const descQs = test.questions?.filter(q => q.type === 'Descriptive') || [];

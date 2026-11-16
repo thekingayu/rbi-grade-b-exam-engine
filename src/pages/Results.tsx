@@ -27,6 +27,9 @@ export function Results({ user }: { user: User }) {
   const [evaluating, setEvaluating] = useState(false);
   const [evalProgress, setEvalProgress] = useState({ message: 'Loading results...', percent: 10 });
   const [activeTab, setActiveTab] = useState<'summary' | 'mcq' | 'descriptive' | 'feedback'>('summary');
+  const [mcqSectionFilter, setMcqSectionFilter] = useState<string>('all');
+  const [descSectionFilter, setDescSectionFilter] = useState<string>('all');
+  const [mcqPage, setMcqPage] = useState<number>(1);
   const [reEvaluatingQId, setReEvaluatingQId] = useState<string | null>(null);
   const [reEvaluatingAll, setReEvaluatingAll] = useState(false);
 
@@ -264,14 +267,16 @@ export function Results({ user }: { user: User }) {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECD5FF] border-[1.5px] border-[#141413] mb-2">
               <Award className="w-3.5 h-3.5 text-[#141413]" />
               <span className="text-[11px] font-mono font-bold text-[#141413] tracking-wider uppercase">
-                EXAM EVALUATION & PERFORMANCE REPORT
+                {test.subjectName ? `${test.subjectName} · PERFORMANCE REPORT` : 'EXAM EVALUATION & PERFORMANCE REPORT'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-heading font-black text-[#141413] dark:text-[#FAF8EC] tracking-tight">
               Exam <span className="font-editorial-italic text-[#0D47FF] dark:text-[#ECD5FF]">Results</span>
             </h1>
             <p className="text-[#5C5A52] dark:text-[#A8A396] text-xs sm:text-sm mt-1">
-              Review your comprehensive performance analytics, answer keys, and evaluation rubrics.
+              {test.isFullPhaseExam
+                ? `${test.mode || test.phaseExamType} · Complete section-wise and rubric evaluation telemetry.`
+                : 'Review your comprehensive performance analytics, answer keys, and evaluation rubrics.'}
             </p>
           </div>
         </div>
@@ -351,11 +356,61 @@ export function Results({ user }: { user: User }) {
                 const descDynamicScore = getScore(descDynamicQs);
                 const descDynamicMax = getMax(descDynamicQs);
 
-                const overallPercentage = test.totalScore && getMax(test.questions) > 0 
-                  ? Math.round((test.totalScore / getMax(test.questions)) * 100) 
+                const totalMaxMarks = getMax(test.questions);
+                const overallPercentage = typeof test.totalScore === 'number' && totalMaxMarks > 0
+                  ? Math.round((test.totalScore / totalMaxMarks) * 100)
                   : 0;
 
+                const orderedSectionSummaries = (() => {
+                  if (!test.sections || test.sections.length === 0) return [];
+                  return test.sections.map(sec => {
+                    const saved = test.perSubjectScores?.[sec.id];
+                    if (saved) return saved;
+                    const secQs = test.questions.slice(sec.startIndex, sec.endIndex + 1);
+                    let score = 0;
+                    let attempted = 0;
+                    let correct = 0;
+                    let incorrect = 0;
+                    let mcqCount = 0;
+                    let descCount = 0;
+                    let maxMarks = 0;
+                    secQs.forEach(q => {
+                      maxMarks += q.maxMarks || 0;
+                      const att = isQuestionAttempted(q);
+                      if (att) attempted++;
+                      if (q.type === 'MCQ') {
+                        mcqCount++;
+                        score += q.score || 0;
+                        if (att) {
+                          if (isQuestionCorrect(q)) correct++;
+                          else incorrect++;
+                        }
+                      } else {
+                        descCount++;
+                        const qId = q.id || test.questions.indexOf(q).toString();
+                        score += test.evaluations?.[qId]?.totalScore || 0;
+                      }
+                    });
+                    return {
+                      sectionId: sec.id,
+                      slug: sec.slug,
+                      name: sec.name,
+                      shortName: sec.shortName,
+                      accentColor: sec.accentColor,
+                      score: Number(score.toFixed(2)),
+                      maxMarks: Number(maxMarks.toFixed(2)),
+                      attempted,
+                      correct,
+                      incorrect,
+                      questionCount: secQs.length,
+                      mcqCount,
+                      descCount
+                    };
+                  });
+                })();
+
                 return (
+                  <div className="space-y-6">
                   <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                     {/* Card 1: Overall Score */}
                     <MotionStaggerItem>
@@ -523,13 +578,114 @@ export function Results({ user }: { user: User }) {
                       </div>
                     </MotionStaggerItem>
                   </MotionStaggerGrid>
+
+                  {/* Section / Paper-Wise Scorecard for Full-Length Phase 1 & Phase 2 */}
+                  {orderedSectionSummaries.length > 0 && (
+                    <div className="bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-5 sm:p-6 space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm sm:text-base font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
+                            Section / Paper-Wise Scorecard
+                          </h3>
+                          <p className="text-xs text-[#5C5A52] dark:text-[#A8A396]">
+                            Disaggregated accuracy and marks scored across every paper vertical
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-[#ECD5FF] text-[#141413] border border-[#141413]">
+                          {orderedSectionSummaries.length} {orderedSectionSummaries.length === 3 ? 'Papers' : 'Sections'}
+                        </span>
+                      </div>
+
+                      <div className={clsx(
+                        'grid gap-4',
+                        orderedSectionSummaries.length === 3
+                          ? 'grid-cols-1 md:grid-cols-3'
+                          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                      )}>
+                        {orderedSectionSummaries.map(sec => {
+                          const secPct = sec.maxMarks > 0 ? Math.max(0, Math.round((sec.score / sec.maxMarks) * 100)) : 0;
+                          const unattempted = Math.max(0, sec.questionCount - sec.attempted);
+                          return (
+                            <div
+                              key={sec.sectionId}
+                              className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl p-4 flex flex-col justify-between space-y-3"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: sec.accentColor }}
+                                    />
+                                    <span className="text-xs font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] truncate" title={sec.name}>
+                                      {sec.shortName || sec.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] tabular-nums shrink-0">
+                                    {secPct}%
+                                  </span>
+                                </div>
+
+                                <div className="flex items-baseline gap-1 tabular-nums">
+                                  <span className="text-2xl font-heading font-black text-[#141413] dark:text-[#FAF8EC]">
+                                    {sec.score}
+                                  </span>
+                                  <span className="text-xs font-mono text-[#5C5A52] dark:text-[#A8A396]">
+                                    / {sec.maxMarks} Marks
+                                  </span>
+                                </div>
+
+                                <div className="w-full bg-[#E5E1CE] dark:bg-[#2E2E2A] h-2 rounded-full overflow-hidden mt-2.5">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${Math.min(100, Math.max(0, sec.maxMarks > 0 ? (sec.score / sec.maxMarks) * 100 : 0))}%`,
+                                      backgroundColor: sec.accentColor
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="pt-2 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#5C5A52] dark:text-[#A8A396] tabular-nums">
+                                {sec.mcqCount > 0 ? (
+                                  <>
+                                    <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ {sec.correct}</span>
+                                    <span className="text-rose-700 dark:text-rose-400 font-bold">✗ {sec.incorrect}</span>
+                                    <span>○ {unattempted}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Attempted: {sec.attempted}/{sec.questionCount}</span>
+                                    <span>Desc</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  </div>
                 );
               })()}
             </motion.div>
           )}
 
           {/* MCQ Tab Review */}
-          {activeTab === 'mcq' && (
+          {activeTab === 'mcq' && (() => {
+            const mcqSections = (test.sections || []).filter(sec =>
+              mcqQuestions.some(q => q.sectionId === sec.id)
+            );
+            const filteredMcqs = mcqSectionFilter === 'all'
+              ? mcqQuestions
+              : mcqQuestions.filter(q => q.sectionId === mcqSectionFilter);
+            const PAGE_SIZE = 40;
+            const totalPages = Math.max(1, Math.ceil(filteredMcqs.length / PAGE_SIZE));
+            const safePage = Math.min(mcqPage, totalPages);
+            const pagedMcqs = filteredMcqs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+            return (
             <motion.div
               key="tab-mcq"
               initial={{ opacity: 0, y: 10 }}
@@ -538,21 +694,69 @@ export function Results({ user }: { user: User }) {
               transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
               className="space-y-5"
             >
-              {mcqQuestions.length === 0 ? (
+              {mcqSections.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => { setMcqSectionFilter('all'); setMcqPage(1); }}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer',
+                      mcqSectionFilter === 'all'
+                        ? 'bg-[#141413] text-[#FAF8EC] dark:bg-[#ECD5FF] dark:text-[#141413] border-[#141413]'
+                        : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#5C5A52] dark:text-[#A8A396] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                    )}
+                  >
+                    All Sections ({mcqQuestions.length})
+                  </button>
+                  {mcqSections.map(sec => {
+                    const count = mcqQuestions.filter(q => q.sectionId === sec.id).length;
+                    const active = mcqSectionFilter === sec.id;
+                    return (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => { setMcqSectionFilter(sec.id); setMcqPage(1); }}
+                        className={clsx(
+                          'px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5',
+                          active
+                            ? 'bg-[#ECD5FF] text-[#141413] border-[#141413] shadow-[2px_2px_0px_#141413]'
+                            : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#5C5A52] dark:text-[#A8A396] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                        )}
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: sec.accentColor }} />
+                        <span>{sec.shortName} ({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {filteredMcqs.length === 0 ? (
                 <div className="text-center py-12 bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A]">
                   <p className="text-sm font-medium text-[#5C5A52] dark:text-[#A8A396]">No Multiple Choice Questions in this assessment.</p>
                 </div>
-              ) : mcqQuestions.map((q, i) => {
+              ) : pagedMcqs.map((q, localIdx) => {
+                const displayIndex = (safePage - 1) * PAGE_SIZE + localIdx;
                 const userAns = getQuestionUserAnswer(q);
                 const isAttempted = !!(userAns && userAns.trim() !== '');
                 const isCorrect = isAttempted && checkMCQCorrect(userAns, q.correctAnswer, q.options);
                 const isUnattempted = !isAttempted;
-                const scoreDisplay = isCorrect ? `+${q.maxMarks || 1} Marks` : isUnattempted ? '0 Marks' : '-0.25 Marks';
+                const wrongPenalty = test.negativeMarks === 0 ? 0 : Number((0.25 * (q.maxMarks || 1)).toFixed(2));
+                const scoreDisplay = isCorrect
+                  ? `+${q.maxMarks || 1} Marks`
+                  : isUnattempted
+                    ? '0 Marks'
+                    : (wrongPenalty > 0 ? `-${wrongPenalty} Marks` : '0 Marks');
                 
                 return (
-                  <div key={i} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
+                  <div key={q.id || displayIndex} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex flex-wrap items-center gap-2">
+                        {q.sectionName && (
+                          <span className="px-2.5 py-0.5 bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#141413] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] text-[11px] font-mono font-bold rounded-full">
+                            {q.sectionName}
+                          </span>
+                        )}
                         <span className="px-2.5 py-0.5 bg-[#ECD5FF] text-[#141413] border border-[#141413] text-[11px] font-mono font-bold rounded-full">
                           {q.sourceTag}
                         </span>
@@ -563,7 +767,7 @@ export function Results({ user }: { user: User }) {
                           </span>
                         )}
                         <span className="text-xs font-mono font-bold text-[#5C5A52] dark:text-[#A8A396]">
-                          QUESTION {i + 1} OF {mcqQuestions.length}
+                          QUESTION {displayIndex + 1} OF {filteredMcqs.length}
                         </span>
                       </div>
                       <span className={clsx(
@@ -664,11 +868,49 @@ export function Results({ user }: { user: User }) {
                   </div>
                 );
               })}
+
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <span className="text-xs font-mono text-[#5C5A52] dark:text-[#A8A396] tabular-nums">
+                    Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredMcqs.length)} of {filteredMcqs.length} MCQs
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={safePage <= 1}
+                      onClick={() => setMcqPage(p => Math.max(1, p - 1))}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] disabled:opacity-40 cursor-pointer"
+                    >
+                      Prev Page
+                    </button>
+                    <span className="text-xs font-mono font-bold px-2 tabular-nums">
+                      {safePage} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={safePage >= totalPages}
+                      onClick={() => setMcqPage(p => Math.min(totalPages, p + 1))}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#E5E1CE] dark:border-[#2E2E2A] bg-[#FAF8EC] dark:bg-[#141413] text-[#141413] dark:text-[#FAF8EC] disabled:opacity-40 cursor-pointer"
+                    >
+                      Next Page
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* Descriptive Tab Evaluation */}
-          {activeTab === 'descriptive' && (
+          {activeTab === 'descriptive' && (() => {
+            const descSections = (test.sections || []).filter(sec =>
+              descQuestions.some(q => q.sectionId === sec.id)
+            );
+            const filteredDescs = descSectionFilter === 'all'
+              ? descQuestions
+              : descQuestions.filter(q => q.sectionId === descSectionFilter);
+
+            return (
             <motion.div
               key="tab-descriptive"
               initial={{ opacity: 0, y: 10 }}
@@ -677,6 +919,42 @@ export function Results({ user }: { user: User }) {
               transition={{ duration: 0.2, ease: EASE_OUT_EXPO }}
               className="space-y-6"
             >
+              {descSections.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDescSectionFilter('all')}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer',
+                      descSectionFilter === 'all'
+                        ? 'bg-[#141413] text-[#FAF8EC] dark:bg-[#ECD5FF] dark:text-[#141413] border-[#141413]'
+                        : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#5C5A52] dark:text-[#A8A396] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                    )}
+                  >
+                    All Papers ({descQuestions.length})
+                  </button>
+                  {descSections.map(sec => {
+                    const count = descQuestions.filter(q => q.sectionId === sec.id).length;
+                    const active = descSectionFilter === sec.id;
+                    return (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => setDescSectionFilter(sec.id)}
+                        className={clsx(
+                          'px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5',
+                          active
+                            ? 'bg-[#ECD5FF] text-[#141413] border-[#141413] shadow-[2px_2px_0px_#141413]'
+                            : 'bg-[#FAF8EC] dark:bg-[#141413] text-[#5C5A52] dark:text-[#A8A396] border-[#E5E1CE] dark:border-[#2E2E2A]'
+                        )}
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: sec.accentColor }} />
+                        <span>{sec.shortName} ({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {descQuestions.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl px-4 py-3">
                   <div>
@@ -698,11 +976,11 @@ export function Results({ user }: { user: User }) {
                 </div>
               )}
 
-              {descQuestions.length === 0 ? (
+              {filteredDescs.length === 0 ? (
                 <div className="text-center py-12 bg-[#FAF8EC] dark:bg-[#141413] rounded-2xl border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A]">
                   <p className="text-sm font-medium text-[#5C5A52] dark:text-[#A8A396]">No Descriptive Questions in this assessment.</p>
                 </div>
-              ) : descQuestions.map((q, i) => {
+              ) : filteredDescs.map((q, i) => {
                 const qId = q.id || (test.questions.indexOf(q)).toString();
                 const evalData = test.evaluations?.[qId];
                 const userAns = q.userAnswer || test.answers?.[qId] || test.answers?.[test.questions.indexOf(q).toString()];
@@ -710,9 +988,14 @@ export function Results({ user }: { user: User }) {
                 const isCurrentlyReevaluating = reEvaluatingQId === qId;
                 
                 return (
-                  <div key={i} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
+                  <div key={qId || i} className="border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden bg-[#FAF8EC] dark:bg-[#141413] p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex flex-wrap items-center gap-2">
+                        {q.sectionName && (
+                          <span className="px-2.5 py-0.5 bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#141413] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] text-[11px] font-mono font-bold rounded-full">
+                            {q.sectionName}
+                          </span>
+                        )}
                         <span className="px-2.5 py-0.5 bg-[#ECD5FF] text-[#141413] border border-[#141413] text-[11px] font-mono font-bold rounded-full">
                           {q.sourceTag} DESCRIPTIVE
                         </span>
@@ -857,7 +1140,8 @@ export function Results({ user }: { user: User }) {
                 );
               })}
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* Feedback Tab */}
           {activeTab === 'feedback' && test.overallFeedback && (
