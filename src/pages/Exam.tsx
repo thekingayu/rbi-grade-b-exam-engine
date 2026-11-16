@@ -51,6 +51,15 @@ export function Exam({ user }: { user: User }) {
   useEffect(() => {
     const fetchTest = async () => {
       if (!testId) return;
+      setLoading(true);
+      hasLoadedRef.current = false;
+      setAnswers({});
+      answersRef.current = {};
+      setMarkedForReview({});
+      setCurrentIndex(0);
+      setActiveSectionIndex(0);
+      setSectionTimers([]);
+      setTimeLeft(0);
       const docRef = doc(db, 'tests', testId);
       const snap = await getDoc(docRef);
       if (snap.exists()) {

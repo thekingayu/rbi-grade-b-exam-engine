@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectCard } from '../components/dashboard/SubjectCard';
@@ -14,14 +14,15 @@ import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { RailwayTimeline, DiagonalMarquee, PrizeBadgeIcon } from '../components/SignatureGraphics';
 import { 
   Plus, CheckCircle2, TrendingUp, Trophy, ArrowRight,
-  Clock, Flame, BookOpen, Compass
+  Clock, Flame, BookOpen, Compass, RotateCcw
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
 import { isSyncDocument } from '../utils/firestore';
 import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
-import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import { createFreshReattemptTest } from '../utils/reattempt';
+import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 import {
   MotionPage,
   MotionSection,
@@ -33,9 +34,11 @@ import {
 } from '../components/MotionPrimitives';
 
 export function Dashboard({ user }: { user: User }) {
+  const navigate = useNavigate();
   const { subjects, setActiveSubject, targetExamDate, userProfile } = useSubject();
   const [tests, setTests] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reattemptingId, setReattemptingId] = useState<string | null>(null);
 
   const displayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Officer';
   const photoURL = userProfile?.photoURL || user.photoURL;
@@ -80,7 +83,18 @@ export function Dashboard({ user }: { user: User }) {
       setTests(prev => prev.filter(t => t.id !== testId));
     } catch (e) {
       console.error(e);
-      alert("Error terminating test. Please try again.");
+    }
+  };
+
+  const handleReattempt = async (sourceTest: TestAttempt) => {
+    if (reattemptingId) return;
+    try {
+      setReattemptingId(sourceTest.id);
+      const newTestId = await createFreshReattemptTest(sourceTest, user);
+      navigate(`/exam/${newTestId}`);
+    } catch (e) {
+      console.error('Failed to start reattempt:', e);
+      setReattemptingId(null);
     }
   };
 
@@ -492,7 +506,7 @@ export function Dashboard({ user }: { user: User }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between md:justify-end gap-4 sm:gap-5 shrink-0">
+                    <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 sm:gap-5 shrink-0">
                       {test.status === 'completed' && (
                         <div className="text-left md:text-right">
                           <span className="text-[10px] font-mono uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">Score</span>
@@ -502,7 +516,21 @@ export function Dashboard({ user }: { user: User }) {
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        {test.status !== 'completed' && (
+                        {test.status === 'completed' ? (
+                          <button
+                            onClick={() => handleReattempt(test)}
+                            disabled={!!reattemptingId || !test.questions || test.questions.length === 0}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer disabled:opacity-50 whitespace-nowrap transition-colors"
+                            title="Reattempt this exact exam freshly"
+                          >
+                            {reattemptingId === test.id ? (
+                              <FuturisticSpinner size="xs" color="cobalt" />
+                            ) : (
+                              <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                            )}
+                            <span>{reattemptingId === test.id ? 'Starting...' : 'Reattempt'}</span>
+                          </button>
+                        ) : (
                           <button
                             onClick={() => handleTerminate(test.id)}
                             className="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"

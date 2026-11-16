@@ -192,6 +192,7 @@ export interface TestAttempt {
   sections?: ExamSectionMeta[];
   sectionalTimingEnabled?: boolean;
   perSubjectScores?: Record<string, PerSubjectScoreSummary>;
+  reattemptOfTestId?: string;
   config: TestConfig;
   sourceNoteFileRefs: string[];
   extractedNotesText: string;

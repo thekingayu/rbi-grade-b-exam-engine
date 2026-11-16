@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Sparkles, Award, BarChart3, FileText, CheckCircle2, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Sparkles, Award, BarChart3, FileText, CheckCircle2, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
+import { createFreshReattemptTest } from '../utils/reattempt';
 import { FuturisticSpinner, FuturisticProgressBar } from '../components/FuturisticLoader';
 import { getSubjectBySlug } from '../data/subjects';
 import { motion, AnimatePresence } from 'motion/react';
@@ -22,6 +23,7 @@ import {
 
 export function Results({ user }: { user: User }) {
   const { testId } = useParams();
+  const navigate = useNavigate();
   const [test, setTest] = useState<TestAttempt | null>(null);
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
@@ -32,6 +34,8 @@ export function Results({ user }: { user: User }) {
   const [mcqPage, setMcqPage] = useState<number>(1);
   const [reEvaluatingQId, setReEvaluatingQId] = useState<string | null>(null);
   const [reEvaluatingAll, setReEvaluatingAll] = useState(false);
+  const [reattempting, setReattempting] = useState(false);
+  const [reattemptError, setReattemptError] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -162,6 +166,20 @@ export function Results({ user }: { user: User }) {
     }
   };
 
+  const handleReattempt = async () => {
+    if (!test || reattempting) return;
+    try {
+      setReattemptError(null);
+      setReattempting(true);
+      const newTestId = await createFreshReattemptTest(test, user);
+      navigate(`/exam/${newTestId}`);
+    } catch (err: any) {
+      console.error('Failed to start reattempt:', err);
+      setReattemptError(err?.message || 'Unable to launch a fresh reattempt right now.');
+      setReattempting(false);
+    }
+  };
+
   if (loading || evaluating) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 px-4">
@@ -280,7 +298,30 @@ export function Results({ user }: { user: User }) {
             </p>
           </div>
         </div>
+
+        <motion.button
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          transition={SPRING_SNAPPY}
+          onClick={handleReattempt}
+          disabled={reattempting || !test.questions || test.questions.length === 0}
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 min-h-[46px] rounded-xl text-xs sm:text-sm font-bold bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] transition-colors cursor-pointer disabled:opacity-50 shrink-0 self-start sm:self-end"
+        >
+          {reattempting ? (
+            <FuturisticSpinner size="xs" color="white" />
+          ) : (
+            <RotateCcw className="w-4 h-4 shrink-0" />
+          )}
+          <span>{reattempting ? 'Preparing Fresh Exam...' : 'Reattempt This Exam'}</span>
+        </motion.button>
       </div>
+
+      {reattemptError && (
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300 flex items-center justify-between gap-3">
+          <span>{reattemptError}</span>
+          <button onClick={() => setReattemptError(null)} className="font-bold cursor-pointer">✕</button>
+        </div>
+      )}
 
       {/* Main Container with Editorial Tabs */}
       <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl overflow-hidden shadow-xs">

@@ -18,7 +18,8 @@ import {
 import { format } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
 import { isSyncDocument } from '../utils/firestore';
-import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import { createFreshReattemptTest } from '../utils/reattempt';
+import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import {
   MotionPage,
@@ -40,7 +41,20 @@ export function SubjectDashboard({ user }: { user: User }) {
   const [filterScoreRange, setFilterScoreRange] = useState<string>('all');
   const [isUploadingNote, setIsUploadingNote] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [reattemptingId, setReattemptingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleReattempt = async (sourceTest: TestAttempt) => {
+    if (reattemptingId) return;
+    try {
+      setReattemptingId(sourceTest.id);
+      const newTestId = await createFreshReattemptTest(sourceTest, user);
+      navigate(`/exam/${newTestId}`);
+    } catch (err) {
+      console.error('Failed to reattempt exam:', err);
+      setReattemptingId(null);
+    }
+  };
 
   // Find subject
   const currentSubject = subjects.find(s => s.slug === slug) || subjects[0];
@@ -723,13 +737,26 @@ export function SubjectDashboard({ user }: { user: User }) {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                     <span className="text-lg font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
                       {pct}%
                     </span>
+                    <button
+                      onClick={() => handleReattempt(test)}
+                      disabled={!!reattemptingId || !test.questions || test.questions.length === 0}
+                      className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap"
+                      title="Reattempt this exam freshly"
+                    >
+                      {reattemptingId === test.id ? (
+                        <FuturisticSpinner size="xs" color="cobalt" />
+                      ) : (
+                        <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                      )}
+                      <span>{reattemptingId === test.id ? 'Starting...' : 'Reattempt'}</span>
+                    </button>
                     <Link
                       to={`/results/${test.id}`}
-                      className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
+                      className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors whitespace-nowrap"
                     >
                       View Report
                     </Link>

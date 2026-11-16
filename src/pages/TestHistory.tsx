@@ -6,13 +6,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
 import { format } from 'date-fns';
 import {
-  FileText, ArrowLeft, Download, Search, Check, X, GitCompare, RefreshCw
+  FileText, ArrowLeft, Download, Search, Check, X, GitCompare, RefreshCw, RotateCcw
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { isSyncDocument } from '../utils/firestore';
 import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
-import { FuturisticScreenLoader } from '../components/FuturisticLoader';
+import { createFreshReattemptTest } from '../utils/reattempt';
+import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import { MotionPage, MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
 
@@ -35,6 +36,22 @@ export function TestHistory({ user }: { user: User }) {
   const [selectedForReassign, setSelectedForReassign] = useState<string[]>([]);
   const [targetReassignSubjectId, setTargetReassignSubjectId] = useState<string>(subjects[0]?.id || '');
   const [isReassigning, setIsReassigning] = useState(false);
+  const [reattemptingId, setReattemptingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleReattempt = async (sourceTest: TestAttempt) => {
+    if (reattemptingId) return;
+    try {
+      setActionError(null);
+      setReattemptingId(sourceTest.id);
+      const newTestId = await createFreshReattemptTest(sourceTest, user);
+      navigate(`/exam/${newTestId}`);
+    } catch (err: any) {
+      console.error('Failed to reattempt exam:', err);
+      setActionError(err?.message || 'Unable to start a fresh reattempt.');
+      setReattemptingId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -233,6 +250,12 @@ export function TestHistory({ user }: { user: User }) {
       </div>
 
       {/* Filter and Search Bar */}
+      {actionError && (
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300 flex items-center justify-between gap-3">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="font-bold cursor-pointer">✕</button>
+        </div>
+      )}
       <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 text-[#66665E] dark:text-[#A3A399] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -362,12 +385,27 @@ export function TestHistory({ user }: { user: User }) {
 
                   <div className="flex items-center justify-end gap-2.5 w-full md:w-auto shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[#E5E1CE]/60 dark:border-[#2E2E2A]/60">
                     {test.status === 'completed' ? (
-                      <Link
-                        to={`/results/${test.id}`}
-                        className="w-full sm:w-auto text-center px-4 py-2 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors"
-                      >
-                        View Report
-                      </Link>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={() => handleReattempt(test)}
+                          disabled={!!reattemptingId || !test.questions || test.questions.length === 0}
+                          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#ECD5FF] hover:bg-[#FFD426] text-[#141413] border border-[#141413] shadow-[2px_2px_0px_#141413] cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap"
+                          title="Start this exact paper again with fresh blank answers"
+                        >
+                          {reattemptingId === test.id ? (
+                            <FuturisticSpinner size="xs" color="cobalt" />
+                          ) : (
+                            <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                          )}
+                          <span>{reattemptingId === test.id ? 'Starting...' : 'Reattempt'}</span>
+                        </button>
+                        <Link
+                          to={`/results/${test.id}`}
+                          className="flex-1 sm:flex-initial text-center px-4 py-2 rounded-xl text-xs font-bold bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:bg-[#0D47FF] hover:text-white hover:border-[#141413] text-[#141413] dark:text-[#FAF8EC] transition-colors whitespace-nowrap"
+                        >
+                          View Report
+                        </Link>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button
