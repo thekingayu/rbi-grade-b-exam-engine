@@ -497,11 +497,11 @@ export function Login() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 sm:space-y-12">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.05 }}
-            transition={{ duration: 0.45, ease: EASE_OUT_EXPO }}
-            className="max-w-2xl space-y-2"
+            transition={{ ...SPRING_BOUNCY, opacity: { duration: 0.25 } }}
+            className="max-w-2xl space-y-2 will-change-transform"
           >
             <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
               EXAMINATION ARCHITECTURE · CYCLE 2026–27
@@ -527,21 +527,22 @@ export function Login() {
                   <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
                     SECTIONAL BLUEPRINT
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">80 Qs</span>
-                    <span>General Awareness (25m)</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">60 Qs</span>
-                    <span>Reasoning Ability (45m)</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">30+30</span>
-                    <span>Quant &amp; English (50m)</span>
-                  </div>
+                  {[
+                    { code: '80 Qs', text: 'General Awareness (25m)' },
+                    { code: '60 Qs', text: 'Reasoning Ability (45m)' },
+                    { code: '30+30', text: 'Quant & English (50m)' },
+                  ].map((item) => (
+                    <motion.div
+                      key={item.code}
+                      whileHover={{ x: 5 }}
+                      transition={SPRING_SNAPPY}
+                      className="flex items-center gap-2.5 cursor-default"
+                    >
+                      <span className="w-2.5 h-2.5 bg-[#ECD5FF] border border-[#141413] shrink-0" />
+                      <span className="font-mono font-bold tabular-nums">{item.code}</span>
+                      <span>{item.text}</span>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </MotionStaggerItem>
@@ -560,21 +561,22 @@ export function Login() {
                   <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
                     MERIT PAPERS
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">100 M</span>
-                    <span>Paper I: Economic &amp; Social Issues</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">100 M</span>
-                    <span>Paper II: English Descriptive Writing</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">100 M</span>
-                    <span>Paper III: Finance &amp; Management</span>
-                  </div>
+                  {[
+                    { code: '100 M', text: 'Paper I: Economic & Social Issues' },
+                    { code: '100 M', text: 'Paper II: English Descriptive Writing' },
+                    { code: '100 M', text: 'Paper III: Finance & Management' },
+                  ].map((item) => (
+                    <motion.div
+                      key={item.text}
+                      whileHover={{ x: 5 }}
+                      transition={SPRING_SNAPPY}
+                      className="flex items-center gap-2.5 cursor-default"
+                    >
+                      <span className="w-2.5 h-2.5 bg-[#FFD426] border border-[#141413] shrink-0" />
+                      <span className="font-mono font-bold tabular-nums">{item.code}</span>
+                      <span>{item.text}</span>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </MotionStaggerItem>
@@ -593,16 +595,21 @@ export function Login() {
                   <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
                     FINAL SELECTION
                   </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#0D47FF] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">75 M</span>
-                    <span>Personality &amp; RBI Board Viva</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 bg-[#0D47FF] border border-[#141413] shrink-0" />
-                    <span className="font-mono font-bold tabular-nums">375 M</span>
-                    <span>Final All-India Cadre Merit List</span>
-                  </div>
+                  {[
+                    { code: '75 M', text: 'Personality & RBI Board Viva' },
+                    { code: '375 M', text: 'Final All-India Cadre Merit List' },
+                  ].map((item) => (
+                    <motion.div
+                      key={item.code}
+                      whileHover={{ x: 5 }}
+                      transition={SPRING_SNAPPY}
+                      className="flex items-center gap-2.5 cursor-default"
+                    >
+                      <span className="w-2.5 h-2.5 bg-[#0D47FF] border border-[#141413] shrink-0" />
+                      <span className="font-mono font-bold tabular-nums">{item.code}</span>
+                      <span>{item.text}</span>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </MotionStaggerItem>

@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
-import { EASE_OUT_EXPO, SPRING_SNAPPY, SPRING_BUTTERY } from './MotionPrimitives';
+import { EASE_OUT_EXPO, SPRING_SNAPPY, SPRING_BUTTERY, SPRING_BOUNCY } from './MotionPrimitives';
 
 /**
  * 1. Station Signboard + Architectural Skyline Line Art
- * Matches Screenshot 3: Yellow platform signboards (PF 1 / PF 2 / PF 3) over black-ink outlines on cream.
+ * Animated yellow platform signboards (PF 1 / PF 2 / PF 3) with full skyline & rail motion.
  */
 export function StationSignboard({
   title,
@@ -15,25 +15,54 @@ export function StationSignboard({
   subtitle: string;
   variant?: 1 | 2 | 3;
 }) {
+  const baseDelay = (variant - 1) * 0.08;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 36, scale: 0.96 }}
+      initial={{ opacity: 0, y: 24, scale: 0.94 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.65, delay: (variant - 1) * 0.1, ease: EASE_OUT_EXPO }}
+      viewport={{ once: true, amount: 0.08 }}
+      transition={{ ...SPRING_BOUNCY, delay: baseDelay, opacity: { duration: 0.24, delay: baseDelay } }}
       whileHover="hovered"
-      className="relative w-full pt-1 select-none group will-change-transform"
+      whileTap={{ scale: 0.98 }}
+      className="relative w-full pt-2 select-none group will-change-transform cursor-pointer"
     >
-      {/* Yellow Signboard */}
+      {/* Yellow Signboard with visible harmonic hover/float & glossy diagonal sheen */}
       <motion.div
-        animate={{ rotate: variant === 2 ? [0.7, -0.7, 0.7] : [-0.8, 0.8, -0.8] }}
-        transition={{ duration: 5.2 + variant * 0.7, repeat: Infinity, ease: 'easeInOut' }}
-        variants={{
-          hovered: { y: -7, scale: 1.025, rotate: variant === 2 ? 1.5 : -1.5 }
+        animate={{
+          y: [0, -5, 0],
+          rotate: variant === 2 ? [1.2, -1.2, 1.2] : [-1.3, 1.3, -1.3]
         }}
-        className="relative z-10 mx-auto w-[86%] max-w-[270px] bg-[#FFD426] border-[1.75px] border-[#141413] rounded-2xl px-4 py-3 text-center shadow-[3px_3px_0px_#141413] group-hover:shadow-[6px_6px_0px_#141413] transition-shadow text-[#141413] will-change-transform"
+        transition={{
+          y: { duration: 2.6 + variant * 0.25, repeat: Infinity, ease: 'easeInOut' },
+          rotate: { duration: 3.1 + variant * 0.35, repeat: Infinity, ease: 'easeInOut' }
+        }}
+        variants={{
+          hovered: {
+            y: -9,
+            scale: 1.035,
+            rotate: 0,
+            transition: SPRING_BOUNCY
+          }
+        }}
+        className="relative z-10 mx-auto w-[86%] max-w-[270px] bg-[#FFD426] border-[1.75px] border-[#141413] rounded-2xl px-4 py-3 text-center shadow-[3px_3px_0px_#141413] group-hover:shadow-[6px_6px_0px_#141413] transition-shadow text-[#141413] overflow-hidden will-change-transform"
       >
-        <div className="border border-[#141413]/70 rounded-xl px-2 py-2">
+        {/* Continuous smooth glossy sheen sweep across the signboard */}
+        <motion.div
+          aria-hidden="true"
+          initial={{ x: '-160%', skewX: -20 }}
+          animate={{ x: ['-160%', '260%'], skewX: -20 }}
+          transition={{
+            duration: 2.4,
+            delay: (variant - 1) * 0.55,
+            repeat: Infinity,
+            repeatDelay: 1.0,
+            ease: EASE_OUT_EXPO
+          }}
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-white/55 to-transparent will-change-transform"
+        />
+
+        <div className="relative z-10 border border-[#141413]/70 rounded-xl px-2 py-2">
           <div className="font-heading font-black text-base sm:text-lg tracking-tight uppercase leading-none">
             {title}
           </div>
@@ -43,104 +72,390 @@ export function StationSignboard({
         </div>
       </motion.div>
 
-      {/* Black & white striped poles + Skyline SVG */}
+      {/* Black & white striped poles + Fully Animated Skyline & Gliding Commuter */}
       <div className="relative -mt-1 flex flex-col items-center">
-        <svg viewBox="0 0 320 96" className="w-full max-w-[320px] h-24 overflow-visible">
-          {/* Two striped signpost legs */}
-          <rect x="76" y="0" width="8" height="84" fill="#FFFFFF" stroke="#141413" strokeWidth="1.5" />
-          <rect x="76" y="10" width="8" height="10" fill="#141413" />
-          <rect x="76" y="30" width="8" height="10" fill="#141413" />
-          <rect x="76" y="50" width="8" height="10" fill="#141413" />
-          <rect x="76" y="70" width="8" height="10" fill="#141413" />
+        <svg viewBox="0 0 320 98" className="w-full max-w-[320px] h-24 overflow-visible">
+          <defs>
+            <clipPath id={`curb-clip-${variant}`}>
+              <rect x="8" y="80" width="304" height="12" rx="3" />
+            </clipPath>
+          </defs>
 
-          <rect x="236" y="0" width="8" height="84" fill="#FFFFFF" stroke="#141413" strokeWidth="1.5" />
-          <rect x="236" y="10" width="8" height="10" fill="#141413" />
-          <rect x="236" y="30" width="8" height="10" fill="#141413" />
-          <rect x="236" y="50" width="8" height="10" fill="#141413" />
-          <rect x="236" y="70" width="8" height="10" fill="#141413" />
+          {/* Two striped signpost legs rising smoothly from the base */}
+          <motion.g
+            initial={{ scaleY: 0, opacity: 0 }}
+            whileInView={{ scaleY: 1, opacity: 1 }}
+            viewport={{ once: true, amount: 0.08 }}
+            transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.05 }}
+            style={{ transformOrigin: '160px 84px' }}
+          >
+            <rect x="76" y="0" width="8" height="84" fill="#FFFFFF" stroke="#141413" strokeWidth="1.5" />
+            <rect x="76" y="10" width="8" height="10" fill="#141413" />
+            <rect x="76" y="30" width="8" height="10" fill="#141413" />
+            <rect x="76" y="50" width="8" height="10" fill="#141413" />
+            <rect x="76" y="70" width="8" height="10" fill="#141413" />
 
-          {/* Variant silhouettes */}
+            <rect x="236" y="0" width="8" height="84" fill="#FFFFFF" stroke="#141413" strokeWidth="1.5" />
+            <rect x="236" y="10" width="8" height="10" fill="#141413" />
+            <rect x="236" y="30" width="8" height="10" fill="#141413" />
+            <rect x="236" y="50" width="8" height="10" fill="#141413" />
+            <rect x="236" y="70" width="8" height="10" fill="#141413" />
+          </motion.g>
+
+          {/* Variant 1: Financial District — animated buildings, blinking windows, floating bird/cloud */}
           {variant === 1 && (
-            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/70" strokeWidth="1.3" fill="none">
-              <rect x="24" y="46" width="22" height="38" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="30" y1="54" x2="40" y2="54" />
-              <line x1="30" y1="62" x2="40" y2="62" />
-              <polygon points="52,84 52,38 64,22 74,38 74,84" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <path d="M98 84 L98 62 Q112 46 126 62 L126 84 Z" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <rect x="136" y="32" width="28" height="52" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="143" y1="42" x2="157" y2="42" />
-              <line x1="143" y1="50" x2="157" y2="50" />
-              <line x1="143" y1="58" x2="157" y2="58" />
-              <polygon points="182,84 182,58 206,52 206,84" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <polygon points="262,84 262,48 278,34 294,48 294,84" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/75" strokeWidth="1.3" fill="none">
+              {/* Gentle drifting breeze cloud */}
+              <motion.path
+                d="M178 24 H206 C206 19 201 16 196 18 C193 13 185 13 183 18 C179 18 178 21 178 24 Z"
+                fill="#FCFBF2"
+                className="dark:fill-[#242421]"
+                animate={{ x: [-8, 12, -8], y: [0, -2.5, 0] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+              />
+
+              {/* Left block + glowing windows */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.08 }}
+                style={{ transformOrigin: '35px 84px' }}
+              >
+                <rect x="24" y="46" width="22" height="38" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                <motion.line
+                  x1="30" y1="54" x2="40" y2="54"
+                  animate={{ opacity: [0.35, 1, 0.35], scaleX: [0.8, 1, 0.8] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '35px 54px' }}
+                />
+                <motion.line
+                  x1="30" y1="62" x2="40" y2="62"
+                  animate={{ opacity: [0.35, 1, 0.35], scaleX: [0.8, 1, 0.8] }}
+                  transition={{ duration: 1.8, delay: 0.35, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '35px 62px' }}
+                />
+              </motion.g>
+
+              {/* Pointed spire building */}
+              <motion.polygon
+                points="52,84 52,38 64,22 74,38 74,84"
+                fill="#FCFBF2"
+                className="dark:fill-[#1C1C1A]"
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.14 }}
+                style={{ transformOrigin: '63px 84px' }}
+              />
+
+              {/* Archway building */}
+              <motion.path
+                d="M98 84 L98 62 Q112 46 126 62 L126 84 Z"
+                fill="#FCFBF2"
+                className="dark:fill-[#1C1C1A]"
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.18 }}
+                style={{ transformOrigin: '112px 84px' }}
+              />
+
+              {/* Tall central tower with animated signal bars */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.22 }}
+                variants={{ hovered: { y: -3, transition: SPRING_BOUNCY } }}
+                style={{ transformOrigin: '150px 84px' }}
+              >
+                <rect x="136" y="32" width="28" height="52" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                {[42, 50, 58].map((yPos, i) => (
+                  <motion.line
+                    key={yPos}
+                    x1="143"
+                    y1={yPos}
+                    x2="157"
+                    y2={yPos}
+                    animate={{ opacity: [0.35, 1, 0.35], scaleX: [0.85, 1, 0.85] }}
+                    transition={{ duration: 1.6, delay: i * 0.28, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{ transformOrigin: `150px ${yPos}px` }}
+                  />
+                ))}
+              </motion.g>
+
+              {/* Slanted modern block */}
+              <motion.polygon
+                points="182,84 182,58 206,52 206,84"
+                fill="#FCFBF2"
+                className="dark:fill-[#1C1C1A]"
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.26 }}
+                style={{ transformOrigin: '194px 84px' }}
+              />
+
+              {/* Right gabled house */}
+              <motion.polygon
+                points="262,84 262,48 278,34 294,48 294,84"
+                fill="#FCFBF2"
+                className="dark:fill-[#1C1C1A]"
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.3 }}
+                style={{ transformOrigin: '278px 84px' }}
+              />
             </g>
           )}
 
+          {/* Variant 2: Broadcast Hub — radar concentric waves + swaying spire + cycling floors */}
           {variant === 2 && (
-            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/70" strokeWidth="1.3" fill="none">
-              <rect x="22" y="36" width="32" height="48" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="29" y1="45" x2="47" y2="45" />
-              <line x1="29" y1="53" x2="47" y2="53" />
-              <line x1="29" y1="61" x2="47" y2="61" />
-              <line x1="106" y1="84" x2="112" y2="28" />
-              <line x1="118" y1="84" x2="112" y2="28" />
-              <motion.circle
-                cx="112"
-                cy="26"
-                r="3.2"
-                fill="#FFD426"
-                animate={{ scale: [1, 1.35, 1], opacity: [0.85, 1, 0.85] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '112px 26px' }}
+            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/75" strokeWidth="1.3" fill="none">
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.08 }}
+                style={{ transformOrigin: '38px 84px' }}
+              >
+                <rect x="22" y="36" width="32" height="48" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                {[45, 53, 61].map((yPos, i) => (
+                  <motion.line
+                    key={yPos}
+                    x1="29" y1={yPos} x2="47" y2={yPos}
+                    animate={{ opacity: [0.35, 1, 0.35] }}
+                    transition={{ duration: 1.5, delay: i * 0.24, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                ))}
+              </motion.g>
+
+              {/* Transmission Spire + Triple Concentric Radar Rings */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.14 }}
+                style={{ transformOrigin: '112px 84px' }}
+              >
+                <line x1="106" y1="84" x2="112" y2="28" />
+                <line x1="118" y1="84" x2="112" y2="28" />
+                {[0, 0.55, 1.1].map((rippleDelay, i) => (
+                  <motion.circle
+                    key={i}
+                    cx="112"
+                    cy="26"
+                    r="3.4"
+                    fill="none"
+                    stroke="#0D47FF"
+                    strokeWidth="1.2"
+                    animate={{ scale: [1, 3.8], opacity: [0.9, 0] }}
+                    transition={{ duration: 1.75, delay: rippleDelay, repeat: Infinity, ease: 'easeOut' }}
+                    style={{ transformOrigin: '112px 26px' }}
+                  />
+                ))}
+                <motion.circle
+                  cx="112"
+                  cy="26"
+                  r="3.5"
+                  fill="#FFD426"
+                  animate={{ scale: [1, 1.38, 1] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '112px 26px' }}
+                />
+              </motion.g>
+
+              <motion.polygon
+                points="134,84 134,64 150,54 166,64 166,84"
+                fill="#FCFBF2"
+                className="dark:fill-[#1C1C1A]"
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.18 }}
+                style={{ transformOrigin: '150px 84px' }}
               />
-              <polygon points="134,84 134,64 150,54 166,64 166,84" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <rect x="176" y="34" width="34" height="50" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="184" y1="44" x2="202" y2="44" />
-              <line x1="184" y1="52" x2="202" y2="52" />
-              <line x1="184" y1="60" x2="202" y2="60" />
-              <rect x="260" y="56" width="36" height="28" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="256" y1="56" x2="300" y2="56" />
+
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.22 }}
+                variants={{ hovered: { y: -3, transition: SPRING_BOUNCY } }}
+                style={{ transformOrigin: '193px 84px' }}
+              >
+                <rect x="176" y="34" width="34" height="50" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                {[44, 52, 60].map((yPos, i) => (
+                  <motion.line
+                    key={yPos}
+                    x1="184" y1={yPos} x2="202" y2={yPos}
+                    animate={{ opacity: [0.35, 1, 0.35], scaleX: [0.8, 1, 0.8] }}
+                    transition={{ duration: 1.6, delay: i * 0.25 + 0.2, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{ transformOrigin: `193px ${yPos}px` }}
+                  />
+                ))}
+              </motion.g>
+
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.28 }}
+                style={{ transformOrigin: '278px 84px' }}
+              >
+                <rect x="260" y="56" width="36" height="28" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                <line x1="256" y1="56" x2="300" y2="56" />
+              </motion.g>
             </g>
           )}
 
+          {/* Variant 3: RBI Mint Heritage Clock Tower — swaying trees, pulsing clock halo, brisk clock hands & sparkles */}
           {variant === 3 && (
-            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/70" strokeWidth="1.3" fill="none">
-              {/* Central RBI Mint / Heritage Clock Tower Heritage Hall */}
-              <circle cx="48" cy="64" r="14" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="48" y1="78" x2="48" y2="84" />
-              <rect x="92" y="54" width="136" height="30" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <rect x="144" y="28" width="32" height="56" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <polygon points="140,28 160,12 180,28" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <circle cx="160" cy="44" r="8" fill="#FFD426" stroke="#141413" strokeWidth="1.4" />
-              <motion.line
-                x1="160"
-                y1="44"
-                x2="160"
-                y2="38.5"
-                stroke="#141413"
-                strokeWidth="1.4"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                style={{ transformOrigin: '160px 44px' }}
-              />
-              <motion.line
-                x1="160"
-                y1="44"
-                x2="164"
-                y2="44"
-                stroke="#141413"
-                strokeWidth="1.4"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-                style={{ transformOrigin: '160px 44px' }}
-              />
-              {[104, 118, 132, 188, 202, 216].map((x) => (
-                <line key={x} x1={x} y1="64" x2={x} y2="74" />
-              ))}
-              <circle cx="276" cy="64" r="14" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
-              <line x1="276" y1="78" x2="276" y2="84" />
+            <g className="stroke-[#141413] dark:stroke-[#FAF8EC]/75" strokeWidth="1.3" fill="none">
+              {/* Left tree gently swaying in breeze */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.08 }}
+                style={{ transformOrigin: '48px 84px' }}
+              >
+                <motion.g
+                  animate={{ rotate: [-5, 5, -5] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '48px 84px' }}
+                >
+                  <circle cx="48" cy="64" r="14" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                  <line x1="48" y1="78" x2="48" y2="84" />
+                </motion.g>
+              </motion.g>
+
+              {/* Central RBI Mint & Clock Tower */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.16 }}
+                variants={{ hovered: { y: -3, transition: SPRING_BOUNCY } }}
+                style={{ transformOrigin: '160px 84px' }}
+              >
+                <rect x="92" y="54" width="136" height="30" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                <rect x="144" y="28" width="32" height="56" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                <polygon points="140,28 160,12 180,28" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+
+                {/* Pulsing golden aura ring around clock face */}
+                <motion.circle
+                  cx="160"
+                  cy="44"
+                  r="8"
+                  fill="none"
+                  stroke="#FFD426"
+                  strokeWidth="1.4"
+                  animate={{ scale: [1, 1.75], opacity: [0.85, 0] }}
+                  transition={{ duration: 2.0, repeat: Infinity, ease: 'easeOut' }}
+                  style={{ transformOrigin: '160px 44px' }}
+                />
+
+                <circle cx="160" cy="44" r="8" fill="#FFD426" stroke="#141413" strokeWidth="1.4" />
+                {/* Visible, smooth spinning minute & hour hands */}
+                <motion.line
+                  x1="160"
+                  y1="44"
+                  x2="160"
+                  y2="38.2"
+                  stroke="#141413"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3.6, repeat: Infinity, ease: 'linear' }}
+                  style={{ transformOrigin: '160px 44px' }}
+                />
+                <motion.line
+                  x1="160"
+                  y1="44"
+                  x2="164.5"
+                  y2="44"
+                  stroke="#141413"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+                  style={{ transformOrigin: '160px 44px' }}
+                />
+
+                {[104, 118, 132, 188, 202, 216].map((x, idx) => (
+                  <motion.line
+                    key={x}
+                    x1={x}
+                    y1="64"
+                    x2={x}
+                    y2="74"
+                    animate={{ opacity: [0.45, 1, 0.45] }}
+                    transition={{ duration: 1.6, delay: idx * 0.16, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                ))}
+
+                {/* Twinkling spire star sparkles */}
+                <motion.path
+                  d="M126 16 L127.6 19.6 L131.2 21.2 L127.6 22.8 L126 26.4 L124.4 22.8 L120.8 21.2 L124.4 19.6 Z"
+                  fill="#ECD5FF"
+                  stroke="#141413"
+                  strokeWidth="1"
+                  animate={{ scale: [0.75, 1.2, 0.75], rotate: [0, 20, 0], opacity: [0.65, 1, 0.65] }}
+                  transition={{ duration: 2.0, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '126px 21.2px' }}
+                />
+                <motion.path
+                  d="M194 14 L195.4 17 L198.4 18.4 L195.4 19.8 L194 22.8 L192.6 19.8 L189.6 18.4 L192.6 17 Z"
+                  fill="#FFD426"
+                  stroke="#141413"
+                  strokeWidth="1"
+                  animate={{ scale: [0.8, 1.25, 0.8], rotate: [0, -20, 0], opacity: [0.65, 1, 0.65] }}
+                  transition={{ duration: 2.2, delay: 0.7, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '194px 18.4px' }}
+                />
+              </motion.g>
+
+              {/* Right tree gently swaying out of phase */}
+              <motion.g
+                initial={{ scaleY: 0, opacity: 0 }}
+                whileInView={{ scaleY: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ ...SPRING_BOUNCY, delay: baseDelay + 0.24 }}
+                style={{ transformOrigin: '276px 84px' }}
+              >
+                <motion.g
+                  animate={{ rotate: [5, -5, 5] }}
+                  transition={{ duration: 2.7, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: '276px 84px' }}
+                >
+                  <circle cx="276" cy="64" r="14" fill="#FCFBF2" className="dark:fill-[#1C1C1A]" />
+                  <line x1="276" y1="78" x2="276" y2="84" />
+                </motion.g>
+              </motion.g>
             </g>
           )}
+
+          {/* Gliding mini metro train pulse racing smoothly along the platform top */}
+          <g clipPath={`url(#curb-clip-${variant})`}>
+            <motion.g
+              animate={{ x: [-36, 330] }}
+              transition={{
+                duration: 3.4,
+                delay: (variant - 1) * 0.9,
+                repeat: Infinity,
+                ease: 'linear'
+              }}
+              className="will-change-transform"
+            >
+              <rect x="0" y="79" width="26" height="5" rx="2" fill="#0D47FF" stroke="#141413" strokeWidth="1" />
+              <rect x="19" y="80" width="4" height="2" rx="0.5" fill="#FFD426" />
+              <rect x="4" y="80.5" width="4" height="1.8" rx="0.5" fill="#ECD5FF" />
+              <rect x="10" y="80.5" width="4" height="1.8" rx="0.5" fill="#ECD5FF" />
+            </motion.g>
+          </g>
 
           {/* Yellow platform curb base */}
           <rect x="8" y="84" width="304" height="7" rx="3" fill="#FFD426" stroke="#141413" strokeWidth="1.5" />

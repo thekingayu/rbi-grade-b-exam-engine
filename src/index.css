@@ -192,14 +192,14 @@ html {
 .animate-marquee-left {
   display: flex;
   width: max-content;
-  animation: marqueeScrollLeft 24s linear infinite;
+  animation: marqueeScrollLeft 18s linear infinite;
   will-change: transform;
 }
 
 .animate-marquee-right {
   display: flex;
   width: max-content;
-  animation: marqueeScrollRight 24s linear infinite;
+  animation: marqueeScrollRight 18s linear infinite;
   will-change: transform;
 }
 
@@ -274,23 +274,23 @@ html {
 }
 
 .animate-spin-slow {
-  animation: spinSlow 14s linear infinite;
+  animation: spinSlow 11s linear infinite;
   will-change: transform;
 }
 
 .animate-sparkle {
-  animation: sparklePop 2.2s ease-in-out infinite;
+  animation: sparklePop 1.8s ease-in-out infinite;
   transform-origin: center;
   will-change: transform, opacity;
 }
 
 .animate-train-bob {
-  animation: trainBob 0.85s ease-in-out infinite;
+  animation: trainBob 0.75s ease-in-out infinite;
   will-change: transform;
 }
 
 .animate-sheen-sweep {
-  animation: sheenSweep 4.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: sheenSweep 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   will-change: transform, opacity;
 }
 
