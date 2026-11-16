@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { User } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
-import { Clock, ChevronLeft, ChevronRight, Flag, BookOpen, RotateCcw, ChevronUp, ChevronDown, Award, Lock, ArrowRight } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Flag, BookOpen, RotateCcw, ChevronUp, ChevronDown, Award, Lock, ArrowRight, XCircle, Trash2, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { evaluateAndPersistTest } from '../services/evaluation';
+import { getPreloadedTest, clearPreloadedTest, waitForPendingTestWrite } from '../utils/reattempt';
+import { handleFirestoreError, OperationType } from '../utils/firestore';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { FuturisticSpinner, FuturisticProgressBar, FuturisticScreenLoader } from '../components/FuturisticLoader';
 import { MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
@@ -44,40 +46,35 @@ export function Exam({ user }: { user: User }) {
   const [showSectionConfirm, setShowSectionConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
+  const [terminating, setTerminating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const isTerminatedRef = useRef(false);
+  const hasUserModifiedAnswersRef = useRef(false);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasSections = Array.isArray(test?.sections) && test!.sections!.length > 0;
   const isSectionalLocked = Boolean(hasSections && test?.sectionalTimingEnabled);
 
   useEffect(() => {
-    const fetchTest = async () => {
-      if (!testId) return;
-      setLoading(true);
-      hasLoadedRef.current = false;
-      setAnswers({});
-      answersRef.current = {};
-      setMarkedForReview({});
-      setCurrentIndex(0);
-      setActiveSectionIndex(0);
-      setSectionTimers([]);
-      setTimeLeft(0);
-      const docRef = doc(db, 'tests', testId);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const data = snap.data() as TestAttempt;
-        const fullTest = { ...data, id: snap.id };
-        setTest(fullTest);
-        if (data.answers) {
-          setAnswers(data.answers);
-          answersRef.current = data.answers;
-        }
-        hasLoadedRef.current = true;
+    let isCancelled = false;
 
-        const sections = Array.isArray(data.sections) ? data.sections : [];
-        if (sections.length > 0 && data.sectionalTimingEnabled) {
-          const storageKey = `rbi_cbt_state_${snap.id}`;
-          let restoredIdx = 0;
-          let restoredTimers = sections.map(s => s.durationSeconds);
+    const initLoadedTest = (fullTest: TestAttempt, skipLocalStorageRestore: boolean) => {
+      if (isCancelled) return;
+      setTest(fullTest);
+      const initialAnswers = fullTest.answers || {};
+      setAnswers(initialAnswers);
+      answersRef.current = initialAnswers;
+      hasLoadedRef.current = true;
 
+      const sections = Array.isArray(fullTest.sections) ? fullTest.sections : [];
+      if (sections.length > 0 && fullTest.sectionalTimingEnabled) {
+        const storageKey = `rbi_cbt_state_${fullTest.id}`;
+        let restoredIdx = 0;
+        let restoredTimers = sections.map(s => s.durationSeconds);
+
+        if (!skipLocalStorageRestore) {
           try {
             const raw = localStorage.getItem(storageKey);
             if (raw) {
@@ -90,7 +87,7 @@ export function Exam({ user }: { user: User }) {
                 restoredIdx = Math.min(Math.max(0, parsed.activeSectionIndex), sections.length - 1);
                 restoredTimers = parsed.sectionTimers.map((t: any) => Math.max(0, Number(t) || 0));
 
-                if (data.status === 'in-progress' && typeof parsed.lastSavedAt === 'number') {
+                if (fullTest.status === 'in-progress' && typeof parsed.lastSavedAt === 'number') {
                   let elapsed = Math.max(0, Math.floor((Date.now() - parsed.lastSavedAt) / 1000));
                   while (elapsed > 0 && restoredIdx < sections.length) {
                     if (restoredTimers[restoredIdx] > elapsed) {
@@ -112,26 +109,79 @@ export function Exam({ user }: { user: User }) {
           } catch {
             // Fallback to fresh section timers
           }
-
-          setActiveSectionIndex(restoredIdx);
-          setSectionTimers(restoredTimers);
-          setCurrentIndex(sections[restoredIdx]?.startIndex || 0);
-        } else {
-          let currentLeft = data.durationSeconds;
-          if (data.status === 'in-progress' && data.startedAt) {
-            const elapsed = Math.floor((Date.now() - data.startedAt) / 1000);
-            currentLeft = Math.max(0, data.durationSeconds - elapsed);
-          }
-          setTimeLeft(currentLeft);
         }
 
-        if (data.status === 'setup') {
-          await updateDoc(docRef, { status: 'in-progress', startedAt: Date.now(), userId: user.uid });
+        setActiveSectionIndex(restoredIdx);
+        setSectionTimers(restoredTimers);
+        setCurrentIndex(sections[restoredIdx]?.startIndex || 0);
+      } else {
+        let currentLeft = fullTest.durationSeconds;
+        if (!skipLocalStorageRestore && fullTest.status === 'in-progress' && fullTest.startedAt) {
+          const elapsed = Math.floor((Date.now() - fullTest.startedAt) / 1000);
+          currentLeft = Math.max(0, fullTest.durationSeconds - elapsed);
         }
+        setTimeLeft(currentLeft);
       }
+
       setLoading(false);
     };
+
+    const fetchTest = async () => {
+      if (!testId) return;
+      isTerminatedRef.current = false;
+      hasUserModifiedAnswersRef.current = false;
+      hasLoadedRef.current = false;
+      setShowTerminateConfirm(false);
+      setTerminating(false);
+      setActionError(null);
+      setAnswers({});
+      answersRef.current = {};
+      setMarkedForReview({});
+      setCurrentIndex(0);
+      setActiveSectionIndex(0);
+      setSectionTimers([]);
+      setTimeLeft(0);
+
+      // Fast path: use already-cloned in-memory questions for instant launch (<5ms)
+      const preloaded = getPreloadedTest(testId);
+      if (preloaded) {
+        initLoadedTest(preloaded, true);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const docRef = doc(db, 'tests', testId);
+        const snap = await getDoc(docRef);
+        if (isCancelled) return;
+
+        if (snap.exists()) {
+          const data = snap.data() as TestAttempt;
+          const fullTest = { ...data, id: snap.id };
+          initLoadedTest(fullTest, false);
+
+          if (data.status === 'setup') {
+            updateDoc(docRef, {
+              status: 'in-progress',
+              startedAt: Date.now(),
+              userId: user.uid
+            }).catch((err) => {
+              console.error('Failed to mark test in-progress:', err);
+            });
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error loading exam:', err);
+        if (!isCancelled) setLoading(false);
+      }
+    };
+
     fetchTest();
+    return () => {
+      isCancelled = true;
+    };
   }, [testId, user.uid]);
 
   // Persist sectional CBT state cleanly to localStorage
@@ -200,13 +250,39 @@ export function Exam({ user }: { user: User }) {
   }, [isSectionalLocked, loading, test, activeSectionIndex, submitting, sectionTimers.length]);
 
   useEffect(() => {
-    if (!testId || loading || !hasLoadedRef.current) return;
+    if (
+      !testId ||
+      loading ||
+      !hasLoadedRef.current ||
+      !hasUserModifiedAnswersRef.current ||
+      isTerminatedRef.current ||
+      submitting
+    ) {
+      return;
+    }
+
     const save = async () => {
-      await updateDoc(doc(db, 'tests', testId), { answers, userId: user.uid });
+      if (isTerminatedRef.current) return;
+      try {
+        const writeStatus = await waitForPendingTestWrite(testId);
+        if (!writeStatus.ok || isTerminatedRef.current) return;
+        await updateDoc(doc(db, 'tests', testId), { answers, userId: user.uid });
+      } catch (err) {
+        if (!isTerminatedRef.current) {
+          console.error('Failed to auto-save answers:', err);
+        }
+      }
     };
+
     const t = setTimeout(save, 1500);
-    return () => clearTimeout(t);
-  }, [answers, testId, loading, user.uid]);
+    autoSaveTimeoutRef.current = t;
+    return () => {
+      clearTimeout(t);
+      if (autoSaveTimeoutRef.current === t) {
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, [answers, testId, loading, submitting, user.uid]);
 
   const displayedSectionIndex = useMemo(() => {
     if (!hasSections || !test?.sections) return 0;
@@ -218,7 +294,8 @@ export function Exam({ user }: { user: User }) {
   const activeSectionMeta = hasSections && test?.sections ? test.sections[displayedSectionIndex] : null;
 
   const handleAnswerChange = (val: string) => {
-    if (!test) return;
+    if (!test || isTerminatedRef.current) return;
+    hasUserModifiedAnswersRef.current = true;
     const q = test.questions[currentIndex];
     const qId = q.id || currentIndex.toString();
     const nextAnswers = { 
@@ -233,7 +310,8 @@ export function Exam({ user }: { user: User }) {
   };
 
   const handleClearResponse = async () => {
-    if (!test) return;
+    if (!test || isTerminatedRef.current) return;
+    hasUserModifiedAnswersRef.current = true;
     const q = test.questions[currentIndex];
     const qId = q.id || currentIndex.toString();
     const nextAnswers = { ...answers };
@@ -243,6 +321,8 @@ export function Exam({ user }: { user: User }) {
     answersRef.current = nextAnswers;
     if (testId) {
       try {
+        const writeStatus = await waitForPendingTestWrite(testId);
+        if (!writeStatus.ok || isTerminatedRef.current) return;
         await updateDoc(doc(db, 'tests', testId), { answers: nextAnswers, userId: user.uid });
       } catch (err) {
         console.error('Failed to sync cleared answer to Firestore:', err);
@@ -281,18 +361,83 @@ export function Exam({ user }: { user: User }) {
     setShowSectionConfirm(false);
   };
 
+  const handleTerminateExam = async () => {
+    if (!test || terminating || submitting) return;
+    isTerminatedRef.current = true;
+    setTerminating(true);
+    setActionError(null);
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+
+    try {
+      localStorage.removeItem(`rbi_cbt_state_${test.id}`);
+    } catch {
+      // Ignore storage errors
+    }
+    clearPreloadedTest(test.id);
+
+    try {
+      const writeStatus = await waitForPendingTestWrite(test.id);
+      if (writeStatus.ok) {
+        await deleteDoc(doc(db, 'tests', test.id));
+      }
+      navigate('/');
+    } catch (err: any) {
+      isTerminatedRef.current = false;
+      setTerminating(false);
+      console.error('Failed to terminate exam:', err);
+      try {
+        handleFirestoreError(err, OperationType.DELETE, `tests/${test.id}`, user);
+      } catch {
+        // Logged structured Firestore error details
+      }
+      setActionError(err?.message || 'Unable to terminate and delete this exam attempt. Please try again.');
+    }
+  };
+
+  const handleSaveAndExit = async () => {
+    if (!test || terminating || submitting) return;
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    clearPreloadedTest(test.id);
+    try {
+      const writeStatus = await waitForPendingTestWrite(test.id);
+      if (writeStatus.ok && hasUserModifiedAnswersRef.current) {
+        await updateDoc(doc(db, 'tests', test.id), {
+          answers: answersRef.current,
+          userId: user.uid
+        });
+      }
+    } catch (err) {
+      console.error('Failed to flush answers before exiting:', err);
+    }
+    navigate('/');
+  };
+
   const handleSubmit = async () => {
-    if (!test || submitting) return;
+    if (!test || submitting || isTerminatedRef.current) return;
     setSubmitting(true);
     setShowConfirm(false);
     setShowSectionConfirm(false);
+    setShowTerminateConfirm(false);
     setEvalProgress({ message: 'Scoring multiple-choice questions...', percent: 15 });
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
 
     try {
       localStorage.removeItem(`rbi_cbt_state_${test.id}`);
     } catch {
       // Ignore
     }
+    clearPreloadedTest(test.id);
     
     // Combine answers from test.answers, current answers state, and answersRef to ensure 0 lost answers
     const cleanAnswers: Record<string, string> = {};
@@ -328,6 +473,7 @@ export function Exam({ user }: { user: User }) {
     };
 
     try {
+      await waitForPendingTestWrite(test.id);
       await evaluateAndPersistTest(
         test.id,
         pendingAttempt,
@@ -341,6 +487,7 @@ export function Exam({ user }: { user: User }) {
       console.error("Submission evaluation error:", e);
       // Fallback update to guarantee test status is saved as completed
       try {
+        await waitForPendingTestWrite(test.id);
         await updateDoc(doc(db, 'tests', test.id), {
           status: 'completed',
           submittedAt: Date.now(),
@@ -438,9 +585,16 @@ export function Exam({ user }: { user: User }) {
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0">
-            <span className="font-heading text-xs sm:text-lg font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] truncate block">
-              RBI GRADE B <span className="hidden xs:inline text-[#0D47FF] dark:text-[#ECD5FF]">× Engine</span>
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-heading text-xs sm:text-lg font-black tracking-tight text-[#141413] dark:text-[#FAF8EC] truncate">
+                RBI GRADE B <span className="hidden md:inline text-[#0D47FF] dark:text-[#ECD5FF]">× Engine</span>
+              </span>
+              {test.reattemptOfTestId && (
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-[#FFD426] text-[#141413] border border-[#141413] text-[10px] font-mono font-bold uppercase tracking-wider shrink-0">
+                  Reattempt
+                </span>
+              )}
+            </div>
             {test.isFullPhaseExam && (
               <span className="hidden sm:block text-[10px] font-mono font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] truncate">
                 {test.subjectName}
@@ -449,9 +603,9 @@ export function Exam({ user }: { user: User }) {
           </div>
         </div>
         
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <div
-            className="flex items-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-mono text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums whitespace-nowrap"
+            className="flex items-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-mono text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums whitespace-nowrap"
             title={isSectionalLocked ? `Section timer: ${activeSectionMeta?.name || ''}` : 'Remaining exam clock'}
           >
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
@@ -465,8 +619,21 @@ export function Exam({ user }: { user: User }) {
             </span>
           </div>
           <button
+            type="button"
+            onClick={() => {
+              setActionError(null);
+              setShowTerminateConfirm(true);
+            }}
+            className="inline-flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-[1.5px] border-rose-500/40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold transition-colors whitespace-nowrap text-xs sm:text-sm cursor-pointer"
+            title="Terminate or exit this exam"
+          >
+            <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="sm:hidden">Exit</span>
+            <span className="hidden sm:inline">Terminate</span>
+          </button>
+          <button
             onClick={() => setShowConfirm(true)}
-            className="bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] active:translate-y-[1px] px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl font-bold transition-all whitespace-nowrap text-xs sm:text-sm cursor-pointer"
+            className="bg-[#0D47FF] hover:bg-[#0936CC] text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] active:translate-y-[1px] px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-xl font-bold transition-all whitespace-nowrap text-xs sm:text-sm cursor-pointer"
           >
             Submit
           </button>
@@ -888,6 +1055,65 @@ export function Exam({ user }: { user: User }) {
               className="w-full min-h-[44px] py-3 font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] rounded-xl transition-colors cursor-pointer"
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      </MotionModal>
+
+      {/* Terminate / Exit Exam Confirmation Modal */}
+      <MotionModal
+        isOpen={showTerminateConfirm}
+        onClose={() => !terminating && setShowTerminateConfirm(false)}
+        maxWidthClass="max-w-sm"
+      >
+        <div className="bg-[#FAF8EC] dark:bg-[#1C1C1A] rounded-3xl w-full p-6 sm:p-8 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 border-[2px] border-[#141413] dark:border-[#ECD5FF]">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+              <XCircle className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
+              Exit or Terminate Exam?
+            </h3>
+          </div>
+          <p className="text-[#40403B] dark:text-[#A3A399] font-medium mb-4 leading-relaxed text-sm">
+            Terminate to permanently delete this attempt without saving a score, or save your progress to resume later.
+            {test.reattemptOfTestId ? ' Your original past exam results and saved questions remain untouched.' : ''}
+          </p>
+
+          {actionError && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300">
+              {actionError}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2.5">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleTerminateExam}
+              disabled={terminating}
+              className="w-full min-h-[46px] py-3 font-bold bg-rose-600 hover:bg-rose-700 text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60 text-sm"
+            >
+              {terminating ? (
+                <FuturisticSpinner size="xs" color="white" />
+              ) : (
+                <Trash2 className="w-4 h-4 shrink-0" />
+              )}
+              <span>{terminating ? 'Terminating Attempt...' : 'Terminate & Delete Attempt'}</span>
+            </motion.button>
+            <button
+              onClick={handleSaveAndExit}
+              disabled={terminating}
+              className="w-full min-h-[44px] py-2.5 font-bold text-[#141413] bg-[#ECD5FF] hover:bg-[#FFD426] border-[1.5px] border-[#141413] rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60 text-sm"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span>Save & Exit for Later</span>
+            </button>
+            <button
+              onClick={() => setShowTerminateConfirm(false)}
+              disabled={terminating}
+              className="w-full min-h-[44px] py-2.5 font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] rounded-xl transition-colors cursor-pointer text-sm"
+            >
+              Continue Exam
             </button>
           </div>
         </div>

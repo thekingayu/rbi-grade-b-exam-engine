@@ -1,13 +1,41 @@
 import { User } from 'firebase/auth';
-import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Question, TestAttempt } from '../types';
-import { handleFirestoreError, OperationType, sanitizeForFirestore } from './firestore';
+import {
+  buildFirestoreErrorInfo,
+  handleFirestoreError,
+  OperationType,
+  sanitizeForFirestore,
+} from './firestore';
+
+// In-memory store for instant exam launch without a redundant Firestore read roundtrip
+const preloadedTestsCache = new Map<string, TestAttempt>();
+const pendingTestWrites = new Map<string, Promise<{ ok: boolean; error?: string }>>();
+
+export function getPreloadedTest(testId: string): TestAttempt | undefined {
+  return preloadedTestsCache.get(testId);
+}
+
+export function clearPreloadedTest(testId: string): void {
+  preloadedTestsCache.delete(testId);
+}
+
+export async function waitForPendingTestWrite(
+  testId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const pending = pendingTestWrites.get(testId);
+  if (pending) {
+    return await pending;
+  }
+  return { ok: true };
+}
 
 /**
- * Creates a brand-new, unattempted Firestore test document cloned from a past TestAttempt.
- * Preserves the exact questions, sections, rubrics, model answers, and exam configuration
- * while clearing all prior answers, scores, timestamps, and evaluations.
+ * Clones a past TestAttempt into a brand-new, unattempted exam using the
+ * already-loaded questions from Firestore (or fetching once only if missing),
+ * caches the fresh attempt in memory for instant (<5ms) CBT launch, and
+ * persists the new document to Firestore in the background.
  */
 export async function createFreshReattemptTest(
   sourceTest: TestAttempt,
@@ -49,19 +77,27 @@ export async function createFreshReattemptTest(
     };
   });
 
+  const now = Date.now();
+  const newDocRef = doc(collection(db, 'tests'));
+
   const cleanPayload: Record<string, any> = {
     userId: user.uid,
-    createdAt: Date.now(),
-    status: 'setup',
+    createdAt: now,
+    startedAt: now,
+    status: 'in-progress',
     subjectId: resolvedSource.subjectId || 'sub_ga',
     subjectSlug: resolvedSource.subjectSlug || 'general-awareness',
-    config: resolvedSource.config ? { ...resolvedSource.config } : {
-      mcqStatic: cleanQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Static').length,
-      mcqDynamic: cleanQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Dynamic').length,
-      descStatic: cleanQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Static').length,
-      descDynamic: cleanQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Dynamic').length,
-    },
-    sourceNoteFileRefs: Array.isArray(resolvedSource.sourceNoteFileRefs) ? [...resolvedSource.sourceNoteFileRefs] : [],
+    config: resolvedSource.config
+      ? { ...resolvedSource.config }
+      : {
+          mcqStatic: cleanQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Static').length,
+          mcqDynamic: cleanQuestions.filter(q => q.type === 'MCQ' && q.sourceTag === 'Dynamic').length,
+          descStatic: cleanQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Static').length,
+          descDynamic: cleanQuestions.filter(q => q.type === 'Descriptive' && q.sourceTag === 'Dynamic').length,
+        },
+    sourceNoteFileRefs: Array.isArray(resolvedSource.sourceNoteFileRefs)
+      ? [...resolvedSource.sourceNoteFileRefs]
+      : [],
     extractedNotesText: resolvedSource.extractedNotesText || '',
     durationSeconds: resolvedSource.durationSeconds || 1800,
     negativeMarks: typeof resolvedSource.negativeMarks === 'number' ? resolvedSource.negativeMarks : 0,
@@ -84,11 +120,33 @@ export async function createFreshReattemptTest(
     cleanPayload.sectionalTimingEnabled = resolvedSource.sectionalTimingEnabled;
   }
 
-  try {
-    const sanitized = sanitizeForFirestore(cleanPayload);
-    const docRef = await addDoc(collection(db, 'tests'), sanitized);
-    return docRef.id;
-  } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, 'tests', user);
-  }
+  const sanitized = sanitizeForFirestore(cleanPayload);
+  const fullPreloadedTest: TestAttempt = {
+    id: newDocRef.id,
+    ...(sanitized as Omit<TestAttempt, 'id'>),
+  };
+
+  // Cache synchronously so Exam page renders immediately without a redundant Firestore download
+  preloadedTestsCache.set(newDocRef.id, fullPreloadedTest);
+
+  // Persist to Firestore in background and track promise so Submit/Terminate never races
+  const writePromise = setDoc(newDocRef, sanitized)
+    .then(() => ({ ok: true as const }))
+    .catch((err) => {
+      const errInfo = buildFirestoreErrorInfo(
+        err,
+        OperationType.CREATE,
+        `tests/${newDocRef.id}`,
+        user
+      );
+      console.error('Background Firestore save error for reattempt:', JSON.stringify(errInfo));
+      return { ok: false as const, error: err instanceof Error ? err.message : String(err) };
+    })
+    .finally(() => {
+      pendingTestWrites.delete(newDocRef.id);
+    });
+
+  pendingTestWrites.set(newDocRef.id, writePromise);
+
+  return newDocRef.id;
 }

@@ -6,13 +6,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { TestAttempt } from '../types';
 import { format } from 'date-fns';
 import {
-  FileText, ArrowLeft, Download, Search, Check, X, GitCompare, RefreshCw, RotateCcw
+  FileText, ArrowLeft, Download, Search, Check, X, GitCompare, RefreshCw, RotateCcw, Trash2, AlertTriangle
 } from 'lucide-react';
 import { useSubject } from '../context/SubjectContext';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
-import { isSyncDocument } from '../utils/firestore';
+import { isSyncDocument, handleFirestoreError, OperationType } from '../utils/firestore';
 import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
-import { createFreshReattemptTest } from '../utils/reattempt';
+import { createFreshReattemptTest, clearPreloadedTest, waitForPendingTestWrite } from '../utils/reattempt';
 import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 import { motion } from 'motion/react';
 import { MotionPage, MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
@@ -38,6 +38,10 @@ export function TestHistory({ user }: { user: User }) {
   const [isReassigning, setIsReassigning] = useState(false);
   const [reattemptingId, setReattemptingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [terminateTarget, setTerminateTarget] = useState<TestAttempt | null>(null);
+  const [terminating, setTerminating] = useState(false);
+  const [terminateError, setTerminateError] = useState<string | null>(null);
 
   const handleReattempt = async (sourceTest: TestAttempt) => {
     if (reattemptingId) return;
@@ -80,14 +84,40 @@ export function TestHistory({ user }: { user: User }) {
     fetchTests();
   }, [user.uid]);
 
-  const handleTerminate = async (testId: string) => {
-    if (!window.confirm("Are you sure you want to terminate and delete this in-progress test?")) return;
+  const openTerminateModal = (targetTest: TestAttempt) => {
+    setTerminateError(null);
+    setTerminateTarget(targetTest);
+  };
+
+  const confirmTerminate = async () => {
+    if (!terminateTarget || terminating) return;
+    const targetId = terminateTarget.id;
+    setTerminating(true);
+    setTerminateError(null);
     try {
-      await deleteDoc(doc(db, 'tests', testId));
-      setTests(prev => prev.filter(t => t.id !== testId));
-    } catch (e) {
-      console.error(e);
-      alert("Error terminating test. Please try again.");
+      try {
+        localStorage.removeItem(`rbi_cbt_state_${targetId}`);
+      } catch {
+        // Ignore storage errors
+      }
+      clearPreloadedTest(targetId);
+
+      const writeStatus = await waitForPendingTestWrite(targetId);
+      if (writeStatus.ok) {
+        await deleteDoc(doc(db, 'tests', targetId));
+      }
+      setTests(prev => prev.filter(t => t.id !== targetId));
+      setTerminateTarget(null);
+    } catch (e: any) {
+      console.error('Failed to terminate test:', e);
+      try {
+        handleFirestoreError(e, OperationType.DELETE, `tests/${targetId}`, user);
+      } catch {
+        // Logged structured Firestore error details
+      }
+      setTerminateError(e?.message || 'Error terminating test. Please try again.');
+    } finally {
+      setTerminating(false);
     }
   };
 
@@ -149,12 +179,14 @@ export function TestHistory({ user }: { user: User }) {
         }
         return t;
       }));
+      const count = selectedForReassign.length;
       setSelectedForReassign([]);
       setShowReassignModal(false);
-      alert(`Successfully reassigned ${selectedForReassign.length} tests to ${targetSub.name}!`);
-    } catch (e) {
+      setActionError(null);
+      setActionNotice(`Successfully reassigned ${count} test${count === 1 ? '' : 's'} to ${targetSub.name}.`);
+    } catch (e: any) {
       console.error(e);
-      alert("Error reassigning tests. Please try again.");
+      setActionError(e?.message || 'Error reassigning tests. Please try again.');
     } finally {
       setIsReassigning(false);
     }
@@ -254,6 +286,12 @@ export function TestHistory({ user }: { user: User }) {
         <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300 flex items-center justify-between gap-3">
           <span>{actionError}</span>
           <button onClick={() => setActionError(null)} className="font-bold cursor-pointer">✕</button>
+        </div>
+      )}
+      {actionNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-between gap-3">
+          <span>{actionNotice}</span>
+          <button onClick={() => setActionNotice(null)} className="font-bold cursor-pointer">✕</button>
         </div>
       )}
       <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -364,6 +402,11 @@ export function TestHistory({ user }: { user: User }) {
                             · {test.mode}
                           </span>
                         )}
+                        {test.reattemptOfTestId && (
+                          <span className="px-1.5 py-0.5 rounded bg-[#FFD426] text-[#141413] border border-[#141413] text-[9px] font-mono font-bold uppercase tracking-wider">
+                            Reattempt
+                          </span>
+                        )}
                         <span className="text-[10px] font-mono text-[#66665E] dark:text-[#A3A399]">
                           · {format(test.createdAt, 'MMM d, yyyy · h:mm a')}
                         </span>
@@ -409,7 +452,8 @@ export function TestHistory({ user }: { user: User }) {
                     ) : (
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button
-                          onClick={() => handleTerminate(test.id)}
+                          type="button"
+                          onClick={() => openTerminateModal(test)}
                           className="flex-1 sm:flex-initial text-center px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
                         >
                           Terminate
@@ -562,6 +606,58 @@ export function TestHistory({ user }: { user: User }) {
             </motion.button>
           </div>
         </div>
+      </MotionModal>
+
+      {/* Terminate In-Progress Attempt Confirmation Modal */}
+      <MotionModal
+        isOpen={!!terminateTarget}
+        onClose={() => !terminating && setTerminateTarget(null)}
+        maxWidthClass="max-w-sm"
+      >
+        {terminateTarget && (
+          <div className="bg-[#FAF8EC] dark:bg-[#1C1C1A] rounded-3xl w-full p-6 sm:p-8 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 border-[2px] border-[#141413] dark:border-[#ECD5FF]">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
+                Terminate Attempt?
+              </h3>
+            </div>
+            <p className="text-[#40403B] dark:text-[#A3A399] font-medium mb-4 leading-relaxed text-sm">
+              This will permanently delete your in-progress attempt
+              {terminateTarget.subjectName ? ` for ${terminateTarget.subjectName}` : ''}.
+              {terminateTarget.reattemptOfTestId ? ' Your original past exam results remain untouched.' : ''}
+            </p>
+            {terminateError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300">
+                {terminateError}
+              </div>
+            )}
+            <div className="flex flex-col gap-2.5">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={confirmTerminate}
+                disabled={terminating}
+                className="w-full min-h-[46px] py-3 font-bold bg-rose-600 hover:bg-rose-700 text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60 text-sm"
+              >
+                {terminating ? (
+                  <FuturisticSpinner size="xs" color="white" />
+                ) : (
+                  <Trash2 className="w-4 h-4 shrink-0" />
+                )}
+                <span>{terminating ? 'Terminating...' : 'Confirm Terminate & Delete'}</span>
+              </motion.button>
+              <button
+                onClick={() => setTerminateTarget(null)}
+                disabled={terminating}
+                className="w-full min-h-[44px] py-2.5 font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] rounded-xl transition-colors cursor-pointer text-sm"
+              >
+                Keep Attempt
+              </button>
+            </div>
+          </div>
+        )}
       </MotionModal>
 
     </MotionPage>

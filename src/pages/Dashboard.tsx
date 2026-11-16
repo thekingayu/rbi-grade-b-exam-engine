@@ -14,20 +14,21 @@ import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { RailwayTimeline, DiagonalMarquee, PrizeBadgeIcon } from '../components/SignatureGraphics';
 import { 
   Plus, CheckCircle2, TrendingUp, Trophy, ArrowRight,
-  Clock, Flame, BookOpen, Compass, RotateCcw
+  Clock, Flame, BookOpen, Compass, RotateCcw, Trash2, AlertTriangle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
 import { calculateDaysRemaining } from '../utils/date';
-import { isSyncDocument } from '../utils/firestore';
+import { isSyncDocument, handleFirestoreError, OperationType } from '../utils/firestore';
 import { getFullPhaseDisplayMeta } from '../data/fullPhaseBlueprints';
-import { createFreshReattemptTest } from '../utils/reattempt';
+import { createFreshReattemptTest, clearPreloadedTest, waitForPendingTestWrite } from '../utils/reattempt';
 import { FuturisticScreenLoader, FuturisticSpinner } from '../components/FuturisticLoader';
 import {
   MotionPage,
   MotionSection,
   MotionStaggerGrid,
   MotionStaggerItem,
+  MotionModal,
   AnimatedNumber,
   SPRING_BOUNCY,
   SPRING_SNAPPY
@@ -39,6 +40,9 @@ export function Dashboard({ user }: { user: User }) {
   const [tests, setTests] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [reattemptingId, setReattemptingId] = useState<string | null>(null);
+  const [terminateTarget, setTerminateTarget] = useState<TestAttempt | null>(null);
+  const [terminating, setTerminating] = useState(false);
+  const [terminateError, setTerminateError] = useState<string | null>(null);
 
   const displayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Officer';
   const photoURL = userProfile?.photoURL || user.photoURL;
@@ -76,13 +80,40 @@ export function Dashboard({ user }: { user: User }) {
     return () => unsubscribe();
   }, [user.uid]);
 
-  const handleTerminate = async (testId: string) => {
-    if (!window.confirm("Are you sure you want to terminate and delete this in-progress test?")) return;
+  const openTerminateModal = (targetTest: TestAttempt) => {
+    setTerminateError(null);
+    setTerminateTarget(targetTest);
+  };
+
+  const confirmTerminate = async () => {
+    if (!terminateTarget || terminating) return;
+    const targetId = terminateTarget.id;
+    setTerminating(true);
+    setTerminateError(null);
     try {
-      await deleteDoc(doc(db, 'tests', testId));
-      setTests(prev => prev.filter(t => t.id !== testId));
-    } catch (e) {
-      console.error(e);
+      try {
+        localStorage.removeItem(`rbi_cbt_state_${targetId}`);
+      } catch {
+        // Ignore storage errors
+      }
+      clearPreloadedTest(targetId);
+
+      const writeStatus = await waitForPendingTestWrite(targetId);
+      if (writeStatus.ok) {
+        await deleteDoc(doc(db, 'tests', targetId));
+      }
+      setTests(prev => prev.filter(t => t.id !== targetId));
+      setTerminateTarget(null);
+    } catch (e: any) {
+      console.error('Failed to terminate test:', e);
+      try {
+        handleFirestoreError(e, OperationType.DELETE, `tests/${targetId}`, user);
+      } catch {
+        // Logged structured Firestore error details
+      }
+      setTerminateError(e?.message || 'Unable to terminate this attempt. Please try again.');
+    } finally {
+      setTerminating(false);
     }
   };
 
@@ -497,8 +528,13 @@ export function Dashboard({ user }: { user: User }) {
                         <SubjectIcon name={subMatch.icon} className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] truncate">
-                          {subMatch.name}{test.mode ? ` · ${test.mode}` : ''}
+                        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                          <span className="truncate">{subMatch.name}{test.mode ? ` · ${test.mode}` : ''}</span>
+                          {test.reattemptOfTestId && (
+                            <span className="px-1.5 py-0.5 rounded bg-[#FFD426] text-[#141413] border border-[#141413] text-[9px] leading-none shrink-0">
+                              Reattempt
+                            </span>
+                          )}
                         </div>
                         <h4 className="font-bold text-[#141413] dark:text-[#FAF8EC] mt-0.5 text-sm sm:text-base truncate">
                           {test.status === 'in-progress' ? 'Test in Progress' : `Exam · ${format(test.createdAt, 'MMM d, yyyy · h:mm a')}`}
@@ -532,7 +568,8 @@ export function Dashboard({ user }: { user: User }) {
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleTerminate(test.id)}
+                            type="button"
+                            onClick={() => openTerminateModal(test)}
                             className="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 cursor-pointer"
                           >
                             Terminate
@@ -553,6 +590,58 @@ export function Dashboard({ user }: { user: User }) {
           </div>
         </div>
       </MotionSection>
+
+      {/* Terminate In-Progress Test Modal */}
+      <MotionModal
+        isOpen={!!terminateTarget}
+        onClose={() => !terminating && setTerminateTarget(null)}
+        maxWidthClass="max-w-sm"
+      >
+        {terminateTarget && (
+          <div className="bg-[#FAF8EC] dark:bg-[#1C1C1A] rounded-3xl w-full p-6 sm:p-8 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF]/40 border-[2px] border-[#141413] dark:border-[#ECD5FF]">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-heading font-extrabold text-[#141413] dark:text-[#FAF8EC]">
+                Terminate Attempt?
+              </h3>
+            </div>
+            <p className="text-[#40403B] dark:text-[#A3A399] font-medium mb-4 leading-relaxed text-sm">
+              This will permanently delete your in-progress attempt
+              {terminateTarget.subjectName ? ` for ${terminateTarget.subjectName}` : ''}.
+              {terminateTarget.reattemptOfTestId ? ' Your original past exam results remain completely safe.' : ''}
+            </p>
+            {terminateError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-medium text-rose-700 dark:text-rose-300">
+                {terminateError}
+              </div>
+            )}
+            <div className="flex flex-col gap-2.5">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={confirmTerminate}
+                disabled={terminating}
+                className="w-full min-h-[46px] py-3 font-bold bg-rose-600 hover:bg-rose-700 text-white border-[1.5px] border-[#141413] shadow-[3px_3px_0px_#141413] rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60 text-sm"
+              >
+                {terminating ? (
+                  <FuturisticSpinner size="xs" color="white" />
+                ) : (
+                  <Trash2 className="w-4 h-4 shrink-0" />
+                )}
+                <span>{terminating ? 'Terminating...' : 'Confirm Terminate & Delete'}</span>
+              </motion.button>
+              <button
+                onClick={() => setTerminateTarget(null)}
+                disabled={terminating}
+                className="w-full min-h-[44px] py-2.5 font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FFFFFF] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] rounded-xl transition-colors cursor-pointer text-sm"
+              >
+                Keep Attempt
+              </button>
+            </div>
+          </div>
+        )}
+      </MotionModal>
 
     </MotionPage>
   );
