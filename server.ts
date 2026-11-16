@@ -173,7 +173,7 @@ DIFFICULTY CALIBRATION — OFFICIAL RBI GRADE B STANDARD:
   } else if (subjectSlug === 'quant') {
     subjectExtremeSpecs = `
 - EXTREME QUANTITATIVE MANDATE (CAT 99%ILE / RBI PHASE 1 TOUGHEST SHIFT CALIBRE):
-  * Data Interpretation & Caselets: Use MISSING-VALUE tables, double pie/bar logic, or variable-embedded (X, Y, Z) Caselet DI requiring solving quadratic/simultaneous equations first before computing CAGR, weighted averages, or conditional ratios.
+  * Data Interpretation & Caselets: Build multi-layered DI sets (Pie/Double-Pie, Vertical/Horizontal Bar Graphs, Line Graphs, Paragraph Caselets, and Mixed Table+Chart combinations) with interconnected percentage/degree splits, weighted averages, CAGR, or ratio chains. Every single chart value MUST be 100% mathematically consistent across all 5 linked questions.
   * Arithmetic & Algebra: Combine multiple concepts per problem (e.g., dishonest dealer + successive markup/discount + partnership with time-varying capital + CI with variable rate per year, or Boat/Stream + Time-Speed-Distance relative motion).
   * Quadratics / Series / Comparisons: Include equations with fractional/surd/cubic terms, wrong-number series combining alternating prime/cube/factorial differences, 3-statement Data Sufficiency (checking Statement I, II, III sufficiency combinations rigorously), and Quantity I vs Quantity II vs Quantity III requiring exact multi-step algebra.`;
   } else if (subjectSlug === 'english') {
@@ -185,23 +185,26 @@ DIFFICULTY CALIBRATION — OFFICIAL RBI GRADE B STANDARD:
   } else if (subjectSlug === 'general-awareness') {
     subjectExtremeSpecs = `
 - EXTREME GENERAL AWARENESS MANDATE (UPSC PRELIMS + RBI GRADE B PHASE 1 TOUGHEST SHIFT CALIBRE):
-  * BANNED: Never ask single-fact recall like "Where is the headquarters of..." or "What is the full form of...".
-  * MANDATORY FORMATS: At least 80% of questions MUST use:
-    (a) Multi-statement synthesis ("Consider Statements I, II, III and IV..."),
-    (b) UPSC/RBI 2023-2025 Pair-Counting ("How many of the statements/pairs given above is/are CORRECT? Only one / Only two / Only three / All four / None") so candidates CANNOT solve by eliminating one option,
-    (c) Exact statutory traps (specific Section numbers & sub-clauses of RBI Act 1934, BR Act 1949, DICGC Act, FEMA 1999, PMLA, subtle 25/50 bps or percentage threshold differences, swapped regulator/committee jurisdiction).
-  * Dynamic 2024–2026 Current Affairs: Test second-order details of RBI Master Directions, MPC corridor triggers, PCA Risk Threshold 1/2/3 ratios, Union Budget/Economic Survey fiscal glidepath/capex figures, and global central-bank/BIS frameworks—not superficial headlines.`;
+  * BANNED: Never ask trivial one-liner recall like "Where is the headquarters of..." or "What is the full form of...".
+  * QUESTION FORMAT DIVERSITY (CRITICAL — DO NOT OVERUSE ONE PATTERN):
+    Vary formats deliberately across every batch:
+    (a) ~40% Direct Analytical / Statutory / Threshold Scenario MCQs (concrete numerical figures, statutory clauses, committee names, or swapped jurisdiction thresholds as the 5 options),
+    (b) ~20% Code-Combination Statement MCQs ("Only I and III", "Only II and IV", "Only I, II and IV", "All I, II, III and IV", "None of the above"),
+    (c) ~15% Caselet Vignette / Double-Blank [X] & [Y] MCQs (short 3–4 line policy/RBI circular vignette asking candidates to identify exact paired facts/sections),
+    (d) ~15% Match-the-Following (List I vs List II with paired codes like "1-C, 2-A, 3-D, 4-B") or Negative/Exception MCQs ("Which of the following is NOT true...?"),
+    (e) MAXIMUM 10–15% Pair-Counting MCQs ("Only one / Only two / Only three / All four / None") — STRICT CAP of at most 2 questions per 15–20 Q batch, and NEVER two in a row.
+  * Dynamic 2024–2026 Current Affairs: Test second-order details of RBI Master Directions, MPC corridor triggers, PCA Risk Threshold 1/2/3 ratios, Union Budget/Economic Survey fiscal glidepath/capex figures, and global central-bank/BIS frameworks.`;
   } else if (subjectSlug === 'esi') {
     subjectExtremeSpecs = `
 - EXTREME ESI MANDATE (RBI GRADE B PHASE 2 + INDIAN ECONOMIC SERVICE CALIBRE):
   * MCQs: Test multi-statement theoretical & empirical synthesis—e.g. combining Solow-Swan steady-state dynamics, Gini/Lorenz/MPI methodology traps, National Income accounting identity edge cases, BoP Capital vs Current Account sub-components, and intricate scheme exclusions/funding splits (Centre:State ratio, beneficiary caps, sunset clauses) in Union Budget & Economic Survey 2024–2026.
-  * Use Pair-Counting ("Only one / Only two / Only three / All four / None") and "Which of the above statements are INCORRECT?" traps regularly.
+  * Authentic Format Variety: Mix Direct Quantitative/Analytical MCQs (~40%), Code-Combination "Only I and II" / "Only II and III" MCQs (~25%), Economic Vignette / Caselet [X]–[Y] MCQs (~20%), Match-the-Following / Exception MCQs (~10%), and AT MOST 1 Pair-Counting ("Only one / Only two...") MCQ per batch.
   * Descriptive: Craft policy trade-off dilemmas (e.g., fiscal consolidation vs public capex multiplier under sticky food inflation and sovereign debt dynamics) demanding quantitative anchors and counter-arguments.`;
   } else if (subjectSlug === 'fm') {
     subjectExtremeSpecs = `
 - EXTREME FINANCE & MANAGEMENT MANDATE (CFA LEVEL II + RBI GRADE B PHASE 2 CALIBRE):
   * Chained Financial Numericals: Require 2–4 chained formulas per numerical MCQ (e.g. DuPont 5-factor ROE decomposition, WACC with tax-shield & market-value debt weights, Bond price sensitivity using Modified Duration + Convexity, YTM approximation, Levered vs Unlevered Beta using Hamada equation, DSCR with tax-adjusted preference dividends, Basel III CET-1 + CCB + Countercyclical + D-SIB capital surcharge exact rupee calculations).
-  * Governance & Organizational Behavior: Test subtle intersections (e.g., differentiating Herzberg's motivators vs Alderfer's ERG regression-frustration vs Vroom's Expectancy Valence/Instrumentality, or Kotak Committee vs Kumar Mangalam Birla / SEBI LODR independent director & audit committee quorum traps) in realistic caselet form.
+  * Governance & Organizational Behavior: Mix numericals (~35%), realistic Boardroom Caselets (~25%), Code-Combination Statements ("Only I and III", ~20%), Match-the-Theorist/Committee (~10%), and keep Pair-Counting ("Only one / Only two...") below 10%.
   * Descriptive: Construct boardroom regulatory/risk-governance crises requiring Basel/RBI supervisory mechanics and structural change-management execution.`;
   } else if (subjectSlug === 'english-writing') {
     subjectExtremeSpecs = `
@@ -213,10 +216,13 @@ DIFFICULTY CALIBRATION — OFFICIAL RBI GRADE B STANDARD:
   return `
 DIFFICULTY CALIBRATION — MAXIMUM / EXTREME HARD MODE (ABSOLUTE PEAK RIGOR):
 YOU MUST PUSH QUESTION DIFFICULTY TO THE FULLEST POSSIBLE EXTENT. "Hard" here means EXTREMELY HARD — top 0.1% difficulty matching the hardest shift ever set by IBPS/RBI/UPSC/CAT.
-STRICT ANTI-SOFTBALL RULES:
+STRICT ANTI-SOFTBALL & OPTION DIVERSITY RULES:
 1. ZERO trivial, single-fact, or one-step questions. Every question must require AT LEAST 2–3 distinct reasoning steps, nested exclusions, multi-statement cross-verification, or chained formulas.
 2. ADVERSARIAL DISTRACTOR DESIGN: Every single incorrect option among the 5 options must represent a plausible, realistic mistake (a forgotten tax adjustment, a wrong RBI Act section, a swapped committee threshold, an off-by-one constraint in a puzzle, or a subtle sign reversal).
-3. AVOID LAZY SHORTCUT OPTIONS: Do NOT pad Option 5 with "All of the above" or "Both (A) and (B)" unless rigorously justified; craft 5 genuinely competing analytical distractors or use UPSC-style "Only one / Only two / Only three / All four / None" pair-counting where partial elimination fails.
+3. ANTI-MONOTONY OPTION DIVERSITY (MANDATORY):
+   - NEVER repeat the same option template across consecutive questions.
+   - STRICTLY CAP "Only one statement / Only two statements / Only three statements / All four / None" pair-counting questions to AT MOST 10–15% of the batch (maximum 1–2 questions total per batch, NEVER back-to-back).
+   - Mix freely across: (A) Direct Concrete Answers (values, formulas, statutory clauses, regulatory conclusions), (B) Code Combinations ("Only I and III", "Only II and IV"), (C) Match-the-Following ("1-C, 2-A, 3-D, 4-B"), (D) Scenario/Passage Vignettes with [X] and [Y] blanks, and (E) Negative/Exception prompts ("Which statement is INCORRECT?").
 4. NEGATIVE & EXCEPTION TRAPS: Regularly test subtle regulatory exceptions, boundary conditions ("except", "incorrect", "necessary vs sufficient"), and multi-layer numerical traps.${subjectExtremeSpecs}`;
 }
 
@@ -304,23 +310,183 @@ STRICT FORMAT REQUIREMENTS:
   ]
 }`;
   } else if (subjectSlug === 'quant') {
+    const isDiTopicDrill = /data interpretation|caselet|\bdi\b|pie|bar|line|table|graph/i.test(config.targetTopic || '');
+    let diSetCount = 0;
+    if (mcq2Count >= 5) {
+      diSetCount = Math.min(3, Math.floor(mcq2Count / 5));
+    } else if (isDiTopicDrill && totalMcqs >= 5) {
+      diSetCount = Math.min(3, Math.floor(totalMcqs / 5));
+    }
+    const diTotalMcqs = diSetCount * 5;
+    const standaloneTotal = Math.max(0, totalMcqs - diTotalMcqs);
+    const standaloneStatic = Math.min(mcq1Count, standaloneTotal);
+    const standalonePyq = Math.min(pyqCount, Math.max(0, standaloneTotal - standaloneStatic));
+    const standaloneDynamic = Math.max(0, standaloneTotal - standaloneStatic - standalonePyq);
+
+    // Pick diverse DI formats so Pie, Vertical/Horizontal Bar, Line, Caselet, and Mixed all get represented properly
+    const diFormatsPool = [
+      'PIE CHART DI ("diType": "pie" or "double_pie"): Circular percentage (%) or degree (° summing to 360°) distribution across 5-6 sectors/companies/departments, optionally paired as two pie charts comparing two periods or Total vs Sub-category.',
+      'BAR GRAPH DI ("diType": "bar_vertical" or "bar_horizontal"): Multi-series rectangular bars (use "chartType": "bar_vertical" or "bar_horizontal" cleanly) comparing 5 categories across 2-3 years, banks, or metrics.',
+      'LINE GRAPH DI ("diType": "line"): Connected time-series points tracking trends, growth rates (%), or quarterly/annual fluctuations across 5-6 years/months for 2-3 entities.',
+      'CASELET DI ("diType": "caselet"): Rich paragraph-based passage (set "charts": [] so NO visual graph is rendered; place the complete 130-190 word data narrative inside "directions") with interconnected ratios, Venn subsets, or tree splits solvable into exact numbers.',
+      'MIXED / COMBINATION DI ("diType": "mixed"): Combine EXACTLY TWO DIFFERENT visual chart panels inside "charts" (e.g., Panel 1 "chartType": "table" + Panel 2 "chartType": "pie", OR Panel 1 "chartType": "bar_vertical" + Panel 2 "chartType": "line") requiring multi-step cross-chart calculation.'
+    ];
+
+    const seed = Math.floor(Date.now() / 1000) % 5;
+    const pickedFormats: string[] = [];
+    if (diSetCount === 3) {
+      // Always include Pie, Bar/Line, and Caselet/Mixed for an authentic 3-DI RBI Grade B paper!
+      pickedFormats.push(diFormatsPool[0]); // Pie or Double Pie
+      pickedFormats.push(seed % 2 === 0 ? diFormatsPool[1] : diFormatsPool[2]); // Bar (Vert/Horiz) or Line
+      pickedFormats.push(seed % 3 === 0 ? diFormatsPool[4] : diFormatsPool[3]); // Mixed or Caselet (rotate both!)
+    } else {
+      for (let i = 0; i < diSetCount; i++) {
+        pickedFormats.push(diFormatsPool[(seed + i * 2) % diFormatsPool.length]);
+      }
+    }
+
+    const diInstructions = diSetCount > 0
+      ? `
+DATA INTERPRETATION (DI) ARCHITECTURE — STRICT 5-QUESTION SET RULE:
+You MUST generate EXACTLY ${diSetCount} COMPLETE Data Interpretation Set(s) inside top-level "diSets" array.
+Each DI Set MUST contain:
+1. Structured metadata & visual data (` + "`groupId`, `diType`, `setTitle`, `directions`, `notes`, `charts`" + `):
+   - Every visual chart (` + "`pie`, `bar_vertical`, `bar_horizontal`, `line`, `table`" + `) has crisp flat ` + "`data`" + ` (or ` + "`columns` + `rows`" + ` for ` + "`table`" + `) with REAL NUMERIC VALUES for every data point (never invent contradictory numbers).
+   - For ` + "`table`" + `, ` + "`rows`" + ` MUST be an array of JSON objects keyed by ` + "`columns`" + ` (NEVER nested arrays like [[...]]!). For missing-value DI tables, put "?" in missing cells and state the exact deriving condition in ` + "`notes`" + ` or ` + "`directions`" + `.
+2. "questions": An array of EXACTLY 5 linked MCQs derived mathematically from that DI set's charts/caselet (${diTotalMcqs} DI MCQs total across ${diSetCount} sets!).
+   - Vary what the 5 linked questions ask within each set: percentage difference, ratio, weighted average, degree-to-value conversion, multi-step conditional projection, or comparative Rank/Difference.
+   - Each of the 5 MCQs MUST have EXACTLY 5 distinct concrete numerical/ratio/comparison options and complete step-by-step arithmetic in "explanation".
+
+ASSIGNED DI SET FORMATS FOR THIS EXAM (${diSetCount} Sets × 5 Questions = ${diTotalMcqs} Qs):
+${pickedFormats.map((fmt, idx) => `• SET ${idx + 1}: ${fmt}`).join('\n')}`
+      : '';
+
     subjectSpecificRules = `
 SUBJECT-SPECIFIC MANDATE (QUANTITATIVE APTITUDE - RBI GRADE B PHASE 1):
 CRITICAL RULE: ABSOLUTELY ZERO GENERAL KNOWLEDGE, CURRENT AFFAIRS, OR THEORETICAL ESSAYS.
-This is a pure examination of advanced quantitative ability, commercial arithmetic, algebra, and data interpretation calibrated to RBI Grade B Phase 1 (30 Marks / 25 Minutes benchmark).
+This is a pure examination of advanced quantitative ability, commercial arithmetic, algebra, and authentic 5-question Data Interpretation sets calibrated to RBI Grade B Phase 1 (30 Marks / 25 Minutes benchmark).
 
 QUESTION DISTRIBUTION:
-- CATEGORY 1: "${primaryMcqLabel}" -> Generate EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static".
-  Topics: Multi-concept Commercial Mathematics (SI/CI with mixed variable compounding, Dishonest weights + successive markups, Partnership with changing capital, Time-Speed-Distance & Time-Work), Quadratic/Cubic Algebraic Comparisons, Wrong & Missing Number Series with nested prime/cube/factorial patterns, Conditional Probability & Combinatorics.
-- CATEGORY 2: "${secondaryMcqLabel}" -> Generate EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic".
-  Topics: Missing-Value Tabular & Variable-Embedded Caselet Data Interpretation testing CAGR and proportional variance, Quantity I vs Quantity II vs Quantity III comparisons, 3-Statement Data Sufficiency.
-${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authentic Previous Year Questions (PYQs) asked in official RBI Grade B Quantitative Aptitude papers (2018–2025). Mark each with "isPyq": true and "pyqYear": "RBI Grade B 2024" (or 2023, 2022, etc.).` : ''}
+${standaloneTotal > 0 ? `- STANDALONE MCQs inside top-level "questions" -> Generate EXACTLY ${standaloneTotal} MCQs (${standaloneStatic} "sourceTag": "Static", ${standaloneDynamic} "sourceTag": "Dynamic"${standalonePyq > 0 ? `, ${standalonePyq} "isPyq": true` : ''}).
+  Topics: Multi-concept Commercial Arithmetic (SI/CI, Profit-Loss-Discount, Partnership, Time-Speed-Distance, Time-Work, Mixture-Alligation), Quadratic Equations (Quantity I vs II or x vs y), Missing/Wrong Number Series, 3-Statement Data Sufficiency, Probability & Mensuration.` : '- Do NOT put extra standalone MCQs outside "diSets" — output `"questions": []` and put ALL ' + diTotalMcqs + ' questions inside `"diSets"`.'}
+${diInstructions}
+${pyqCount > 0 && standalonePyq === 0 ? `- AUTHENTIC PYQ TAGGING: Mark ${pyqCount} DI questions matching classic RBI Grade B PYQ numerical patterns with "isPyq": true and "pyqYear": "RBI Grade B 2024".` : ''}
 
 STRICT FORMAT REQUIREMENTS:
 - Every MCQ MUST have EXACTLY 5 distinct options.
-- The explanation must include complete mathematical formulas and step-by-step arithmetic/algebraic calculations.`;
+- Mathematical Consistency Check: Verify every calculation backwards from the chart/caselet numbers before finalizing "correctAnswer" and "explanation".`;
 
-    jsonSchemaExample = `{
+    if (diSetCount > 0) {
+      jsonSchemaExample = `{
+  "diSets": [
+    {
+      "groupId": "di_set_1",
+      "diType": "mixed",
+      "setTitle": "Branch Credit Disbursement & Recovery Breakdown (FY 2024–25)",
+      "directions": "Study the following Pie Chart and Table carefully and answer the 5 questions that follow. The Pie Chart shows the percentage distribution of Total Loans Disbursed (Rs. 4,000 Crore) across 5 Zones (North, South, East, West, Central), while the Table shows the Ratio of Priority Sector to Non-Priority Sector loans and Recovery Rate (%) in each Zone.",
+      "notes": [
+        "Total Loans Disbursed across all 5 zones combined = Rs. 4,000 Crore.",
+        "Recovered Amount = Loans Disbursed in that Zone × Recovery Rate (%)."
+      ],
+      "charts": [
+        {
+          "chartType": "pie",
+          "title": "Zone-wise Loan Share (%)",
+          "unit": "%",
+          "totalLabel": "Total: Rs. 4,000 Cr",
+          "categoryKey": "zone",
+          "seriesKeys": ["share"],
+          "data": [
+            { "zone": "North", "share": 24 },
+            { "zone": "South", "share": 28 },
+            { "zone": "East", "share": 15 },
+            { "zone": "West", "share": 21 },
+            { "zone": "Central", "share": 12 }
+          ]
+        },
+        {
+          "chartType": "table",
+          "title": "Priority Ratio & Recovery Rate",
+          "columns": ["Zone", "Priority : Non-Priority", "Recovery Rate (%)"],
+          "data": [],
+          "rows": [
+            { "Zone": "North", "Priority : Non-Priority": "5 : 3", "Recovery Rate (%)": 80 },
+            { "Zone": "South", "Priority : Non-Priority": "4 : 3", "Recovery Rate (%)": 75 },
+            { "Zone": "East", "Priority : Non-Priority": "2 : 3", "Recovery Rate (%)": 70 },
+            { "Zone": "West", "Priority : Non-Priority": "3 : 4", "Recovery Rate (%)": 85 },
+            { "Zone": "Central", "Priority : Non-Priority": "1 : 2", "Recovery Rate (%)": 65 }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "type": "MCQ",
+          "sourceTag": "Dynamic",
+          "isPyq": false,
+          "topic": "Mixed Data Interpretation (Pie + Table)",
+          "text": "What is the ratio of Priority Sector loans disbursed in the South Zone to the Non-Priority Sector loans disbursed in the West Zone?",
+          "options": ["4 : 3", "16 : 15", "8 : 7", "32 : 27", "5 : 4"],
+          "correctAnswer": "4 : 3",
+          "explanation": "South Zone total = 28% of 4000 = Rs. 1,120 Cr. Priority share = (4/7)*1120 = Rs. 640 Cr. West Zone total = 21% of 4000 = Rs. 840 Cr. Non-Priority share = (4/7)*840 = Rs. 480 Cr. Ratio = 640 : 480 = 4 : 3.",
+          "maxMarks": 1
+        }
+      ]
+    },
+    {
+      "groupId": "di_set_2",
+      "diType": "bar_horizontal",
+      "setTitle": "Quarterly Export Volume of FinTech Hardware (Units in '000)",
+      "directions": "Study the Horizontal Bar Graph showing exports by Firm A and Firm B across 5 Quarters and answer the 5 questions below.",
+      "notes": ["All figures represent thousands of units exported."],
+      "charts": [
+        {
+          "chartType": "bar_horizontal",
+          "title": "Firm A vs Firm B Exports ('000 Units)",
+          "unit": "k",
+          "xAxisLabel": "Units ('000)",
+          "yAxisLabel": "Quarter",
+          "categoryKey": "quarter",
+          "seriesKeys": ["Firm A", "Firm B"],
+          "data": [
+            { "quarter": "Q1", "Firm A": 42, "Firm B": 36 },
+            { "quarter": "Q2", "Firm A": 54, "Firm B": 48 },
+            { "quarter": "Q3", "Firm A": 45, "Firm B": 60 },
+            { "quarter": "Q4", "Firm A": 68, "Firm B": 52 },
+            { "quarter": "Q5", "Firm A": 75, "Firm B": 64 }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "type": "MCQ",
+          "sourceTag": "Dynamic",
+          "isPyq": false,
+          "topic": "Bar Graph Data Interpretation",
+          "text": "Total units exported by Firm A in Q2 and Q4 combined is approximately what percent more than units exported by Firm B in Q1 and Q3 combined?",
+          "options": ["27.08%", "24.50%", "31.25%", "29.17%", "22.40%"],
+          "correctAnswer": "27.08%",
+          "explanation": "Firm A (Q2+Q4) = 54 + 68 = 122k. Firm B (Q1+Q3) = 36 + 60 = 96k. % more = (122 - 96)/96 * 100 = 26/96 * 100 = 27.08%.",
+          "maxMarks": 1
+        }
+      ]
+    }
+  ],
+  "questions": ${standaloneTotal > 0 ? `[
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "isPyq": false,
+      "topic": "Quadratic Equations & Comparisons",
+      "text": "Solve Equations I and II and determine the relation between x and y:\\nI. 3x² - 19x + 28 = 0\\nII. 2y² - 17y + 36 = 0",
+      "options": ["x > y", "x < y", "x ≥ y", "x ≤ y", "x = y or relationship cannot be established"],
+      "correctAnswer": "x ≤ y",
+      "explanation": "x = 7/3 or 4; y = 9/2 or 4 => x ≤ y.",
+      "maxMarks": 1
+    }
+  ]` : '[]'}
+}`;
+    } else {
+      jsonSchemaExample = `{
   "questions": [
     {
       "type": "MCQ",
@@ -343,7 +509,7 @@ STRICT FORMAT REQUIREMENTS:
       "type": "MCQ",
       "sourceTag": "Dynamic",
       "isPyq": false,
-      "topic": "${config.targetTopic || 'Data Interpretation & Quantity Comparisons'}",
+      "topic": "${config.targetTopic || 'Quantity Comparisons'}",
       "text": "Compare the quantities given below:\\n\\nQuantity I: The compound interest earned on Rs. 16,000 for 1.5 years at 20% per annum, compounded half-yearly.\\n\\nQuantity II: The simple interest earned on Rs. 25,000 for 3 years at 7.5% per annum.\\n\\nDetermine the relation between Quantity I and Quantity II:",
       "options": [
         "Quantity I > Quantity II",
@@ -358,6 +524,7 @@ STRICT FORMAT REQUIREMENTS:
     }
   ]
 }`;
+    }
   } else if (subjectSlug === 'english') {
     subjectSpecificRules = `
 SUBJECT-SPECIFIC MANDATE (ENGLISH LANGUAGE - RBI GRADE B PHASE 1):
@@ -428,32 +595,20 @@ ${pyqCount > 0 ? `- AUTHENTIC PYQ SECTION: Generate EXACTLY ${pyqCount} authenti
 
 STRICT FORMAT REQUIREMENTS:
 - Every single MCQ MUST have EXACTLY 5 distinct options.
-- Utilize authentic multi-statement formats (Statements I, II, III, IV), UPSC-style pair-counting ("How many of the statements/pairs given above is/are correct?"), and subtle statutory/numerical traps.`;
+- MANDATORY RBI GRADE B QUESTION FORMAT MIX (STRICTLY ENFORCED):
+  • ~40% Direct Analytical / Statutory / Threshold MCQs (concrete thresholds, statutory sections, committee names, exact figures or swapped regulator powers as options).
+  • ~20% Code-Combination MCQs (Statements I–IV with options like "Only I and III", "Only II and IV", "Only I, II and IV", "Only IV", "All I, II, III and IV").
+  • ~15% Caselet Vignette / Double-Blank [X] & [Y] MCQs (short paragraph scenario testing two regulatory facts simultaneously).
+  • ~15% Match-the-Following (List I vs List II with code options like "1-C, 2-A, 3-D, 4-B") OR Exception MCQs ("Which of the following statements is INCORRECT?").
+  • MAX ≤15% Pair-Counting MCQs ("Only one / Only two / Only three / All four / None") — STRICT CAP of AT MOST 2 per batch, NEVER back-to-back.`;
 
     jsonSchemaExample = `{
   "questions": [
     {
       "type": "MCQ",
-      "sourceTag": "Static",
-      "isPyq": false,
-      "topic": "${config.targetTopic || 'Statutory Banking & Monetary Policy'}",
-      "text": "Consider the following statements regarding the Standing Deposit Facility (SDF) introduced by the Reserve Bank of India:\\n\\nI. The SDF allows the RBI to absorb liquidity from commercial banks without providing collateral in return.\\nII. The SDF rate serves as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. The RBI was empowered to introduce the SDF through an amendment to Section 17 of the RBI Act, 1934.\\nIV. Balances parked under SDF are eligible for Statutory Liquidity Ratio (SLR) maintenance.\\n\\nHow many of the statements given above is/are CORRECT?",
-      "options": [
-        "Only one statement",
-        "Only two statements",
-        "Only three statements",
-        "All four statements",
-        "None of the statements"
-      ],
-      "correctAnswer": "Only three statements",
-      "explanation": "Statements I, II, and III are correct: SDF is uncollateralized, sets the LAF floor, and derives statutory backing from the 2018 amendment to Section 17 of the RBI Act, 1934. Statement IV is INCORRECT: Balances under SDF are NOT eligible for SLR (though they count towards CRR/liquidity buffers as specified, they are distinct from SLR securities).",
-      "maxMarks": 1
-    },
-    {
-      "type": "MCQ",
       "sourceTag": "Dynamic",
       "isPyq": false,
-      "topic": "${config.targetTopic || 'Dynamic Current Affairs & Circulars'}",
+      "topic": "${config.targetTopic || 'RBI Circulars & PCA Framework'}",
       "text": "Under the Prompt Corrective Action (PCA) Framework for Non-Banking Financial Companies (NBFCs) notified by the Reserve Bank of India, which of the following represents the Tier 1 Capital threshold trigger for Risk Threshold 1?",
       "options": [
         "Tier 1 Capital ratio falling below 10.0%",
@@ -463,7 +618,41 @@ STRICT FORMAT REQUIREMENTS:
         "Net NPA ratio exceeding 9.0%"
       ],
       "correctAnswer": "Tier 1 Capital ratio falling below 10.0%",
-      "explanation": "Under the RBI PCA Framework for NBFCs (Middle, Upper, and Top Layers), Risk Threshold 1 is triggered when the CRAR falls below 15.0% or the Tier 1 Capital ratio drops below 10.0%.",
+      "explanation": "Under the RBI PCA Framework for NBFCs (Middle, Upper, and Top Layers), Risk Threshold 1 is triggered when CRAR falls below 15.0% or the Tier 1 Capital ratio drops below 10.0%.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Static",
+      "isPyq": false,
+      "topic": "${config.targetTopic || 'Statutory Banking & Monetary Policy'}",
+      "text": "With reference to the Standing Deposit Facility (SDF) operated by the Reserve Bank of India, examine the following statements:\\nI. SDF allows the RBI to absorb liquidity from commercial banks without offering collateral.\\nII. SDF rate acts as the floor of the Liquidity Adjustment Facility (LAF) corridor.\\nIII. Statutory power for SDF came via the Finance Act 2018 amendment to Section 17 of the RBI Act, 1934.\\nIV. SDF balances qualify for Statutory Liquidity Ratio (SLR) maintenance.\\n\\nWhich of the statements given above are CORRECT?",
+      "options": [
+        "Only I and II",
+        "Only I, II and III",
+        "Only II and IV",
+        "Only I, III and IV",
+        "All I, II, III and IV"
+      ],
+      "correctAnswer": "Only I, II and III",
+      "explanation": "Statements I, II, and III are correct. Statement IV is incorrect because SDF balances are eligible for CRR/liquidity buffers as specified, NOT for Statutory Liquidity Ratio (SLR) maintenance.",
+      "maxMarks": 1
+    },
+    {
+      "type": "MCQ",
+      "sourceTag": "Dynamic",
+      "isPyq": false,
+      "topic": "${config.targetTopic || 'Regulatory Committees & Institutions'}",
+      "text": "Read the following regulatory vignette and identify [X] and [Y]:\\n'To resolve stressed assets cleanly through an institutional bad bank architecture, the Reserve Bank of India licensed [X] under the SARFAESI Act, 2002 with sovereign-backed Security Receipts guaranteed up to Rs. [Y] Crore via IDRCL.'",
+      "options": [
+        "[X]: NARCL ; [Y]: 30,600",
+        "[X]: ARCIL ; [Y]: 25,000",
+        "[X]: NARCL ; [Y]: 50,000",
+        "[X]: NaBFID ; [Y]: 20,000",
+        "[X]: AMCIL ; [Y]: 30,600"
+      ],
+      "correctAnswer": "[X]: NARCL ; [Y]: 30,600",
+      "explanation": "National Asset Reconstruction Company Limited (NARCL) was set up as the Asset Reconstruction Company backed by a Rs. 30,600 crore sovereign guarantee for Security Receipts issued to acquire legacy NPAs.",
       "maxMarks": 1
     }
   ]
@@ -690,7 +879,7 @@ ${subjectSpecificRules}
 
 MANDATORY EXAMINATION STANDARDS:
 1. STRICT 5-OPTION RULE: EVERY single MCQ MUST HAVE EXACTLY 5 DISTINCT OPTIONS (Option 1 to Option 5). Never output only 4 options.
-2. DIFFICULTY & TRAP INTEGRITY: Respect the calibrated difficulty directive strictly. Distractors must be realistic, nuanced, and designed to trap superficial knowledge.
+2. FORMAT VARIETY RULE: Do NOT trap multiple questions in identical "Only one / Only two / Only three" options. Across every batch, vary between direct concrete answers, code combinations ("Only I and III"), match-the-following ("1-B, 2-D, 3-A, 4-C"), [X]/[Y] vignettes, exceptions ("Which is INCORRECT?"), and DI graphs/caselets.
 3. QUESTION COUNT ENFORCEMENT:
    - Output EXACTLY ${mcq1Count} MCQs with "sourceTag": "Static" and "isPyq": false.
    - Output EXACTLY ${mcq2Count} MCQs with "sourceTag": "Dynamic" and "isPyq": false.
@@ -712,12 +901,11 @@ app.post('/api/generate-questions', async (req, res) => {
     const { extractedText, config } = req.body;
     const subjectSlug = config?.subjectSlug || 'general-awareness';
     const subjectName = config?.subject || 'General Banking & Economic Awareness';
-    
+
     const prompt = buildSubjectPrompt(subjectSlug, subjectName, config, extractedText);
 
     const rawJson = await callGeminiWithRetry(prompt);
     const parsed = safeJsonParse(rawJson);
-    const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
 
     // Safe option prefix cleaner: strips leading "A) ", "(A) ", "Option 1: ", "1. " etc. without destroying "A-2, B-1"
     const cleanOptionText = (opt: any): string => {
@@ -727,14 +915,143 @@ app.post('/api/generate-questions', async (req, res) => {
         .trim();
     };
 
-    // Robust Question Normalization
-    const normalizedQuestions = rawQuestions.map((q: any, index: number) => {
+    const coerceScalar = (val: any): string | number => {
+      if (typeof val === 'number' && Number.isFinite(val)) return val;
+      if (val === null || val === undefined) return '—';
+      const str = String(val).trim();
+      if (!str) return '—';
+      // Only coerce pure numbers (avoid turning ratios like "5 : 3" or "2024-25" into numbers)
+      if (/^-?\d+(?:\.\d+)?$/.test(str)) {
+        const n = Number(str);
+        if (Number.isFinite(n)) return n;
+      }
+      return str;
+    };
+
+    const VALID_DI_TYPES = new Set(['pie', 'double_pie', 'bar_vertical', 'bar_horizontal', 'line', 'table', 'caselet', 'mixed']);
+    const VALID_CHART_TYPES = new Set(['pie', 'bar_vertical', 'bar_horizontal', 'line', 'table']);
+
+    const normalizeDiGroup = (rawSet: any, setIdx: number) => {
+      if (!rawSet || typeof rawSet !== 'object') return null;
+      const rawDiType = String(rawSet.diType || 'mixed').toLowerCase().trim();
+      const diType = VALID_DI_TYPES.has(rawDiType) ? rawDiType : 'mixed';
+      const groupId = String(rawSet.groupId || `di_${Date.now()}_${setIdx + 1}`);
+      const setTitle = String(rawSet.setTitle || `Data Interpretation Set ${setIdx + 1}`).trim();
+      const directions = String(rawSet.directions || rawSet.passage || '').trim();
+      const notes = Array.isArray(rawSet.notes)
+        ? rawSet.notes.map((n: any) => String(n || '').trim()).filter(Boolean)
+        : [];
+
+      const rawCharts = Array.isArray(rawSet.charts) ? rawSet.charts : [];
+      const charts = rawCharts
+        .filter((ch: any) => ch && typeof ch === 'object')
+        .map((ch: any, chIdx: number) => {
+          const rawChartType = String(ch.chartType || (diType === 'double_pie' ? 'pie' : diType === 'caselet' ? 'table' : diType)).toLowerCase().trim();
+          const chartType = VALID_CHART_TYPES.has(rawChartType) ? rawChartType : 'bar_vertical';
+
+          // Normalize flat object data rows (never nested arrays)
+          let dataArr: Array<Record<string, string | number>> = [];
+          if (Array.isArray(ch.data)) {
+            dataArr = ch.data
+              .filter((row: any) => row && typeof row === 'object' && !Array.isArray(row))
+              .map((row: any) => {
+                const flat: Record<string, string | number> = {};
+                Object.entries(row).forEach(([k, v]) => {
+                  flat[String(k)] = coerceScalar(v);
+                });
+                return flat;
+              });
+          }
+
+          let columns = Array.isArray(ch.columns)
+            ? ch.columns.map((c: any) => String(c || '').trim()).filter(Boolean)
+            : [];
+
+          let rowsArr: Array<Record<string, string | number>> = [];
+          if (Array.isArray(ch.rows)) {
+            rowsArr = ch.rows
+              .map((r: any) => {
+                if (Array.isArray(r)) {
+                  // Convert accidental nested array rows into flat objects keyed by columns
+                  const obj: Record<string, string | number> = {};
+                  r.forEach((cell: any, cIdx: number) => {
+                    const colKey = columns[cIdx] || `Col ${cIdx + 1}`;
+                    obj[colKey] = coerceScalar(cell);
+                  });
+                  return obj;
+                }
+                if (r && typeof r === 'object') {
+                  const obj: Record<string, string | number> = {};
+                  Object.entries(r).forEach(([k, v]) => {
+                    obj[String(k)] = coerceScalar(v);
+                  });
+                  return obj;
+                }
+                return null;
+              })
+              .filter(Boolean) as Array<Record<string, string | number>>;
+          }
+
+          if (chartType === 'table' && columns.length === 0 && rowsArr.length > 0) {
+            columns = Object.keys(rowsArr[0]);
+          }
+          if (chartType === 'table' && rowsArr.length === 0 && dataArr.length > 0) {
+            rowsArr = dataArr;
+            if (columns.length === 0) columns = Object.keys(rowsArr[0]);
+          }
+
+          const sampleKeys = dataArr.length > 0 ? Object.keys(dataArr[0]) : [];
+          let categoryKey = ch.categoryKey ? String(ch.categoryKey).trim() : '';
+          if (!categoryKey && sampleKeys.length > 0) {
+            const nonNumericKey = sampleKeys.find(k => typeof dataArr[0][k] === 'string');
+            categoryKey = nonNumericKey || sampleKeys[0];
+          }
+
+          let seriesKeys = Array.isArray(ch.seriesKeys)
+            ? ch.seriesKeys.map((s: any) => String(s || '').trim()).filter(Boolean)
+            : [];
+          if (seriesKeys.length === 0 && sampleKeys.length > 0) {
+            seriesKeys = sampleKeys.filter(k => k !== categoryKey);
+          }
+
+          const panel: Record<string, any> = {
+            chartType,
+            title: String(ch.title || `Exhibit ${chIdx + 1}`).trim(),
+            data: dataArr,
+          };
+          if (ch.subtitle) panel.subtitle = String(ch.subtitle).trim();
+          if (ch.unit) panel.unit = String(ch.unit).trim();
+          if (ch.totalLabel) panel.totalLabel = String(ch.totalLabel).trim();
+          if (ch.xAxisLabel) panel.xAxisLabel = String(ch.xAxisLabel).trim();
+          if (ch.yAxisLabel) panel.yAxisLabel = String(ch.yAxisLabel).trim();
+          if (categoryKey) panel.categoryKey = categoryKey;
+          if (seriesKeys.length > 0) panel.seriesKeys = seriesKeys;
+          if (columns.length > 0) panel.columns = columns;
+          if (rowsArr.length > 0) panel.rows = rowsArr;
+          return panel;
+        });
+
+      const group: Record<string, any> = {
+        groupId,
+        diType,
+        setTitle,
+        directions,
+        charts: diType === 'caselet' ? [] : charts
+      };
+      if (notes.length > 0) group.notes = notes;
+      return group;
+    };
+
+    const normalizeSingleQuestion = (
+      q: any,
+      index: number,
+      diMeta?: { diGroup: any; diSetIndex: number; diSetTotal: number; forceSourceTag?: 'Static' | 'Dynamic' }
+    ) => {
       const isMCQ = (q.type || '').toUpperCase() === 'MCQ' || (Array.isArray(q.options) && q.options.length > 0) || (q.options && typeof q.options === 'object');
       const text = q.text || q.question || q.questionText || `Question ${index + 1}`;
-      const sourceTag = (q.sourceTag === 'Dynamic' || q.source === 'Dynamic') ? 'Dynamic' : 'Static';
+      const sourceTag = diMeta?.forceSourceTag || ((q.sourceTag === 'Dynamic' || q.source === 'Dynamic') ? 'Dynamic' : 'Static');
 
       if (isMCQ) {
-        // Extract options ensuring exactly 5 options
         let optionsList: string[] = [];
         if (Array.isArray(q.options)) {
           optionsList = q.options.map(cleanOptionText).filter(Boolean);
@@ -742,32 +1059,25 @@ app.post('/api/generate-questions', async (req, res) => {
           optionsList = Object.values(q.options).map(cleanOptionText).filter(Boolean);
         }
 
-        // Standardize correctAnswer
         let rawCorrect = cleanOptionText(q.correctAnswer || '');
-
-        // If correctAnswer was just an index or letter like "A", "B", "C", "D", "E" or "1".."5"
         const letterIndex = ['A', 'B', 'C', 'D', 'E'].indexOf(rawCorrect.toUpperCase());
         const numIndex = ['1', '2', '3', '4', '5'].indexOf(rawCorrect);
-        
+
         let resolvedCorrect = '';
         if (letterIndex !== -1 && optionsList[letterIndex]) {
           resolvedCorrect = optionsList[letterIndex];
         } else if (numIndex !== -1 && optionsList[numIndex]) {
           resolvedCorrect = optionsList[numIndex];
         } else {
-          // Check match with one of the options
           const matched = optionsList.find(opt => opt.toLowerCase() === rawCorrect.toLowerCase());
-          if (matched) {
-            resolvedCorrect = matched;
-          }
+          if (matched) resolvedCorrect = matched;
         }
 
-        // Strictly enforce 5 options per RBI Grade B standards
         const defaultFillers = [
           "None of the above",
-          "Cannot be determined from the available regulatory data",
+          "Cannot be determined from the given data",
           "Both (b) and (c)",
-          "All of the above statements are valid"
+          "Data inadequate"
         ];
         let fillerIdx = 0;
         while (optionsList.length < 5) {
@@ -777,20 +1087,18 @@ app.post('/api/generate-questions', async (req, res) => {
           }
         }
         if (optionsList.length > 5) {
-          // Truncate to 5 options, ensuring resolvedCorrect stays if present
           if (resolvedCorrect && optionsList.indexOf(resolvedCorrect) >= 5) {
             optionsList[4] = resolvedCorrect;
           }
           optionsList = optionsList.slice(0, 5);
         }
 
-        // Finalize correctAnswer
         if (!resolvedCorrect || !optionsList.includes(resolvedCorrect)) {
           resolvedCorrect = optionsList[0];
         }
 
-        const fallbackTopic = q.topic || config.targetTopic || (sourceTag === 'Dynamic' 
-          ? (config.secondaryMcqLabel || 'Applied Analytical Problems') 
+        const fallbackTopic = q.topic || config.targetTopic || (sourceTag === 'Dynamic'
+          ? (config.secondaryMcqLabel || 'Applied Analytical Problems')
           : (config.primaryMcqLabel || 'Core Syllabus Principles'));
 
         let fallbackExplanation = q.explanation;
@@ -812,7 +1120,9 @@ app.post('/api/generate-questions', async (req, res) => {
           resolvedMcqMarks = index < config.mcqOneMarkCount ? 1 : 2;
         }
 
-        return {
+        const normalizedInlineDi = !diMeta && q.diGroup ? normalizeDiGroup(q.diGroup, index) : null;
+
+        const out: Record<string, any> = {
           id: q.id || `q_mcq_${index + 1}`,
           type: 'MCQ' as const,
           sourceTag,
@@ -826,10 +1136,20 @@ app.post('/api/generate-questions', async (req, res) => {
           explanation: fallbackExplanation,
           maxMarks: resolvedMcqMarks
         };
+        if (diMeta?.diGroup) {
+          out.diGroup = diMeta.diGroup;
+          out.diSetIndex = diMeta.diSetIndex;
+          out.diSetTotal = diMeta.diSetTotal;
+        } else if (normalizedInlineDi) {
+          out.diGroup = normalizedInlineDi;
+          if (typeof q.diSetIndex === 'number') out.diSetIndex = q.diSetIndex;
+          if (typeof q.diSetTotal === 'number') out.diSetTotal = q.diSetTotal;
+        }
+        return out;
       } else {
         const maxMarks = typeof q.maxMarks === 'number' && q.maxMarks > 0 ? q.maxMarks : 15;
         const wordLimit = typeof q.wordLimit === 'number' && q.wordLimit > 0 ? q.wordLimit : (maxMarks === 10 ? 400 : maxMarks === 30 ? 170 : maxMarks === 40 ? 400 : 600);
-        
+
         let markingScheme = q.markingScheme;
         if (!markingScheme || typeof markingScheme !== 'object' || Object.keys(markingScheme).length === 0) {
           const split = Number((maxMarks / 4).toFixed(1));
@@ -856,6 +1176,34 @@ app.post('/api/generate-questions', async (req, res) => {
           modelAnswer: q.modelAnswer || 'Comprehensive model answer addressing structural impacts, regulatory guardrails, and implementation roadmap.'
         };
       }
+    };
+
+    const rawStandalone = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const rawDiSets = Array.isArray(parsed.diSets) ? parsed.diSets : [];
+
+    const normalizedQuestions: any[] = [];
+    let runningIndex = 0;
+
+    // 1. Normalize standalone questions first (Static/Arithmetic/Algebra/Descriptive)
+    rawStandalone.forEach((q: any) => {
+      normalizedQuestions.push(normalizeSingleQuestion(q, runningIndex++));
+    });
+
+    // 2. Flatten each DI set cleanly, attaching shared visual diGroup + 1..N index
+    rawDiSets.forEach((rawSet: any, setIdx: number) => {
+      const diGroup = normalizeDiGroup(rawSet, setIdx);
+      const setQuestions = Array.isArray(rawSet?.questions) ? rawSet.questions : [];
+      const setTotal = setQuestions.length || 5;
+      setQuestions.forEach((sq: any, qInSetIdx: number) => {
+        normalizedQuestions.push(
+          normalizeSingleQuestion(sq, runningIndex++, {
+            diGroup,
+            diSetIndex: qInSetIdx + 1,
+            diSetTotal: setTotal,
+            forceSourceTag: (config?.mcqDynamic || 0) > 0 ? 'Dynamic' : undefined
+          })
+        );
+      });
     });
 
     res.json({ questions: normalizedQuestions });

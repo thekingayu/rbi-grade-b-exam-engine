@@ -197,25 +197,25 @@ export const FULL_PHASE_1_BLUEPRINT: FullPhaseBlueprint = {
       mcqCount: 30,
       descCount: 0,
       negativeMarking: 0.25,
-      description: '30 MCQs covering missing-table & caselet Data Interpretation, chained arithmetic, quadratics, series & data sufficiency.',
+      description: '30 MCQs featuring 3 complete Data Interpretation sets (5 Qs each: Pie, Bar/Line, Caselet & Mixed DI) plus arithmetic, quadratics, series & data sufficiency.',
       batches: [
         {
           batchIndex: 1,
-          mcqStatic: 15,
+          mcqStatic: 13,
           mcqDynamic: 0,
           descStatic: 0,
           descDynamic: 0,
-          pyqCount: 0,
-          batchFocus: 'Commercial Arithmetic & Algebra: Multi-concept Profit/Loss/Partnership/SI-CI/TSD/Time-Work, Wrong/Missing Number Series & Surd/Quadratic Equations'
+          pyqCount: 2,
+          batchFocus: 'Commercial Arithmetic, Algebra & Sufficiency (13 Static + 2 Official PYQs): Multi-concept Profit/Loss/Partnership/SI-CI/TSD/Time-Work, Wrong/Missing Number Series, Surd/Quadratic Comparisons, Quantity I vs II & 3-Statement Data Sufficiency'
         },
         {
           batchIndex: 2,
           mcqStatic: 0,
-          mcqDynamic: 13,
+          mcqDynamic: 15,
           descStatic: 0,
           descDynamic: 0,
-          pyqCount: 2,
-          batchFocus: 'Data Interpretation & Sufficiency: Missing-Value Tabular & Variable-Embedded Caselet DI, Quantity I vs II vs III comparisons, 3-Statement Data Sufficiency & 2 Official PYQs'
+          pyqCount: 0,
+          batchFocus: 'EXACTLY 3 COMPLETE DATA INTERPRETATION SETS (5 Linked MCQs Per Set = 15 Qs total): Set 1 (Single or Double Pie Chart with % or degree distribution), Set 2 (Vertical/Horizontal Bar Graph or Multi-Series Line Graph), Set 3 (Paragraph Caselet DI or Mixed Combination DI such as Table + Pie or Bar + Line)'
         }
       ]
     }

@@ -96,17 +96,17 @@ export const INITIAL_SUBJECTS: Subject[] = [
       defaultDescCount: 0,
     },
     questionCategories: {
-      primaryMcqLabel: 'Commercial Arithmetic & Algebra',
-      primaryMcqSubtext: 'Profit-loss, SI/CI, time-work, probability, missing/wrong series & quadratic equations',
-      secondaryMcqLabel: 'Data Interpretation & Data Sufficiency',
-      secondaryMcqSubtext: 'Caselets, Tabular, Radar/Missing DI sets & Quantity I vs Quantity II comparisons',
-      fullMock: { mcqStatic: 14, mcqDynamic: 14, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
-      sectional: { mcqStatic: 7, mcqDynamic: 6, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 15 },
-      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 10 }
+      primaryMcqLabel: 'Commercial Arithmetic, Algebra & Sufficiency',
+      primaryMcqSubtext: 'Profit-loss, SI/CI, time-work, probability, number series, quadratics & Quantity I vs II',
+      secondaryMcqLabel: 'Data Interpretation Sets (5 Qs Per Set)',
+      secondaryMcqSubtext: 'Pie/Double-Pie, Vertical & Horizontal Bar Graphs, Line Graphs, Caselet DI & Mixed Combination DI (5 linked Qs each)',
+      fullMock: { mcqStatic: 13, mcqDynamic: 15, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 25 },
+      sectional: { mcqStatic: 6, mcqDynamic: 10, descStatic: 0, descDynamic: 0, pyqCount: 2, durationMinutes: 18 },
+      topicDrill: { mcqStatic: 10, mcqDynamic: 0, descStatic: 0, descDynamic: 0, pyqCount: 0, durationMinutes: 12 }
     },
     categories: ['Data Interpretation', 'Commercial Arithmetic', 'Quadratic Equations', 'Number Series'],
     syllabusTopics: [
-      'Data Interpretation & Caselets (Tables, Bar, Line, Pie, Radar & Missing DI)',
+      'Data Interpretation & Caselets (Pie, Vertical/Horizontal Bar, Line, Caselet & Mixed DI)',
       'Number Series (Missing number & wrong number pattern finding)',
       'Quadratic Equations & Quantity Comparison (Q1 vs Q2)',
       'Simple & Compound Interest (Half-yearly/annual growth differences)',
@@ -117,7 +117,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
       'Mixture & Allegation (Replacement & ratio blending)',
       'Mensuration & Probability (Permutations, combinations & geometry)'
     ],
-    description: 'High-precision numerical problem solving, caselet analysis, and mathematical modeling.'
+    description: '30-mark Quant section with 2–3 complete 5-question Data Interpretation sets (Pie, Bar, Line, Caselet & Mixed DI), arithmetic & algebra.'
   },
   {
     id: 'sub_english',

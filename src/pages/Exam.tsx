@@ -13,6 +13,7 @@ import { handleFirestoreError, OperationType } from '../utils/firestore';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { FuturisticSpinner, FuturisticProgressBar, FuturisticScreenLoader } from '../components/FuturisticLoader';
 import { MotionModal, SPRING_SNAPPY } from '../components/MotionPrimitives';
+import { DiVisualRenderer } from '../components/exam/DiVisualRenderer';
 
 export function Exam({ user }: { user: User }) {
   const { testId } = useParams();
@@ -698,137 +699,163 @@ export function Exam({ user }: { user: User }) {
         <div
           ref={mainScrollRef}
           data-lenis-prevent
-          className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-8 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-6 xl:p-8 overscroll-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-8 sm:pb-14">
-            
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`q-panel-${currentIndex}`}
-                initial={{ opacity: 0, x: 18, scale: 0.99 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: -14, scale: 0.99 }}
-                transition={{ ...SPRING_SNAPPY, opacity: { duration: 0.14 } }}
-                className="space-y-5 will-change-transform"
-              >
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {activeSectionMeta && (
-                    <span
-                      className="px-3 py-1 border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-xs font-mono font-bold uppercase tracking-wider rounded-md"
-                      style={{
-                        backgroundColor: `${activeSectionMeta.accentColor}20`,
-                        color: activeSectionMeta.accentColor
-                      }}
-                    >
-                      {activeSectionMeta.shortName}
-                    </span>
-                  )}
-                  <span className="px-3 py-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
-                    {activeSectionMeta
-                      ? `Q ${sectionQuestionNumber} of ${sectionQuestionTotal} (#${currentIndex + 1})`
-                      : `Question ${currentIndex + 1} of ${test.questions.length}`}
-                  </span>
-                  <span className="px-3 py-1 bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md">
-                    {currentQ.sourceTag}
-                  </span>
-                  <span className="px-3 py-1 bg-[#FAF8EC] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
-                    {currentQ.type === 'MCQ'
-                      ? `${mcqMarkLabel}${mcqNegVal > 0 ? ` (-${mcqNegVal})` : ''}`
-                      : `${currentQ.type} · ${currentQ.maxMarks || 15}M`}
-                  </span>
-                  {currentQ.isPyq && (
-                    <span className="px-3 py-1 bg-[#FFD426] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-[#141413] shrink-0" />
-                      <span>{currentQ.pyqYear || 'RBI Grade B PYQ'}</span>
-                    </span>
-                  )}
+          <div className={clsx('mx-auto space-y-4 sm:space-y-5 pb-8 sm:pb-14', currentQ.diGroup ? 'max-w-7xl' : 'max-w-4xl')}>
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              {activeSectionMeta && (
+                <span
+                  className="px-3 py-1 border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-xs font-mono font-bold uppercase tracking-wider rounded-md"
+                  style={{
+                    backgroundColor: `${activeSectionMeta.accentColor}20`,
+                    color: activeSectionMeta.accentColor
+                  }}
+                >
+                  {activeSectionMeta.shortName}
+                </span>
+              )}
+              <span className="px-3 py-1 bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
+                {activeSectionMeta
+                  ? `Q ${sectionQuestionNumber} of ${sectionQuestionTotal} (#${currentIndex + 1})`
+                  : `Question ${currentIndex + 1} of ${test.questions.length}`}
+              </span>
+              <span className="px-3 py-1 bg-[#ECD5FF] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md">
+                {currentQ.sourceTag}
+              </span>
+              <span className="px-3 py-1 bg-[#FAF8EC] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E] dark:text-[#A3A399] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
+                {currentQ.type === 'MCQ'
+                  ? `${mcqMarkLabel}${mcqNegVal > 0 ? ` (-${mcqNegVal})` : ''}`
+                  : `${currentQ.type} · ${currentQ.maxMarks || 15}M`}
+              </span>
+              {currentQ.diGroup && (
+                <span className="px-3 py-1 bg-[#0D47FF] text-white border-[1.5px] border-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md tabular-nums">
+                  DI Set · Q{currentQ.diSetIndex || 1}/{currentQ.diSetTotal || 5}
+                </span>
+              )}
+              {currentQ.isPyq && (
+                <span className="px-3 py-1 bg-[#FFD426] border-[1.5px] border-[#141413] text-[#141413] text-xs font-mono font-bold uppercase tracking-wider rounded-md flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-[#141413] shrink-0" />
+                  <span>{currentQ.pyqYear || 'RBI Grade B PYQ'}</span>
+                </span>
+              )}
+            </div>
+
+            {currentQ.type === 'Descriptive' && (
+              <div className="px-4 py-3 bg-[#ECD5FF]/45 dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/50 text-xs sm:text-sm font-mono font-bold text-[#141413] dark:text-[#ECD5FF] rounded-xl tabular-nums">
+                Word limit: {currentQ.wordLimit || 250} words • {currentQ.maxMarks || 15} marks
+              </div>
+            )}
+
+            <div className={clsx(currentQ.diGroup ? 'grid grid-cols-1 xl:grid-cols-12 gap-5 items-start' : '')}>
+              {/* Left CBT Pane for Data Interpretation Visuals / Caselets (stays mounted across Q1..Q5 of the same set) */}
+              {currentQ.diGroup && (
+                <div className="xl:col-span-7 xl:sticky xl:top-0 min-w-0">
+                  <DiVisualRenderer
+                    key={currentQ.diGroup.groupId}
+                    diGroup={currentQ.diGroup}
+                    activeSetIndex={currentQ.diSetIndex}
+                    activeSetTotal={currentQ.diSetTotal}
+                  />
                 </div>
-                
-                {currentQ.type === 'Descriptive' && (
-                  <div className="px-4 py-3 bg-[#ECD5FF]/45 dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/50 text-xs sm:text-sm font-mono font-bold text-[#141413] dark:text-[#ECD5FF] rounded-xl tabular-nums">
-                    Word limit: {currentQ.wordLimit || 250} words • {currentQ.maxMarks || 15} marks
-                  </div>
-                )}
+              )}
 
-                {/* Question Card */}
-                <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-8">
-                  <div className="text-base sm:text-xl font-medium text-[#141413] dark:text-[#FAF8EC] leading-relaxed mb-6 sm:mb-8 whitespace-pre-wrap">
-                    {currentQ.text}
-                  </div>
-
-                  {currentQ.type === 'MCQ' && currentQ.options && (
-                    <div className="space-y-3">
-                      {currentQ.options.map((opt, i) => {
-                        const isSelected = answers[currentQId] === opt || answers[currentIndex.toString()] === opt;
-                        const optionLetter = ['A', 'B', 'C', 'D', 'E'][i] || String.fromCharCode(65 + i);
-                        return (
-                          <motion.label
-                            key={i}
-                            whileHover={{ x: 3 }}
-                            whileTap={{ scale: 0.975 }}
-                            transition={SPRING_SNAPPY}
-                            onClick={() => handleAnswerChange(opt)}
-                            className={clsx(
-                              "flex items-start gap-3 sm:gap-4 p-3.5 sm:p-5 rounded-2xl border-[1.5px] cursor-pointer transition-colors group",
-                              isSelected
-                                ? "bg-[#ECD5FF]/35 dark:bg-[#ECD5FF]/15 border-[#141413] dark:border-[#ECD5FF] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF]"
-                                : "bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60"
-                            )}
-                          >
-                            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 pt-0.5">
-                              <input
-                                type="radio"
-                                name={`q-${currentQId}`}
-                                value={opt}
-                                checked={isSelected}
-                                onChange={() => handleAnswerChange(opt)}
-                                className="w-5 h-5 accent-[#0D47FF] border-[#141413] cursor-pointer"
-                              />
-                              <span className={clsx(
-                                "w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors font-mono border",
-                                isSelected
-                                  ? "bg-[#0D47FF] text-white border-[#141413]"
-                                  : "bg-[#FFFFFF] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] border-[#E5E1CE] dark:border-[#2E2E2A] group-hover:border-[#141413]"
-                              )}>
-                                {optionLetter}
-                              </span>
-                            </div>
-                            <span className="text-[#141413] dark:text-[#FAF8EC] text-sm sm:text-lg leading-snug flex-1">{opt}</span>
-                          </motion.label>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {currentQ.type === 'Descriptive' && (
-                    <div>
-                      <textarea
-                        value={answers[currentQId] || ''}
-                        onChange={(e) => handleAnswerChange(e.target.value)}
-                        placeholder={
-                          isEnglishWritingQuestion
-                            ? 'Draft your Paper II response focusing on coherence, formal register, clarity, and structure...'
-                            : 'Type your structured answer here adhering to RBI Grade B Phase II guidelines...'
-                        }
-                        className="w-full h-56 sm:h-96 p-3.5 sm:p-6 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] outline-none text-[#141413] dark:text-[#FAF8EC] resize-y text-sm sm:text-lg leading-relaxed"
-                      />
-                      <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
-                        <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
-                          {isEnglishWritingQuestion
-                            ? 'Paper II Standard: Clarity • Tone • Vocabulary • Analytical Precision'
-                            : 'Phase II Standard: Statutory provisions • Regulatory circulars • Policy implications'}
-                        </span>
-                        <span className="text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] px-3 py-1 rounded-md font-mono tabular-nums">
-                          {answers[currentQId]?.trim().split(/\s+/).filter(w => w.length > 0).length || 0} / {currentQ.wordLimit || 250} words
-                        </span>
+              {/* Right / Primary Question Card */}
+              <div className={clsx(currentQ.diGroup ? 'xl:col-span-5 min-w-0' : '')}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`q-panel-${currentIndex}`}
+                    initial={{ opacity: 0, x: 18, scale: 0.99 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -14, scale: 0.99 }}
+                    transition={{ ...SPRING_SNAPPY, opacity: { duration: 0.14 } }}
+                    className="will-change-transform"
+                  >
+                    <div className="bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl sm:rounded-3xl p-5 sm:p-7">
+                      <div className={clsx(
+                        'font-medium text-[#141413] dark:text-[#FAF8EC] leading-relaxed mb-6 whitespace-pre-wrap',
+                        currentQ.diGroup ? 'text-sm sm:text-lg' : 'text-base sm:text-xl sm:mb-8'
+                      )}>
+                        {currentQ.text}
                       </div>
+
+                      {currentQ.type === 'MCQ' && currentQ.options && (
+                        <div className="space-y-3">
+                          {currentQ.options.map((opt, i) => {
+                            const isSelected = answers[currentQId] === opt || answers[currentIndex.toString()] === opt;
+                            const optionLetter = ['A', 'B', 'C', 'D', 'E'][i] || String.fromCharCode(65 + i);
+                            return (
+                              <motion.label
+                                key={i}
+                                whileHover={{ x: 3 }}
+                                whileTap={{ scale: 0.975 }}
+                                transition={SPRING_SNAPPY}
+                                onClick={() => handleAnswerChange(opt)}
+                                className={clsx(
+                                  "flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border-[1.5px] cursor-pointer transition-colors group",
+                                  isSelected
+                                    ? "bg-[#ECD5FF]/35 dark:bg-[#ECD5FF]/15 border-[#141413] dark:border-[#ECD5FF] shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF]"
+                                    : "bg-[#FAF8EC] dark:bg-[#141413] border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 pt-0.5">
+                                  <input
+                                    type="radio"
+                                    name={`q-${currentQId}`}
+                                    value={opt}
+                                    checked={isSelected}
+                                    onChange={() => handleAnswerChange(opt)}
+                                    className="w-5 h-5 accent-[#0D47FF] border-[#141413] cursor-pointer"
+                                  />
+                                  <span className={clsx(
+                                    "w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors font-mono border",
+                                    isSelected
+                                      ? "bg-[#0D47FF] text-white border-[#141413]"
+                                      : "bg-[#FFFFFF] dark:bg-[#1C1C1A] text-[#141413] dark:text-[#FAF8EC] border-[#E5E1CE] dark:border-[#2E2E2A] group-hover:border-[#141413]"
+                                  )}>
+                                    {optionLetter}
+                                  </span>
+                                </div>
+                                <span className={clsx(
+                                  'text-[#141413] dark:text-[#FAF8EC] leading-snug flex-1',
+                                  currentQ.diGroup ? 'text-sm sm:text-base' : 'text-sm sm:text-lg'
+                                )}>{opt}</span>
+                              </motion.label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {currentQ.type === 'Descriptive' && (
+                        <div>
+                          <textarea
+                            value={answers[currentQId] || ''}
+                            onChange={(e) => handleAnswerChange(e.target.value)}
+                            placeholder={
+                              isEnglishWritingQuestion
+                                ? 'Draft your Paper II response focusing on coherence, formal register, clarity, and structure...'
+                                : 'Type your structured answer here adhering to RBI Grade B Phase II guidelines...'
+                            }
+                            className="w-full h-56 sm:h-96 p-3.5 sm:p-6 bg-[#FAF8EC] dark:bg-[#141413] border-[1.5px] border-[#E5E1CE] dark:border-[#2E2E2A] rounded-2xl focus:border-[#0D47FF] dark:focus:border-[#ECD5FF] outline-none text-[#141413] dark:text-[#FAF8EC] resize-y text-sm sm:text-lg leading-relaxed"
+                          />
+                          <div className="flex flex-wrap justify-between items-center gap-2 mt-3">
+                            <span className="text-xs font-mono text-[#66665E] dark:text-[#A3A399]">
+                              {isEnglishWritingQuestion
+                                ? 'Paper II Standard: Clarity • Tone • Vocabulary • Analytical Precision'
+                                : 'Phase II Standard: Statutory provisions • Regulatory circulars • Policy implications'}
+                            </span>
+                            <span className="text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] px-3 py-1 rounded-md font-mono tabular-nums">
+                              {answers[currentQId]?.trim().split(/\s+/).filter(w => w.length > 0).length || 0} / {currentQ.wordLimit || 250} words
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
 
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mt-6">

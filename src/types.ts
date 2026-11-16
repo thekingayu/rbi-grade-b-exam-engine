@@ -121,6 +121,40 @@ export interface TestConfig {
   secondaryDescLabel?: string;
 }
 
+export type DiFormatType =
+  | 'pie'
+  | 'double_pie'
+  | 'bar_vertical'
+  | 'bar_horizontal'
+  | 'line'
+  | 'table'
+  | 'caselet'
+  | 'mixed';
+
+export interface DiChartPanel {
+  chartType: 'pie' | 'bar_vertical' | 'bar_horizontal' | 'line' | 'table';
+  title: string;
+  subtitle?: string;
+  unit?: string;
+  totalLabel?: string;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  categoryKey?: string;
+  seriesKeys?: string[];
+  data: Array<Record<string, string | number>>;
+  columns?: string[];
+  rows?: Array<Record<string, string | number>>;
+}
+
+export interface DiGroupData {
+  groupId: string;
+  diType: DiFormatType;
+  setTitle: string;
+  directions: string;
+  notes?: string[];
+  charts: DiChartPanel[];
+}
+
 export interface Question {
   id?: string;
   type: 'MCQ' | 'Descriptive';
@@ -146,6 +180,9 @@ export interface Question {
   isCorrect?: boolean;
   timeSpentSeconds?: number;
   confidence?: 'sure' | 'educated_guess' | 'blind_guess';
+  diGroup?: DiGroupData | null;
+  diSetIndex?: number;
+  diSetTotal?: number;
 }
 
 export interface ExamSectionMeta {

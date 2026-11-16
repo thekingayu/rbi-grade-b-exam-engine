@@ -4,12 +4,13 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { TestAttempt, Question } from '../types';
-import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Sparkles, Award, BarChart3, FileText, CheckCircle2, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target, RotateCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, MinusCircle, Sparkles, Award, BarChart3, FileText, CheckCircle2, SlidersHorizontal, FileEdit, AlertTriangle, Lightbulb, Target, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { clsx } from 'clsx';
 import { checkMCQCorrect } from '../utils/exam';
 import { evaluateAndPersistTest, evaluateSingleDescriptiveQuestion, isDescriptiveEvaluationValid } from '../services/evaluation';
 import { createFreshReattemptTest } from '../utils/reattempt';
 import { FuturisticSpinner, FuturisticProgressBar } from '../components/FuturisticLoader';
+import { DiVisualRenderer } from '../components/exam/DiVisualRenderer';
 import { getSubjectBySlug } from '../data/subjects';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -36,6 +37,7 @@ export function Results({ user }: { user: User }) {
   const [reEvaluatingAll, setReEvaluatingAll] = useState(false);
   const [reattempting, setReattempting] = useState(false);
   const [reattemptError, setReattemptError] = useState<string | null>(null);
+  const [expandedDiGroups, setExpandedDiGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let isCancelled = false;
@@ -807,6 +809,11 @@ export function Results({ user }: { user: User }) {
                             <span>{q.pyqYear || 'RBI Grade B PYQ'}</span>
                           </span>
                         )}
+                        {q.diGroup && (
+                          <span className="px-2.5 py-0.5 bg-[#0D47FF] text-white border border-[#141413] text-[11px] font-mono font-bold rounded-full tabular-nums">
+                            DI SET · Q{q.diSetIndex || 1}/{q.diSetTotal || 5}
+                          </span>
+                        )}
                         <span className="text-xs font-mono font-bold text-[#5C5A52] dark:text-[#A8A396]">
                           QUESTION {displayIndex + 1} OF {filteredMcqs.length}
                         </span>
@@ -822,6 +829,43 @@ export function Results({ user }: { user: User }) {
                         {isCorrect ? '✓ Correct' : isUnattempted ? '○ Unattempted' : '✗ Incorrect'} ({scoreDisplay})
                       </span>
                     </div>
+
+                    {q.diGroup && (() => {
+                      const prevDiId = localIdx > 0 ? pagedMcqs[localIdx - 1]?.diGroup?.groupId : null;
+                      const isFirstInSet = prevDiId !== q.diGroup.groupId;
+                      const diToggleKey = `${q.id || displayIndex}_${q.diGroup.groupId}`;
+                      const isExpanded = expandedDiGroups[diToggleKey] ?? isFirstInSet;
+                      return (
+                        <div className="mb-5">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedDiGroups(prev => ({ ...prev, [diToggleKey]: !isExpanded }))}
+                            className="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413]/25 dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF] text-left transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <BarChart3 className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
+                              <span className="text-xs sm:text-sm font-bold text-[#141413] dark:text-[#FAF8EC] truncate">
+                                DI Exhibit: {q.diGroup.setTitle}
+                              </span>
+                            </div>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-[#0D47FF] dark:text-[#ECD5FF] shrink-0">
+                              <span>{isExpanded ? 'Hide Exhibit' : 'Show Exhibit'}</span>
+                              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div className="mt-3">
+                              <DiVisualRenderer
+                                diGroup={q.diGroup}
+                                activeSetIndex={q.diSetIndex}
+                                activeSetTotal={q.diSetTotal}
+                                compact
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                     
                     <p className="text-[#141413] dark:text-[#FAF8EC] font-medium mb-5 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                       {q.text}
