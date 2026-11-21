@@ -310,6 +310,274 @@ html {
   }
 }
 
+/* ==========================================================================
+   Immersed 3D Concentric-Circle Glass Card (Adapted to Editorial Cream/Dark UI)
+   ========================================================================== */
+.u3d-parent {
+  perspective: 1100px;
+  width: 100%;
+  height: 100%;
+}
+
+.u3d-card {
+  position: relative;
+  height: 100%;
+  min-height: 308px;
+  border-radius: 36px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--u3d-accent, #0D47FF) 78%, #FAF8EC) 0%,
+    color-mix(in srgb, var(--u3d-accent-2, #10B981) 88%, #141413 10%) 100%
+  );
+  border: 1.5px solid #141413;
+  transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+  box-shadow:
+    color-mix(in srgb, var(--u3d-accent, #0D47FF) 0%, transparent) 32px 42px 24px -32px,
+    rgba(20, 20, 19, 0.16) 0px 18px 24px -10px,
+    4px 4px 0px #141413;
+  will-change: transform;
+}
+
+.dark .u3d-card {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--u3d-accent, #0D47FF) 42%, #1C1C1A) 0%,
+    color-mix(in srgb, var(--u3d-accent-2, #8B5CF6) 32%, #141413) 100%
+  );
+  border: 1.5px solid rgba(236, 213, 255, 0.28);
+  box-shadow:
+    rgba(0, 0, 0, 0.45) 0px 20px 28px -10px,
+    4px 4px 0px color-mix(in srgb, var(--u3d-accent, #ECD5FF) 55%, #141413);
+}
+
+.u3d-glass {
+  transform-style: preserve-3d;
+  position: absolute;
+  inset: 8px;
+  border-radius: 30px;
+  border-top-right-radius: 100%;
+  background: linear-gradient(
+    0deg,
+    rgba(250, 248, 236, 0.72) 0%,
+    rgba(255, 255, 255, 0.94) 100%
+  );
+  transform: translate3d(0px, 0px, 22px);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.92);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.92);
+  transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease;
+  pointer-events: none;
+}
+
+.dark .u3d-glass {
+  background: linear-gradient(
+    0deg,
+    rgba(20, 20, 19, 0.76) 0%,
+    rgba(30, 30, 27, 0.94) 100%
+  );
+  border-left: 1px solid rgba(250, 248, 236, 0.16);
+  border-bottom: 1px solid rgba(250, 248, 236, 0.16);
+}
+
+.u3d-content {
+  position: relative;
+  z-index: 2;
+  transform: translate3d(0, 0, 26px);
+  transform-style: preserve-3d;
+}
+
+.u3d-bottom {
+  position: relative;
+  z-index: 3;
+  transform-style: preserve-3d;
+  transform: translate3d(0, 0, 28px);
+}
+
+.u3d-action-row {
+  display: flex;
+  gap: 8px;
+  transform-style: preserve-3d;
+}
+
+.u3d-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: #FFFFFF;
+  color: var(--u3d-accent-ink, #141413);
+  border: 1.5px solid #141413;
+  display: grid;
+  place-content: center;
+  box-shadow: rgba(20, 20, 19, 0.28) 0px 7px 6px -4px;
+  cursor: pointer;
+}
+
+.dark .u3d-action-btn {
+  background: #242421;
+  color: #FAF8EC;
+  border: 1.5px solid rgba(250, 248, 236, 0.24);
+  box-shadow: rgba(0, 0, 0, 0.55) 0px 7px 8px -4px;
+}
+
+.u3d-action-btn:first-child {
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1) 0.12s, box-shadow 0.26s ease 0.12s, background-color 0.18s ease, color 0.18s ease;
+}
+.u3d-action-btn:nth-child(2) {
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1) 0.22s, box-shadow 0.26s ease 0.22s, background-color 0.18s ease, color 0.18s ease;
+}
+.u3d-action-btn:nth-child(3) {
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1) 0.32s, box-shadow 0.26s ease 0.32s, background-color 0.18s ease, color 0.18s ease;
+}
+
+.u3d-action-btn:hover {
+  background: #141413;
+  color: #FAF8EC;
+  border-color: #141413;
+}
+
+.dark .u3d-action-btn:hover {
+  background: #ECD5FF;
+  color: #141413;
+  border-color: #ECD5FF;
+}
+
+.u3d-action-btn:active {
+  background: #FFD426;
+  color: #141413;
+  border-color: #141413;
+}
+
+.u3d-view-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease;
+}
+
+.u3d-view-more:hover {
+  transform: translate3d(0, 0, 14px);
+}
+
+.u3d-logo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.u3d-circle {
+  display: block;
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  top: 0;
+  right: 0;
+  box-shadow: rgba(20, 20, 19, 0.14) -8px 8px 18px 0px;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  background: color-mix(in srgb, var(--u3d-accent, #0D47FF) 22%, rgba(255, 255, 255, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark .u3d-circle {
+  box-shadow: rgba(0, 0, 0, 0.38) -8px 8px 18px 0px;
+  background: color-mix(in srgb, var(--u3d-accent, #ECD5FF) 24%, rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(250, 248, 236, 0.14);
+}
+
+.u3d-circle1 {
+  width: 146px;
+  transform: translate3d(0, 0, 18px);
+  top: 7px;
+  right: 7px;
+}
+
+.u3d-circle2 {
+  width: 120px;
+  transform: translate3d(0, 0, 36px);
+  top: 10px;
+  right: 10px;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition-delay: 0.12s;
+}
+
+.u3d-circle3 {
+  width: 94px;
+  transform: translate3d(0, 0, 54px);
+  top: 15px;
+  right: 15px;
+  transition-delay: 0.22s;
+}
+
+.u3d-circle4 {
+  width: 68px;
+  transform: translate3d(0, 0, 72px);
+  top: 21px;
+  right: 21px;
+  transition-delay: 0.32s;
+}
+
+.u3d-circle5 {
+  width: 44px;
+  transform: translate3d(0, 0, 90px);
+  top: 27px;
+  right: 27px;
+  display: grid;
+  place-content: center;
+  background: var(--u3d-accent, #0D47FF);
+  color: #FFFFFF;
+  border: 1.5px solid #141413;
+  box-shadow: rgba(20, 20, 19, 0.3) -6px 8px 14px 0px;
+  transition-delay: 0.42s;
+}
+
+.dark .u3d-circle5 {
+  border-color: rgba(250, 248, 236, 0.65);
+  box-shadow: rgba(0, 0, 0, 0.5) -6px 8px 16px 0px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .u3d-parent:hover .u3d-card {
+    transform: rotate3d(1, 1, 0, 18deg);
+    box-shadow:
+      color-mix(in srgb, var(--u3d-accent, #0D47FF) 32%, transparent) 24px 38px 24px -28px,
+      rgba(20, 20, 19, 0.18) 0px 24px 28px -6px,
+      6px 8px 0px #141413;
+  }
+
+  .dark .u3d-parent:hover .u3d-card {
+    box-shadow:
+      color-mix(in srgb, var(--u3d-accent, #ECD5FF) 28%, transparent) 24px 38px 28px -22px,
+      rgba(0, 0, 0, 0.55) 0px 24px 32px -4px,
+      6px 8px 0px color-mix(in srgb, var(--u3d-accent, #ECD5FF) 65%, #141413);
+  }
+
+  .u3d-parent:hover .u3d-card .u3d-action-btn {
+    transform: translate3d(0, 0, 46px);
+    box-shadow: rgba(20, 20, 19, 0.28) -4px 16px 10px -2px;
+  }
+
+  .u3d-parent:hover .u3d-card .u3d-circle2 {
+    transform: translate3d(0, 0, 56px);
+  }
+
+  .u3d-parent:hover .u3d-card .u3d-circle3 {
+    transform: translate3d(0, 0, 76px);
+  }
+
+  .u3d-parent:hover .u3d-card .u3d-circle4 {
+    transform: translate3d(0, 0, 96px);
+  }
+
+  .u3d-parent:hover .u3d-card .u3d-circle5 {
+    transform: translate3d(0, 0, 116px);
+  }
+}
+
 /* Accessibility: honor OS reduced motion preference globally */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-left,
@@ -322,8 +590,14 @@ html {
   }
 
   .ink-btn-hard,
-  .sketch-tactile-btn {
+  .sketch-tactile-btn,
+  .u3d-card,
+  .u3d-glass,
+  .u3d-circle,
+  .u3d-action-btn,
+  .u3d-view-more {
     transition: none !important;
+    transform: none !important;
   }
 }
 

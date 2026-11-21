@@ -17,6 +17,7 @@ import {
   FullPhaseBlueprint
 } from '../data/fullPhaseBlueprints';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
+import { Glass3DCard } from '../components/ui/Glass3DCard';
 import { SynthesisOverlay } from '../components/SynthesisOverlay';
 import { sanitizeForFirestore } from '../utils/firestore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1063,54 +1064,66 @@ export function NewTest({ user }: { user: User }) {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {(['phase1', 'phase2'] as const).map(key => {
                 const bp = FULL_PHASE_BLUEPRINTS[key];
+                const isPhase1 = key === 'phase1';
                 return (
-                  <motion.div
+                  <Glass3DCard
                     key={bp.id}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={SPRING_BOUNCY}
-                    onClick={() => setFullPhaseKey(key)}
-                    className="group relative p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/70 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF]/35 hover:shadow-[6px_6px_0px_#0D47FF] dark:hover:shadow-[6px_6px_0px_#FFD426] transition-all cursor-pointer flex flex-col justify-between gap-4 overflow-hidden"
+                    accentColor={bp.accentColor}
+                    secondaryAccentColor={isPhase1 ? '#0D9488' : '#4F46E5'}
+                    logoIcon={isPhase1 ? <Compass className="w-5 h-5" /> : <Award className="w-5 h-5" />}
+                    kicker={`${bp.phase} · ${bp.totalMarks} Marks · ${bp.totalDurationMinutes} Mins`}
+                    title={bp.title}
+                    description={bp.subtitle}
+                    ctaLabel={`Configure ${bp.phase}`}
+                    minHeightClass="min-h-[300px]"
+                    onCardClick={() => setFullPhaseKey(key)}
+                    actions={[
+                      {
+                        label: `Configure ${bp.phase} (Peak Rigor)`,
+                        icon: <Sparkles className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setFullPhaseConfig(prev => ({ ...prev, difficulty: 'Hard' }));
+                          setFullPhaseKey(key);
+                        }
+                      },
+                      {
+                        label: `Configure ${bp.phase} (Sectional Lock)`,
+                        icon: <Timer className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setFullPhaseConfig(prev => ({ ...prev, sectionalTimingEnabled: true }));
+                          setFullPhaseKey(key);
+                        }
+                      },
+                      {
+                        label: 'Inspect Exam Syllabus',
+                        icon: <BookOpen className="w-3.5 h-3.5" />,
+                        onClick: () => navigate('/syllabus')
+                      }
+                    ]}
                   >
-                    <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: bp.accentColor }} />
-                    <div className="space-y-2.5 pt-0.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md text-white border border-[#141413]"
-                          style={{ backgroundColor: bp.accentColor }}
-                        >
-                          {bp.badge}
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-[#66665E] dark:text-[#A3A399] tabular-nums">
-                          {bp.totalDurationMinutes} Mins
-                        </span>
-                      </div>
-                      <h3 className="font-heading font-black text-lg sm:text-xl text-[#141413] dark:text-[#FAF8EC] group-hover:text-[#0D47FF] dark:group-hover:text-[#ECD5FF] transition-colors">
-                        {bp.title}
-                      </h3>
-                      <p className="text-xs text-[#40403B] dark:text-[#A3A399] leading-relaxed">
-                        {bp.subtitle}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {bp.sections.map(s => (
-                          <span
-                            key={s.id}
-                            className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC]"
-                          >
-                            {s.shortName} · {s.totalMarks}m
-                          </span>
+                    <div className="pt-3 border-t border-[#141413]/10 dark:border-[#FAF8EC]/10 space-y-2">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-mono font-bold text-[#141413] dark:text-[#FAF8EC] tabular-nums">
+                        {bp.sections.map((s, sIdx) => (
+                          <React.Fragment key={s.id}>
+                            <span>
+                              {s.shortName} ({s.totalMarks}M)
+                            </span>
+                            {sIdx < bp.sections.length - 1 && (
+                              <span className="text-[#66665E] dark:text-[#A3A399]" aria-hidden="true">
+                                ·
+                              </span>
+                            )}
+                          </React.Fragment>
                         ))}
                       </div>
+                      <p className="text-[11px] text-[#5C5A52] dark:text-[#A8A396] font-mono tabular-nums">
+                        {bp.totalQuestions} Questions · {bp.negativeMarkingNote}
+                      </p>
                     </div>
-
-                    <div className="pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between text-xs font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
-                      <span>Configure & Start Full {bp.phase} Exam</span>
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </motion.div>
+                  </Glass3DCard>
                 );
               })}
             </div>
