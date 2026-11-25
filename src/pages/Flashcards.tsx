@@ -1473,9 +1473,24 @@ export function Flashcards({ user }: { user: User }) {
 
                       {/* Subject's Deck Cards Grid */}
                       <MotionStaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {group.decks.map((deck) => (
+                        {group.decks.map((deck, deckIdx) => (
                           <MotionStaggerItem key={deck.id}>
-                            <div className="h-full rounded-3xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/60 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] p-5 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                            <motion.div
+                              whileHover={{
+                                y: -8,
+                                scaleX: 1.03,
+                                scaleY: 0.975,
+                                rotate: deckIdx % 2 === 0 ? -1.1 : 1.1,
+                                transition: { type: 'spring', stiffness: 300, damping: 11, mass: 0.85 }
+                              }}
+                              whileTap={{
+                                scaleX: 0.96,
+                                scaleY: 1.04,
+                                y: -2,
+                                transition: { type: 'spring', stiffness: 520, damping: 14 }
+                              }}
+                              className="h-full rounded-3xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/60 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] hover:shadow-[7px_8px_0px_#141413] dark:hover:shadow-[7px_8px_0px_#ECD5FF] p-5 flex flex-col justify-between relative overflow-hidden group transition-shadow will-change-transform"
+                            >
                               <div
                                 className="absolute top-0 inset-x-0 h-1.5"
                                 style={{ backgroundColor: accent }}
@@ -1516,16 +1531,30 @@ export function Flashcards({ user }: { user: User }) {
 
                               <div className="pt-4 mt-4 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between gap-2">
                                 <motion.button
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{
+                                    scaleX: 1.07,
+                                    scaleY: 0.92,
+                                    y: -2,
+                                    transition: { type: 'spring', stiffness: 460, damping: 12 }
+                                  }}
+                                  whileTap={{
+                                    scaleX: 0.9,
+                                    scaleY: 1.12,
+                                    y: 2,
+                                    transition: { type: 'spring', stiffness: 550, damping: 14 }
+                                  }}
                                   type="button"
                                   onClick={() => setStudyingState({ deck, mode: 'full' })}
-                                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
+                                  className="fc-jello-hover flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
                                 >
                                   <Play className="w-3.5 h-3.5 fill-current" />
                                   Study Deck
                                 </motion.button>
 
-                                <button
+                                <motion.button
+                                  whileHover={{ scale: 1.12, rotate: -6 }}
+                                  whileTap={{ scale: 0.88, rotate: 6 }}
+                                  transition={{ type: 'spring', stiffness: 450, damping: 12 }}
                                   type="button"
                                   onClick={() => setPreviewDeck(deck)}
                                   className="p-2.5 rounded-xl bg-[#F3F0E0] dark:bg-[#242421] border border-[#E5E1CE] dark:border-[#2E2E2A] text-[#141413] dark:text-[#FAF8EC] hover:border-[#141413] cursor-pointer"
@@ -1533,9 +1562,12 @@ export function Flashcards({ user }: { user: User }) {
                                   aria-label="Preview deck cards"
                                 >
                                   <Eye className="w-4 h-4" />
-                                </button>
+                                </motion.button>
 
-                                <button
+                                <motion.button
+                                  whileHover={{ scale: 1.12, rotate: 6 }}
+                                  whileTap={{ scale: 0.88, rotate: -6 }}
+                                  transition={{ type: 'spring', stiffness: 450, damping: 12 }}
                                   type="button"
                                   onClick={() =>
                                     setDeleteTarget({
@@ -1549,9 +1581,9 @@ export function Flashcards({ user }: { user: User }) {
                                   aria-label="Delete deck"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                </button>
+                                </motion.button>
                               </div>
-                            </div>
+                            </motion.div>
                           </MotionStaggerItem>
                         ))}
                       </MotionStaggerGrid>

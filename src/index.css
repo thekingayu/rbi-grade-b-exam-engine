@@ -579,34 +579,41 @@ html {
 }
 
 /* ==========================================================================
-   Interactive 3D Flashcard Flip Engine
+   Interactive 3D Flashcard Flip & Rubber-Jelly Physics Engine
    ========================================================================== */
 .fc-perspective {
-  perspective: 1400px;
+  perspective: 1500px;
 }
 
-.fc-card-3d {
-  position: relative;
-  width: 100%;
+.fc-preserve-3d {
   transform-style: preserve-3d;
-  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
-}
-
-.fc-card-3d.is-flipped {
-  transform: rotateY(180deg);
 }
 
 .fc-face {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform: rotateY(0deg);
+  transform: rotateY(0deg) translateZ(1px);
 }
 
 .fc-face-back {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+@keyframes fcJelloPop {
+  0%   { transform: scale3d(1, 1, 1); }
+  22%  { transform: scale3d(1.11, 0.89, 1); }
+  40%  { transform: scale3d(0.91, 1.09, 1); }
+  58%  { transform: scale3d(1.06, 0.95, 1); }
+  74%  { transform: scale3d(0.97, 1.03, 1); }
+  88%  { transform: scale3d(1.02, 0.99, 1); }
+  100% { transform: scale3d(1, 1, 1); }
+}
+
+.fc-jello-hover:hover {
+  animation: fcJelloPop 0.58s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Accessibility: honor OS reduced motion preference globally */
@@ -616,7 +623,8 @@ html {
   .animate-spin-slow,
   .animate-sparkle,
   .animate-train-bob,
-  .animate-sheen-sweep {
+  .animate-sheen-sweep,
+  .fc-jello-hover:hover {
     animation: none !important;
   }
 
@@ -627,7 +635,7 @@ html {
   .u3d-circle,
   .u3d-action-btn,
   .u3d-view-more,
-  .fc-card-3d {
+  .fc-preserve-3d {
     transition: none !important;
     transform: none !important;
   }

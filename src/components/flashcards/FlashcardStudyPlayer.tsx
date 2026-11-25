@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { User } from 'firebase/auth';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  type PanInfo
+} from 'motion/react';
 import {
   RotateCw,
   Lightbulb,
@@ -165,6 +172,148 @@ function formatSeconds(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Crazy-bouncy rubber jelly spring profiles (GPU transform-only)
+const JELLY_SPRING = {
+  type: 'spring' as const,
+  stiffness: 290,
+  damping: 11,
+  mass: 0.72
+};
+
+const FLIP_JELLY_SPRING = {
+  type: 'spring' as const,
+  stiffness: 205,
+  damping: 11.5,
+  mass: 0.85
+};
+
+const TILT_SPRING_CONFIG = {
+  stiffness: 250,
+  damping: 12,
+  mass: 0.55
+};
+
+interface BurstParticle {
+  id: number;
+  dx: number;
+  dy: number;
+  rotate: number;
+  scale: number;
+  color: string;
+  shape: 'circle' | 'diamond' | 'pill';
+}
+
+interface BurstEffect {
+  id: number;
+  label: string;
+  badgeClass: string;
+  particles: BurstParticle[];
+}
+
+function createParticleBurst(rating: FlashcardConfidence): BurstEffect {
+  const palettes: Record<FlashcardConfidence, { label: string; badgeClass: string; colors: string[]; count: number }> = {
+    mastered: {
+      label: 'MASTERED! +100%',
+      badgeClass: 'bg-emerald-500 text-white border-[#141413]',
+      colors: ['#10B981', '#FFD426', '#ECD5FF', '#0D47FF', '#34D399'],
+      count: 18
+    },
+    good: {
+      label: 'SOLID RECALL! ⚡',
+      badgeClass: 'bg-[#0D47FF] text-white border-[#141413]',
+      colors: ['#0D47FF', '#ECD5FF', '#60A5FA', '#FFD426'],
+      count: 12
+    },
+    hard: {
+      label: 'PARTIAL · KEEP PUSHING',
+      badgeClass: 'bg-[#FFD426] text-[#141413] border-[#141413]',
+      colors: ['#F59E0B', '#FFD426', '#FBBF24'],
+      count: 8
+    },
+    again: {
+      label: 'FLAGGED FOR RE-DRILL 🔁',
+      badgeClass: 'bg-rose-600 text-white border-[#141413]',
+      colors: ['#F43F5E', '#FB7185', '#FDA4AF'],
+      count: 8
+    }
+  };
+
+  const cfg = palettes[rating];
+  const shapes: Array<'circle' | 'diamond' | 'pill'> = ['circle', 'diamond', 'pill'];
+  const particles: BurstParticle[] = Array.from({ length: cfg.count }, (_, idx) => {
+    const angle = (Math.PI * 2 * idx) / cfg.count + (Math.random() - 0.5) * 0.35;
+    const dist = 110 + Math.random() * 140;
+    return {
+      id: idx,
+      dx: Math.round(Math.cos(angle) * dist),
+      dy: Math.round(Math.sin(angle) * dist - (rating === 'mastered' ? 45 : 15)),
+      rotate: Math.round((Math.random() - 0.5) * 520),
+      scale: Number((0.75 + Math.random() * 0.85).toFixed(2)),
+      color: cfg.colors[idx % cfg.colors.length],
+      shape: shapes[idx % shapes.length]
+    };
+  });
+
+  return {
+    id: Date.now() + Math.random(),
+    label: cfg.label,
+    badgeClass: cfg.badgeClass,
+    particles
+  };
+}
+
+function getCardExitAnimation(rating: FlashcardConfidence | null) {
+  if (rating === 'mastered') {
+    return {
+      opacity: 0,
+      x: 240,
+      y: -170,
+      rotateZ: 28,
+      scaleX: 1.12,
+      scaleY: 0.84,
+      transition: { duration: 0.34, ease: [0.32, 0, 0.24, 1] as const }
+    };
+  }
+  if (rating === 'good') {
+    return {
+      opacity: 0,
+      x: 280,
+      y: -36,
+      rotateZ: 17,
+      scaleX: 1.08,
+      scaleY: 0.9,
+      transition: { duration: 0.3, ease: [0.32, 0, 0.24, 1] as const }
+    };
+  }
+  if (rating === 'hard') {
+    return {
+      opacity: 0,
+      x: [-14, 18, -10, 120],
+      y: [0, -10, 6, 95],
+      rotateZ: [-6, 8, -4, 14],
+      scale: 0.86,
+      transition: { duration: 0.36, ease: 'easeInOut' as const }
+    };
+  }
+  if (rating === 'again') {
+    return {
+      opacity: 0,
+      x: [14, -18, 10, -260],
+      y: [0, -8, 12, 95],
+      rotateZ: [6, -10, 7, -26],
+      scale: 0.84,
+      transition: { duration: 0.36, ease: 'easeInOut' as const }
+    };
+  }
+  return {
+    opacity: 0,
+    x: -120,
+    scale: 0.86,
+    rotateZ: -10,
+    transition: { duration: 0.24 }
+  };
+}
+
 export function FlashcardStudyPlayer({
   user,
   deck,
@@ -190,7 +339,10 @@ export function FlashcardStudyPlayer({
   const [showHint, setShowHint] = useState(false);
   const [flipsOnCurrent, setFlipsOnCurrent] = useState(0);
   const [results, setResults] = useState<FlashcardCardResult[]>([]);
-  const [cardSlideDir, setCardSlideDir] = useState<1 | -1>(1);
+  const [lastExitRating, setLastExitRating] = useState<FlashcardConfidence | null>(null);
+  const [flipBounceTick, setFlipBounceTick] = useState(0);
+  const [shuffleTick, setShuffleTick] = useState(0);
+  const [activeBurst, setActiveBurst] = useState<BurstEffect | null>(null);
   const [isShuffled, setIsShuffled] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -202,8 +354,43 @@ export function FlashcardStudyPlayer({
 
   const sessionStartRef = useRef<number>(Date.now());
   const cardStartRef = useRef<number>(Date.now());
+  const didDragRef = useRef<boolean>(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [cardElapsedSeconds, setCardElapsedSeconds] = useState(0);
+
+  // Live magnetic 3D pointer tilt & rubber-band drag MotionValues (60fps GPU-only)
+  const rawPointerX = useMotionValue(0);
+  const rawPointerY = useMotionValue(0);
+  const dragX = useMotionValue(0);
+  const dragY = useMotionValue(0);
+
+  const smoothTiltX = useSpring(useTransform(rawPointerY, [-0.5, 0.5], [11, -11]), TILT_SPRING_CONFIG);
+  const smoothTiltY = useSpring(useTransform(rawPointerX, [-0.5, 0.5], [-13, 13]), TILT_SPRING_CONFIG);
+  const dragRotateZ = useSpring(useTransform(dragX, [-220, 0, 220], [-16, 0, 16]), TILT_SPRING_CONFIG);
+  const dragStretchScale = useSpring(useTransform(dragX, [-220, 0, 220], [0.96, 1, 0.96]), TILT_SPRING_CONFIG);
+  const sheenX = useSpring(useTransform(rawPointerX, [-0.5, 0.5], ['15%', '85%']), TILT_SPRING_CONFIG);
+  const sheenY = useSpring(useTransform(rawPointerY, [-0.5, 0.5], ['15%', '85%']), TILT_SPRING_CONFIG);
+
+  // Live swipe stamp opacity while dragging a flipped card
+  const swipeRightStampOpacity = useTransform(dragX, [35, 115], [0, 1]);
+  const swipeLeftStampOpacity = useTransform(dragX, [-115, -35], [1, 0]);
+
+  const handleCardPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const nx = (e.clientX - rect.left) / rect.width - 0.5;
+      const ny = (e.clientY - rect.top) / rect.height - 0.5;
+      rawPointerX.set(nx);
+      rawPointerY.set(ny);
+    },
+    [rawPointerX, rawPointerY]
+  );
+
+  const handleCardPointerLeave = useCallback(() => {
+    rawPointerX.set(0);
+    rawPointerY.set(0);
+  }, [rawPointerX, rawPointerY]);
 
   // Live timers while studying
   useEffect(() => {
@@ -229,6 +416,7 @@ export function FlashcardStudyPlayer({
 
   const handleFlip = useCallback(() => {
     if (completedSession || !currentCard) return;
+    setFlipBounceTick((t) => t + 1);
     setIsFlipped((prev) => {
       if (!prev) {
         setFlipsOnCurrent((f) => f + 1);
@@ -351,6 +539,14 @@ export function FlashcardStudyPlayer({
 
       const nextResults = [...results, cardResult];
       setResults(nextResults);
+      setLastExitRating(rating);
+
+      // Fire crazy radial particle burst + comic pop label!
+      const burst = createParticleBurst(rating);
+      setActiveBurst(burst);
+      setTimeout(() => {
+        setActiveBurst((curr) => (curr?.id === burst.id ? null : curr));
+      }, 900);
 
       if (rating === 'mastered' || rating === 'good') {
         setStreakCount((s) => s + 1);
@@ -358,10 +554,14 @@ export function FlashcardStudyPlayer({
         setStreakCount(0);
       }
 
+      rawPointerX.set(0);
+      rawPointerY.set(0);
+      dragX.set(0);
+      dragY.set(0);
+
       if (currentIndex + 1 >= cardsQueue.length) {
         finalizeSession(nextResults);
       } else {
-        setCardSlideDir(1);
         setIsFlipped(false);
         setShowHint(false);
         setFlipsOnCurrent(0);
@@ -370,7 +570,43 @@ export function FlashcardStudyPlayer({
         setCardElapsedSeconds(0);
       }
     },
-    [cardsQueue.length, completedSession, currentCard, currentIndex, finalizeSession, flipsOnCurrent, results]
+    [
+      cardsQueue.length,
+      completedSession,
+      currentCard,
+      currentIndex,
+      dragX,
+      dragY,
+      finalizeSession,
+      flipsOnCurrent,
+      rawPointerX,
+      rawPointerY,
+      results
+    ]
+  );
+
+  const handleCardDragEnd = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const movedDistance = Math.hypot(info.offset.x, info.offset.y);
+      if (movedDistance > 10) {
+        didDragRef.current = true;
+        setTimeout(() => {
+          didDragRef.current = false;
+        }, 120);
+      }
+      // Swipe-to-rate when answer is revealed (Right = Mastered, Left = Again)
+      if (isFlipped) {
+        if (info.offset.x > 125 || info.velocity.x > 650) {
+          handleRate('mastered');
+          return;
+        }
+        if (info.offset.x < -125 || info.velocity.x < -650) {
+          handleRate('again');
+          return;
+        }
+      }
+    },
+    [handleRate, isFlipped]
   );
 
   // Keyboard shortcuts: Space/Enter flip, H hint, 1/2/3/4 rate when flipped
@@ -409,6 +645,7 @@ export function FlashcardStudyPlayer({
     setShowHint(false);
     setFlipsOnCurrent(0);
     setIsShuffled(true);
+    setShuffleTick((t) => t + 1);
     cardStartRef.current = Date.now();
   };
 
@@ -876,190 +1113,342 @@ export function FlashcardStudyPlayer({
         </div>
       </div>
 
-      {/* Physical Stacked Deck + 3D Flipping Flashcard Theater */}
-      <div className="relative pt-2 pb-3">
-        {/* Stacked card depth silhouettes */}
+      {/* Physical Spring-Loaded Stacked Deck + Crazy Bouncy Jiggly 3D Flashcard Theater */}
+      <div className="relative pt-3 pb-4">
+        {/* Radial Confetti Particle Burst & Comic Feedback Pop */}
+        <AnimatePresence>
+          {activeBurst && (
+            <div
+              key={activeBurst.id}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center overflow-visible"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.4, y: 20, rotate: -8 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.4, 1.18, 0.96, 1.08],
+                  y: [16, -78, -94, -125],
+                  rotate: [-8, 5, -2, 3]
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                className={`px-4 py-1.5 rounded-xl border-2 shadow-[4px_4px_0px_#141413] font-mono text-xs font-black uppercase tracking-wider ${activeBurst.badgeClass}`}
+              >
+                {activeBurst.label}
+              </motion.div>
+
+              {activeBurst.particles.map((p) => (
+                <motion.span
+                  key={p.id}
+                  initial={{ x: 0, y: 0, scale: 0, opacity: 1, rotate: 0 }}
+                  animate={{
+                    x: p.dx,
+                    y: p.dy,
+                    scale: [0, p.scale * 1.25, p.scale, 0],
+                    opacity: [1, 1, 0.85, 0],
+                    rotate: p.rotate
+                  }}
+                  transition={{ duration: 0.78, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ backgroundColor: p.color }}
+                  className={`absolute border border-[#141413]/40 ${
+                    p.shape === 'circle'
+                      ? 'w-3 h-3 rounded-full'
+                      : p.shape === 'diamond'
+                        ? 'w-3 h-3 rounded-sm rotate-45'
+                        : 'w-4 h-2 rounded-full'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Living Spring-Loaded Background Deck Cards (Hop & Jiggle on every flip/advance/shuffle!) */}
         {currentIndex + 2 < cardsQueue.length && (
-          <div
+          <motion.div
+            key={`stack-back-2-${currentIndex}-${flipBounceTick}-${shuffleTick}`}
             aria-hidden="true"
-            className="absolute inset-x-8 top-0 bottom-0 translate-y-4 rounded-[30px] bg-[#F3F0E0] dark:bg-[#1A1A18] border border-[#E5E1CE] dark:border-[#2E2E2A] opacity-65 pointer-events-none"
+            initial={{ y: 22, scale: 0.9, rotateZ: -3.5 }}
+            animate={{ y: 18, scale: 0.93, rotateZ: isFlipped ? 2.4 : -2.2 }}
+            transition={JELLY_SPRING}
+            className="absolute inset-x-8 top-0 bottom-2 rounded-[30px] bg-[#F3F0E0] dark:bg-[#1A1A18] border-[1.5px] border-[#141413]/20 dark:border-[#FAF8EC]/15 opacity-70 pointer-events-none"
           />
         )}
         {currentIndex + 1 < cardsQueue.length && (
-          <div
+          <motion.div
+            key={`stack-back-1-${currentIndex}-${flipBounceTick}-${shuffleTick}`}
             aria-hidden="true"
-            className="absolute inset-x-4 top-1 bottom-0 translate-y-2 rounded-[30px] bg-[#FAF8EC] dark:bg-[#22221F] border border-[#141413]/25 dark:border-[#FAF8EC]/20 opacity-85 pointer-events-none"
+            initial={{ y: 18, scale: 0.93, rotateZ: 3 }}
+            animate={{ y: 9, scale: 0.968, rotateZ: isFlipped ? -1.8 : 1.6 }}
+            transition={JELLY_SPRING}
+            className="absolute inset-x-4 top-1 bottom-1 rounded-[30px] bg-[#FAF8EC] dark:bg-[#22221F] border-[1.5px] border-[#141413]/30 dark:border-[#FAF8EC]/25 opacity-90 pointer-events-none shadow-[3px_3px_0px_rgba(20,20,19,0.12)]"
           />
         )}
 
-        <AnimatePresence mode="wait" custom={cardSlideDir}>
+        <AnimatePresence mode="popLayout" custom={lastExitRating}>
           {currentCard && (
             <motion.div
-              key={`${currentCard.id}_${currentIndex}`}
-              custom={cardSlideDir}
-              initial={{ opacity: 0, x: 52, scale: 0.96, rotateZ: 1.5 }}
-              animate={{ opacity: 1, x: 0, scale: 1, rotateZ: 0 }}
-              exit={{ opacity: 0, x: -64, scale: 0.94, rotateZ: -2 }}
-              transition={{ ...SPRING_SNAPPY, opacity: { duration: 0.18 } }}
+              key={`${currentCard.id}_${currentIndex}_${shuffleTick}`}
+              custom={lastExitRating}
+              initial={{
+                opacity: 0,
+                y: 54,
+                scaleX: 0.84,
+                scaleY: 1.12,
+                rotateZ: -5
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scaleX: 1,
+                scaleY: 1,
+                rotateZ: 0
+              }}
+              exit={getCardExitAnimation(lastExitRating)}
+              transition={{
+                ...JELLY_SPRING,
+                opacity: { duration: 0.16 }
+              }}
               className="fc-perspective relative z-10"
             >
-              <div
-                onClick={handleFlip}
-                role="button"
-                tabIndex={0}
-                aria-label={isFlipped ? 'Flashcard answer side. Click to flip back.' : 'Flashcard prompt side. Click to reveal answer.'}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleFlip();
-                  }
+              {/* Rubber-Band Draggable + Magnetic 3D Tilt Wrapper */}
+              <motion.div
+                drag
+                dragSnapToOrigin
+                dragElastic={0.44}
+                dragTransition={{ bounceStiffness: 340, bounceDamping: 11 }}
+                onDragEnd={handleCardDragEnd}
+                onPointerMove={handleCardPointerMove}
+                onPointerLeave={handleCardPointerLeave}
+                style={{
+                  x: dragX,
+                  y: dragY,
+                  rotateX: smoothTiltX,
+                  rotateY: smoothTiltY,
+                  rotateZ: dragRotateZ,
+                  scale: dragStretchScale
                 }}
-                className={`fc-card-3d cursor-pointer select-none min-h-[360px] sm:min-h-[410px] ${
-                  isFlipped ? 'is-flipped' : ''
-                }`}
+                whileHover={{ scale: 1.018 }}
+                whileTap={{ scaleX: 1.03, scaleY: 0.965 }}
+                className="fc-perspective cursor-grab active:cursor-grabbing relative"
               >
-                {/* FRONT FACE (QUESTION / RECALL PROMPT) */}
-                <div className="fc-face absolute inset-0 rounded-[28px] bg-[#FFFFFF] dark:bg-[#1C1C1A] border-2 border-[#141413] dark:border-[#FAF8EC]/80 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF] p-6 sm:p-9 flex flex-col justify-between overflow-hidden">
-                  <div
-                    className="absolute top-0 inset-x-0 h-2"
-                    style={{ backgroundColor: accentColor }}
-                  />
+                {/* Live Drag-to-Rate Floating Stamps (Visible when dragging flipped card left/right) */}
+                {isFlipped && (
+                  <>
+                    <motion.div
+                      style={{ opacity: swipeRightStampOpacity }}
+                      className="pointer-events-none absolute top-6 left-6 z-40 px-3.5 py-1.5 rounded-xl bg-emerald-500 text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-mono text-xs font-black uppercase tracking-wider -rotate-12"
+                    >
+                      MASTERED! ⚡
+                    </motion.div>
+                    <motion.div
+                      style={{ opacity: swipeLeftStampOpacity }}
+                      className="pointer-events-none absolute top-6 right-6 z-40 px-3.5 py-1.5 rounded-xl bg-rose-600 text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-mono text-xs font-black uppercase tracking-wider rotate-12"
+                    >
+                      AGAIN! 🔁
+                    </motion.div>
+                  </>
+                )}
 
-                  {/* Top metadata row */}
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border"
+                {/* Squash-and-Stretch Rubber Jelly Pulse Layer on Flip */}
+                <motion.div
+                  key={`jelly-pulse-${flipBounceTick}`}
+                  initial={
+                    flipBounceTick > 0
+                      ? { scaleX: 1.09, scaleY: 0.91, y: -18, rotateZ: isFlipped ? -3 : 3 }
+                      : false
+                  }
+                  animate={{ scaleX: 1, scaleY: 1, y: 0, rotateZ: 0 }}
+                  transition={JELLY_SPRING}
+                  className="fc-perspective"
+                >
+                  {/* Spring-Driven 3D Flipping Card Body (visibly overshoots 180deg with jelly bounce!) */}
+                  <motion.div
+                    animate={{ rotateY: isFlipped ? 180 : 0 }}
+                    transition={FLIP_JELLY_SPRING}
+                    onClick={() => {
+                      if (didDragRef.current) return;
+                      handleFlip();
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={
+                      isFlipped
+                        ? 'Flashcard answer side. Click to flip back.'
+                        : 'Flashcard prompt side. Click to reveal answer.'
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleFlip();
+                      }
+                    }}
+                    className="fc-preserve-3d relative w-full select-none min-h-[365px] sm:min-h-[415px]"
+                  >
+                    {/* FRONT FACE (QUESTION / RECALL PROMPT) */}
+                    <div className="fc-face absolute inset-0 rounded-[28px] bg-[#FFFFFF] dark:bg-[#1C1C1A] border-2 border-[#141413] dark:border-[#FAF8EC]/80 shadow-[7px_7px_0px_#141413] dark:shadow-[7px_7px_0px_#ECD5FF] p-6 sm:p-9 flex flex-col justify-between overflow-hidden">
+                      {/* Dynamic Magnetic Light Sheen */}
+                      <motion.div
+                        aria-hidden="true"
                         style={{
-                          backgroundColor: `${accentColor}16`,
-                          borderColor: `${accentColor}40`,
-                          color: accentColor
+                          left: sheenX,
+                          top: sheenY
                         }}
-                      >
-                        {currentCard.conceptTag}
-                      </span>
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
-                        {currentCard.difficulty}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[11px] font-bold text-[#66665E] dark:text-[#A3A399] tabular-nums">
-                      PROMPT · {cardElapsedSeconds}s
-                    </span>
-                  </div>
+                        className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-gradient-to-br from-[#ECD5FF]/35 via-[#FFD426]/15 to-transparent dark:from-[#ECD5FF]/15 dark:via-[#0D47FF]/12 blur-2xl opacity-75"
+                      />
 
-                  {/* Center Question Body */}
-                  <div className="my-auto py-6 text-center space-y-5">
-                    <p className="font-heading text-xl sm:text-2xl lg:text-[26px] font-black text-[#141413] dark:text-[#FAF8EC] leading-snug tracking-tight max-w-2xl mx-auto">
-                      {currentCard.front}
-                    </p>
-
-                    {/* Optional Hint Accordion */}
-                    {currentCard.hint && (
                       <div
-                        className="flex flex-col items-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {!showHint ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowHint(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F3F0E0] dark:bg-[#242421] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-xs font-bold text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] transition-colors cursor-pointer"
+                        className="absolute top-0 inset-x-0 h-2.5"
+                        style={{ backgroundColor: accentColor }}
+                      />
+
+                      {/* Top metadata row */}
+                      <div className="relative z-10 flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border"
+                            style={{
+                              backgroundColor: `${accentColor}16`,
+                              borderColor: `${accentColor}40`,
+                              color: accentColor
+                            }}
                           >
-                            <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                            Show Retrieval Hint (H)
-                          </button>
-                        ) : (
-                          <motion.div
-                            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={SPRING_SNAPPY}
-                            className="max-w-xl px-4 py-2.5 rounded-xl bg-[#FFD426]/25 dark:bg-[#FFD426]/12 border border-[#FFD426]/60 text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC] font-medium"
+                            {currentCard.conceptTag}
+                          </span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                            {currentCard.difficulty}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[11px] font-bold text-[#66665E] dark:text-[#A3A399] tabular-nums">
+                          PROMPT · {cardElapsedSeconds}s
+                        </span>
+                      </div>
+
+                      {/* Center Question Body */}
+                      <div className="relative z-10 my-auto py-6 text-center space-y-5">
+                        <p className="font-heading text-xl sm:text-2xl lg:text-[26px] font-black text-[#141413] dark:text-[#FAF8EC] leading-snug tracking-tight max-w-2xl mx-auto">
+                          {currentCard.front}
+                        </p>
+
+                        {/* Optional Hint Accordion */}
+                        {currentCard.hint && (
+                          <div
+                            className="flex flex-col items-center"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                           >
-                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-[#FFD426] mr-2">
-                              Hint:
-                            </span>
-                            {currentCard.hint}
-                          </motion.div>
+                            {!showHint ? (
+                              <motion.button
+                                whileHover={{ scale: 1.07, rotate: -1.5 }}
+                                whileTap={{ scale: 0.9 }}
+                                transition={JELLY_SPRING}
+                                type="button"
+                                onClick={() => setShowHint(true)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#F3F0E0] dark:bg-[#242421] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-xs font-bold text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC] transition-colors cursor-pointer"
+                              >
+                                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                                Show Retrieval Hint (H)
+                              </motion.button>
+                            ) : (
+                              <motion.div
+                                initial={{ opacity: 0, y: 12, scaleX: 0.85, scaleY: 1.15 }}
+                                animate={{ opacity: 1, y: 0, scaleX: 1, scaleY: 1 }}
+                                transition={JELLY_SPRING}
+                                className="max-w-xl px-4 py-2.5 rounded-xl bg-[#FFD426]/25 dark:bg-[#FFD426]/12 border border-[#FFD426]/60 text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC] font-medium"
+                              >
+                                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-[#FFD426] mr-2">
+                                  Hint:
+                                </span>
+                                {currentCard.hint}
+                              </motion.div>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
 
-                  {/* Bottom Flip Cue */}
-                  <div className="flex items-center justify-between pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-xs">
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
-                      Recall mentally before flipping
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
-                      <RotateCw className="w-3.5 h-3.5" />
-                      Tap card or press Space to reveal
-                    </span>
-                  </div>
-                </div>
-
-                {/* BACK FACE (ANSWER + MEMORY ANCHOR) */}
-                <div className="fc-face-back absolute inset-0 rounded-[28px] bg-[#FAF8EC] dark:bg-[#191917] border-2 border-[#0D47FF] dark:border-[#ECD5FF] shadow-[6px_6px_0px_#0D47FF] dark:shadow-[6px_6px_0px_#FFD426] p-6 sm:p-9 flex flex-col justify-between overflow-y-auto">
-                  <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
-                        VERIFIED ANSWER · {currentCard.conceptTag}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
-                      Tap to flip back
-                    </span>
-                  </div>
-
-                  <div className="my-auto py-4 space-y-4">
-                    <p className="text-base sm:text-lg font-semibold text-[#141413] dark:text-[#FAF8EC] leading-relaxed whitespace-pre-line">
-                      {currentCard.back}
-                    </p>
-
-                    {currentCard.mnemonic && (
-                      <div className="p-3.5 rounded-2xl bg-[#ECD5FF]/45 dark:bg-[#ECD5FF]/12 border border-[#141413]/20 dark:border-[#ECD5FF]/35 flex items-start gap-2.5">
-                        <Sparkles className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0 mt-0.5" />
-                        <div className="text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC]">
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider block text-[#0D47FF] dark:text-[#ECD5FF] mb-0.5">
-                            Memory Anchor
-                          </span>
-                          {currentCard.mnemonic}
-                        </div>
+                      {/* Bottom Flip Cue */}
+                      <div className="relative z-10 flex items-center justify-between pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] text-xs">
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                          Wiggle, drag or tap to flip
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 font-bold text-[#0D47FF] dark:text-[#ECD5FF]">
+                          <RotateCw className="w-3.5 h-3.5" />
+                          Tap or press Space
+                        </span>
                       </div>
-                    )}
+                    </div>
 
-                    {currentCard.sourceExcerpt && (
-                      <p className="text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] italic border-l-2 border-[#0D47FF]/50 pl-3">
-                        From notes: “{currentCard.sourceExcerpt}”
-                      </p>
-                    )}
-                  </div>
+                    {/* BACK FACE (ANSWER + MEMORY ANCHOR) */}
+                    <div className="fc-face-back absolute inset-0 rounded-[28px] bg-[#FAF8EC] dark:bg-[#191917] border-2 border-[#0D47FF] dark:border-[#ECD5FF] shadow-[7px_7px_0px_#0D47FF] dark:shadow-[7px_7px_0px_#FFD426] p-6 sm:p-9 flex flex-col justify-between overflow-y-auto">
+                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E5E1CE] dark:border-[#2E2E2A]">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
+                            VERIFIED ANSWER · {currentCard.conceptTag}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399]">
+                          Swipe L/R or tap to flip
+                        </span>
+                      </div>
 
-                  <div className="pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between text-[11px] font-mono text-[#66665E] dark:text-[#A3A399]">
-                    <span>Rate your recall honestly below (Keys 1–4)</span>
-                    <span className="tabular-nums">{cardElapsedSeconds}s</span>
-                  </div>
-                </div>
-              </div>
+                      <div className="my-auto py-4 space-y-4">
+                        <p className="text-base sm:text-lg font-semibold text-[#141413] dark:text-[#FAF8EC] leading-relaxed whitespace-pre-line">
+                          {currentCard.back}
+                        </p>
+
+                        {currentCard.mnemonic && (
+                          <motion.div
+                            initial={{ scale: 0.92, rotate: -1 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={JELLY_SPRING}
+                            className="p-3.5 rounded-2xl bg-[#ECD5FF]/45 dark:bg-[#ECD5FF]/12 border border-[#141413]/20 dark:border-[#ECD5FF]/35 flex items-start gap-2.5"
+                          >
+                            <Sparkles className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0 mt-0.5" />
+                            <div className="text-xs sm:text-sm text-[#141413] dark:text-[#FAF8EC]">
+                              <span className="font-mono text-[10px] font-bold uppercase tracking-wider block text-[#0D47FF] dark:text-[#ECD5FF] mb-0.5">
+                                Memory Anchor
+                              </span>
+                              {currentCard.mnemonic}
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {currentCard.sourceExcerpt && (
+                          <p className="text-[11px] font-mono text-[#66665E] dark:text-[#A3A399] italic border-l-2 border-[#0D47FF]/50 pl-3">
+                            From notes: “{currentCard.sourceExcerpt}”
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between text-[11px] font-mono text-[#66665E] dark:text-[#A3A399]">
+                        <span>Drag Right = Mastered · Drag Left = Again · Keys 1–4</span>
+                        <span className="tabular-nums">{cardElapsedSeconds}s</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom Interactive Rating Dock */}
-      <div className="min-h-[108px] flex items-center justify-center">
+      {/* Bottom Interactive Jiggly Jelly Rating Dock */}
+      <div className="min-h-[112px] flex items-center justify-center">
         <AnimatePresence mode="wait">
           {!isFlipped ? (
             <motion.button
               key="reveal-btn"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={SPRING_SNAPPY}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 18, scaleX: 0.88, scaleY: 1.12 }}
+              animate={{ opacity: 1, y: 0, scaleX: 1, scaleY: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.9 }}
+              transition={JELLY_SPRING}
+              whileHover={{ y: -4, scaleX: 1.05, scaleY: 0.96, rotate: -1 }}
+              whileTap={{ scaleX: 0.92, scaleY: 1.1, y: 2 }}
               onClick={handleFlip}
-              className="w-full sm:w-auto min-w-[260px] px-8 py-4 rounded-2xl bg-[#0D47FF] text-white font-heading font-black text-sm sm:text-base ink-btn-hard flex items-center justify-center gap-2.5 cursor-pointer"
+              className="w-full sm:w-auto min-w-[270px] px-8 py-4 rounded-2xl bg-[#0D47FF] text-white font-heading font-black text-sm sm:text-base ink-btn-hard flex items-center justify-center gap-2.5 cursor-pointer"
             >
               <RotateCw className="w-4 h-4" />
               Flip & Check Answer
@@ -1070,22 +1459,29 @@ export function FlashcardStudyPlayer({
           ) : (
             <motion.div
               key="rating-dock"
-              initial={{ opacity: 0, y: 14, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={SPRING_BOUNCY}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={JELLY_SPRING}
               className="w-full space-y-2.5"
             >
               <p className="text-center font-mono text-[10px] uppercase tracking-widest text-[#66665E] dark:text-[#A3A399]">
                 How accurately did you recall this concept?
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                {RATING_META.map((opt) => (
+                {RATING_META.map((opt, idx) => (
                   <motion.button
                     key={opt.key}
-                    whileHover={{ y: -3, scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={SPRING_SNAPPY}
+                    initial={{ opacity: 0, y: 24, scaleX: 0.84, scaleY: 1.16 }}
+                    animate={{ opacity: 1, y: 0, scaleX: 1, scaleY: 1 }}
+                    transition={{ ...JELLY_SPRING, delay: idx * 0.045 }}
+                    whileHover={{
+                      y: -6,
+                      scaleX: 1.07,
+                      scaleY: 0.94,
+                      rotate: idx % 2 === 0 ? -2.2 : 2.2
+                    }}
+                    whileTap={{ scaleX: 0.9, scaleY: 1.12, y: 2 }}
                     onClick={() => handleRate(opt.key)}
                     className={`p-3.5 rounded-2xl border-[1.5px] text-left transition-colors cursor-pointer group ${opt.bgClass} ${opt.borderClass}`}
                   >
