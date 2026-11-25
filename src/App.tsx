@@ -20,6 +20,7 @@ import { Exam } from './pages/Exam';
 import { Results } from './pages/Results';
 import { Profile } from './pages/Profile';
 import { Syllabus } from './pages/Syllabus';
+import { Flashcards } from './pages/Flashcards';
 import { SmoothScroll } from './components/SmoothScroll';
 import { SubjectProvider } from './context/SubjectContext';
 import { SketchProvider } from 'sketchbook-ui';
@@ -63,6 +64,7 @@ export default function App() {
                   <Route path="subject/:slug" element={<SubjectDashboard user={user} />} />
                   <Route path="new" element={<NewTest user={user} />} />
                   <Route path="exam/new" element={<NewTest user={user} />} />
+                  <Route path="flashcards" element={<Flashcards user={user} />} />
                   <Route path="history" element={<TestHistory user={user} />} />
                   <Route path="archive" element={<TestHistory user={user} />} />
                   <Route path="mistakes" element={<MistakeNotebook user={user} />} />

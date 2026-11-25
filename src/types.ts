@@ -268,3 +268,71 @@ export interface TestAttempt {
     nextSteps: string[];
   };
 }
+
+export type FlashcardConfidence = 'again' | 'hard' | 'good' | 'mastered';
+
+export interface FlashcardItem {
+  id: string;
+  front: string;
+  back: string;
+  hint?: string;
+  mnemonic?: string;
+  conceptTag: string;
+  difficulty: 'Easy' | 'Moderate' | 'Hard';
+  sourceExcerpt?: string;
+}
+
+export interface FlashcardCardResult {
+  cardId: string;
+  front: string;
+  back: string;
+  conceptTag: string;
+  rating: FlashcardConfidence;
+  timeSpentSeconds: number;
+  flipsCount: number;
+  attemptsInSession: number;
+}
+
+export interface FlashcardDeck {
+  id: string;
+  userId: string;
+  subjectId: string;
+  subjectSlug: string;
+  subjectName: string;
+  title: string;
+  topic: string;
+  sourceFileNames: string[];
+  sourceFileTypes: string[];
+  cardCount: number;
+  cards: FlashcardItem[];
+  createdAt: number;
+  lastStudiedAt?: number;
+  bestEfficiency?: number;
+  totalSessions?: number;
+}
+
+export interface FlashcardSession {
+  id: string;
+  userId: string;
+  deckId: string;
+  deckTitle: string;
+  subjectId: string;
+  subjectSlug: string;
+  subjectName: string;
+  topic: string;
+  mode: 'full' | 'weak-drill';
+  startedAt: number;
+  completedAt: number;
+  durationSeconds: number;
+  totalCards: number;
+  masteredCount: number;
+  goodCount: number;
+  hardCount: number;
+  againCount: number;
+  efficiencyScore: number;
+  retentionRatePct: number;
+  avgSecondsPerCard: number;
+  weakCardIds: string[];
+  cardResults: FlashcardCardResult[];
+}
+

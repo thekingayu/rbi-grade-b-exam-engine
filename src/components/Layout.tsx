@@ -13,7 +13,8 @@ import {
   ChevronDown,
   Search,
   Timer as TimerIcon,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -110,6 +111,7 @@ export function Layout({ user }: { user: User }) {
   const navItems = [
     { path: '/', label: 'Dashboard' },
     { path: '/new', label: 'New Exam', matchPrefix: '/new' },
+    { path: '/flashcards', label: 'Flashcards', matchPrefix: '/flashcards' },
     { path: '/mistakes', label: 'Mistakes' },
     { path: '/history', label: 'Archive' },
     { path: '/manage-subjects', label: 'Subjects' },
@@ -256,7 +258,7 @@ export function Layout({ user }: { user: User }) {
             </div>
 
             {/* ZONE 2: Clean Flat Editorial Navigation Links with shared layoutId underline */}
-            <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 shrink-0 min-w-0">
+            <nav className="hidden lg:flex items-center gap-2.5 xl:gap-5 shrink-0 min-w-0">
               {navItems.map((item) => {
                 const active = isNavActive(item);
                 return (
@@ -290,6 +292,19 @@ export function Layout({ user }: { user: User }) {
 
             {/* ZONE 3: Action Utilities & Profile */}
             <div className="flex items-center gap-1 sm:gap-1.5 xl:gap-2 shrink-0">
+              <Link
+                to="/flashcards"
+                className={`lg:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center border transition-colors shrink-0 ${
+                  location.pathname.startsWith('/flashcards')
+                    ? 'bg-[#0D47FF] text-white border-[#141413]'
+                    : 'bg-[#ECD5FF] dark:bg-[#1C1C1A] border-[#141413]/40 dark:border-[#ECD5FF]/40 text-[#141413] dark:text-[#ECD5FF]'
+                }`}
+                title="Flashcards Studio"
+                aria-label="Open Flashcards Studio"
+              >
+                <Layers className="w-4 h-4" />
+              </Link>
+
               <motion.button
                 whileHover={{ y: -2, scale: 1.05 }}
                 whileTap={{ scale: 0.88 }}

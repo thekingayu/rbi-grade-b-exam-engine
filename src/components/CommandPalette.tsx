@@ -13,7 +13,8 @@ import {
   ArrowRight,
   BookOpen,
   X,
-  User as UserIcon
+  User as UserIcon,
+  Layers
 } from 'lucide-react';
 import { SubjectIcon } from './dashboard/SubjectIcon';
 import { SPRING_BOUNCY, SPRING_SNAPPY } from './MotionPrimitives';
@@ -61,6 +62,8 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
     { label: 'Officer Profile & Pass', path: '/profile', icon: UserIcon, badge: 'Profile' },
     { label: 'Command Center', path: '/', icon: Compass, badge: 'Home' },
     { label: 'Start New Exam Wizard', path: '/new', icon: Plus, badge: 'Exam' },
+    { label: 'Flashcards Studio (Notes to Cards)', path: '/flashcards', icon: Layers, badge: 'Recall' },
+    { label: 'Past Flashcards & Efficiency Archive', path: '/flashcards?tab=history', icon: Clock, badge: 'Results' },
     { label: 'Spaced Mistake Notebook', path: '/mistakes', icon: RotateCcw, badge: 'Review' },
     { label: 'Exam Attempt Archive', path: '/history', icon: Clock, badge: 'History' },
     { label: 'Official Syllabus & PDF', path: '/syllabus', icon: BookOpen, badge: 'Syllabus' },

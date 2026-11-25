@@ -77,6 +77,57 @@
         "targetScoreGoal": { "type": "number" },
         "updatedAt": { "type": "number" }
       }
+    },
+    "FlashcardDeck": {
+      "title": "FlashcardDeck",
+      "description": "A subject-scoped active recall flashcard deck generated from uploaded PDF or image notes",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "subjectSlug": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "title": { "type": "string" },
+        "topic": { "type": "string" },
+        "sourceFileNames": { "type": "array" },
+        "sourceFileTypes": { "type": "array" },
+        "cardCount": { "type": "number" },
+        "cards": { "type": "array" },
+        "createdAt": { "type": "number" },
+        "lastStudiedAt": { "type": "number" },
+        "bestEfficiency": { "type": "number" },
+        "totalSessions": { "type": "number" }
+      },
+      "required": ["userId", "subjectId", "subjectSlug", "subjectName", "title", "topic", "cardCount", "cards", "createdAt"]
+    },
+    "FlashcardSession": {
+      "title": "FlashcardSession",
+      "description": "A completed flashcard study session storing recall ratings and learning efficiency analytics",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "deckId": { "type": "string" },
+        "deckTitle": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "subjectSlug": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "topic": { "type": "string" },
+        "mode": { "type": "string", "enum": ["full", "weak-drill"] },
+        "startedAt": { "type": "number" },
+        "completedAt": { "type": "number" },
+        "durationSeconds": { "type": "number" },
+        "totalCards": { "type": "number" },
+        "masteredCount": { "type": "number" },
+        "goodCount": { "type": "number" },
+        "hardCount": { "type": "number" },
+        "againCount": { "type": "number" },
+        "efficiencyScore": { "type": "number" },
+        "retentionRatePct": { "type": "number" },
+        "avgSecondsPerCard": { "type": "number" },
+        "weakCardIds": { "type": "array" },
+        "cardResults": { "type": "array" }
+      },
+      "required": ["userId", "deckId", "deckTitle", "subjectId", "subjectSlug", "subjectName", "mode", "startedAt", "completedAt", "durationSeconds", "totalCards", "efficiencyScore", "cardResults"]
     }
   },
   "firestore": {
@@ -91,6 +142,15 @@
     "/tests/{testId}/questions/{questionId}": {
       "schema": { "$ref": "#/entities/Question" },
       "description": "Questions for a test"
+    },
+    "/flashcardDecks/{deckId}": {
+      "schema": { "$ref": "#/entities/FlashcardDeck" },
+      "description": "User-owned flashcard decks segregated by RBI Grade B subject"
+    },
+    "/flashcardSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/FlashcardSession" },
+      "description": "Completed flashcard study session results and efficiency analytics"
     }
   }
 }
+

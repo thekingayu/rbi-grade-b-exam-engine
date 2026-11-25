@@ -1562,6 +1562,238 @@ app.post('/api/extract-text', async (req, res) => {
   }
 });
 
+// Multimodal Flashcards Generation (PDF, PNG, JPG, WebP, GIF, Text/Markdown + optional extra notes)
+const flashcardUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB per file
+    files: 8
+  }
+});
+
+function inferFlashcardMimeType(file: Express.Multer.File): string {
+  let mime = (file.mimetype || '').toLowerCase();
+  if (mime === 'image/jpg') mime = 'image/jpeg';
+  if (mime && mime !== 'application/octet-stream') return mime;
+
+  const lower = (file.originalname || '').toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.bmp')) return 'image/bmp';
+  if (lower.endsWith('.avif')) return 'image/avif';
+  if (lower.endsWith('.txt') || lower.endsWith('.md')) return 'text/plain';
+  return 'application/pdf';
+}
+
+app.post('/api/generate-flashcards', flashcardUpload.array('files', 8), async (req: any, res) => {
+  const tempFilesToClean: string[] = [];
+  try {
+    const files: Express.Multer.File[] = Array.isArray(req.files) ? req.files : [];
+    const subjectName = String(req.body.subjectName || 'RBI Grade B General').trim().slice(0, 140);
+    const subjectSlug = String(req.body.subjectSlug || 'general-awareness').trim().slice(0, 80);
+    const topicHint = String(req.body.topic || '').trim().slice(0, 200);
+    const extraNotesText = String(req.body.extraNotesText || '').trim().slice(0, 35000);
+    const requestedCount = Math.min(24, Math.max(6, parseInt(String(req.body.cardCount || '12'), 10) || 12));
+    const difficulty = ['Easy', 'Moderate', 'Hard'].includes(String(req.body.difficulty))
+      ? String(req.body.difficulty)
+      : 'Moderate';
+
+    if (files.length === 0 && extraNotesText.length < 20) {
+      return res.status(400).json({
+        error: 'Please upload at least one PDF or image note (PNG, JPG, WebP, GIF) or paste study notes.'
+      });
+    }
+
+    const genai = getGenAI();
+    const parts: any[] = [];
+    const textChunks: string[] = [];
+    if (extraNotesText) {
+      textChunks.push(extraNotesText);
+    }
+
+    for (const file of files) {
+      const mimeType = inferFlashcardMimeType(file);
+      const isSupportedImage = mimeType.startsWith('image/');
+      const isPdf = mimeType === 'application/pdf';
+      const isText = mimeType.startsWith('text/');
+
+      if (isText) {
+        const decoded = file.buffer.toString('utf-8').trim();
+        if (decoded) {
+          textChunks.push(`[File: ${file.originalname}]\n${decoded.slice(0, 20000)}`);
+        }
+        continue;
+      }
+
+      if (!isSupportedImage && !isPdf) {
+        return res.status(400).json({
+          error: `Unsupported file format for "${file.originalname}". Upload PDF, PNG, JPG, WebP, GIF, or TXT notes.`
+        });
+      }
+
+      // Use Gemini File API for large PDFs (>12MB); inlineData for fast image & standard PDF analysis
+      if (isPdf && file.size > 12 * 1024 * 1024) {
+        const safeName = (file.originalname || 'notes.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const tmpPath = path.join(os.tmpdir(), `fc-${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`);
+        await fs.promises.writeFile(tmpPath, file.buffer);
+        tempFilesToClean.push(tmpPath);
+
+        const uploaded = await genai.files.upload({
+          file: tmpPath,
+          config: { mimeType }
+        });
+
+        let state = await genai.files.get({ name: uploaded.name });
+        let polls = 0;
+        while (state.state === 'PROCESSING' && polls < 20) {
+          await new Promise(r => setTimeout(r, 1500));
+          state = await genai.files.get({ name: uploaded.name });
+          polls++;
+        }
+        if (state.state === 'FAILED') {
+          throw new Error(`Failed to process uploaded PDF "${file.originalname}".`);
+        }
+        parts.push({ fileData: { fileUri: uploaded.uri, mimeType: uploaded.mimeType } });
+      } else {
+        parts.push({
+          inlineData: {
+            mimeType,
+            data: file.buffer.toString('base64')
+          }
+        });
+      }
+    }
+
+    const combinedTextNotes = textChunks.join('\n\n---\n\n').slice(0, 32000);
+    const prompt = `You are a Master Cognitive Scientist and RBI Grade B Active-Recall Flashcard Designer.
+Analyze ALL attached study notes (PDF pages, handwritten or printed images, diagrams, tables, charts, and any supplementary text notes) thoroughly.
+
+TARGET SUBJECT: ${subjectName} (${subjectSlug})
+${topicHint ? `FOCUS TOPIC / CHAPTER: ${topicHint}` : 'DETECT THE PRIMARY TOPIC FROM THE UPLOADED NOTES.'}
+TARGET CARD COUNT: Generate EXACTLY ${requestedCount} high-yield active-recall flashcards.
+TARGET DIFFICULTY CALIBRATION: ${difficulty}
+
+${combinedTextNotes ? `ADDITIONAL STUDY NOTES TEXT:\n"""\n${combinedTextNotes}\n"""\n` : ''}
+
+DESIGN MANDATES FOR ELITE ACTIVE-RECALL FLASHCARDS:
+1. GROUNDED IN UPLOADED NOTES: Every single flashcard MUST directly test concepts, statutory sections, numerical thresholds, formulas, diagrams, tables, dates, committees, or definitions actually present in the uploaded notes/images/PDFs. Do not hallucinate unrelated trivia.
+2. ATOMIC & TESTABLE:
+   - "front": Sharp, unambiguous active-recall prompt (1–3 sentences max). Use varied recall formats: direct concept probes, "Compare X vs Y", formula/threshold checks, "What happens when...", statutory clause checks, or short scenario applications.
+   - "back": Crisp, structured, exam-ready answer (concise bullet-style or 2–4 clean lines with exact numbers, statutory sections, or formula steps).
+3. COGNITIVE SCAFFOLDING:
+   - "hint": Subtle 1-line nudge that helps recall without giving away the answer.
+   - "mnemonic": Optional short memory hook / acronym / formula anchor when helpful (or empty string "" if not needed).
+   - "conceptTag": Short 2–4 word sub-topic tag (e.g. "Basel III CCB", "Monetary Transmission", "Section 45ZB").
+   - "difficulty": "Easy" | "Moderate" | "Hard" (calibrated around ${difficulty}).
+   - "sourceExcerpt": Short 8–18 word reference phrase from the uploaded notes showing where this concept came from.
+4. ZERO DUPLICATES: Cover the breadth of the uploaded notes evenly from start to finish.
+
+Return STRICT JSON matching this exact schema:
+{
+  "title": "Crisp 4-8 word deck title summarizing these notes",
+  "topic": "Primary chapter or topic name",
+  "cards": [
+    {
+      "id": "fc_1",
+      "front": "Clear active-recall question or prompt",
+      "back": "Concise, high-precision answer with exact facts/formulas",
+      "hint": "Subtle retrieval cue",
+      "mnemonic": "Short memory anchor or empty string",
+      "conceptTag": "Short Concept Tag",
+      "difficulty": "${difficulty}",
+      "sourceExcerpt": "Short reference snippet from uploaded notes"
+    }
+  ]
+}`;
+
+    parts.push({ text: prompt });
+
+    const models = ['gemini-4-hydrogen', 'gemini-2.5-flash', 'gemini-3.1-flash-lite'];
+    let rawJson = '';
+    let lastError: any = null;
+
+    for (const model of models) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const response = await genai.models.generateContent({
+            model,
+            contents: { role: 'user', parts },
+            config: {
+              responseMimeType: 'application/json'
+            }
+          });
+          if (response.text && response.text.trim()) {
+            rawJson = response.text;
+            break;
+          }
+        } catch (err: any) {
+          lastError = err;
+          console.warn(`Flashcards attempt ${attempt + 1} with ${model} failed:`, err?.message || err);
+          await new Promise(r => setTimeout(r, 700 * (attempt + 1)));
+        }
+      }
+      if (rawJson) break;
+    }
+
+    if (!rawJson) {
+      throw lastError || new Error('Unable to synthesize flashcards from the uploaded notes.');
+    }
+
+    const parsed = safeJsonParse(rawJson);
+    const rawCards = Array.isArray(parsed?.cards) ? parsed.cards : [];
+
+    const normalizedCards = rawCards
+      .filter((c: any) => c && String(c.front || '').trim() && String(c.back || '').trim())
+      .slice(0, 40)
+      .map((c: any, idx: number) => {
+        const diffVal = String(c.difficulty || difficulty);
+        const safeDiff: 'Easy' | 'Moderate' | 'Hard' =
+          diffVal === 'Easy' || diffVal === 'Moderate' || diffVal === 'Hard'
+            ? diffVal
+            : (difficulty as 'Easy' | 'Moderate' | 'Hard');
+
+        return {
+          id: `fc_${idx + 1}_${Math.random().toString(36).slice(2, 6)}`,
+          front: String(c.front).trim().slice(0, 600),
+          back: String(c.back).trim().slice(0, 1200),
+          hint: String(c.hint || '').trim().slice(0, 260) || undefined,
+          mnemonic: String(c.mnemonic || '').trim().slice(0, 260) || undefined,
+          conceptTag: String(c.conceptTag || topicHint || subjectName).trim().slice(0, 80),
+          difficulty: safeDiff,
+          sourceExcerpt: String(c.sourceExcerpt || '').trim().slice(0, 220) || undefined
+        };
+      });
+
+    if (normalizedCards.length === 0) {
+      return res.status(422).json({
+        error: 'Could not extract readable study concepts from those files. Try clearer note images or a text-readable PDF.'
+      });
+    }
+
+    const fallbackTitle = topicHint
+      ? `${subjectName}: ${topicHint}`
+      : files[0]?.originalname
+        ? files[0].originalname.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ')
+        : `${subjectName} Active Recall Deck`;
+
+    res.json({
+      title: String(parsed?.title || fallbackTitle).trim().slice(0, 180),
+      topic: String(parsed?.topic || topicHint || subjectName).trim().slice(0, 160),
+      cards: normalizedCards
+    });
+  } catch (error: any) {
+    console.error('Generate flashcards error:', error);
+    res.status(500).json({ error: error?.message || String(error) });
+  } finally {
+    for (const tmpPath of tempFilesToClean) {
+      await fs.promises.unlink(tmpPath).catch(() => {});
+    }
+  }
+});
+
 // Serve frontend
 async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production';

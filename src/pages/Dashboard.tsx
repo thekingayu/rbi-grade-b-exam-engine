@@ -14,7 +14,7 @@ import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { RailwayTimeline, DiagonalMarquee, PrizeBadgeIcon } from '../components/SignatureGraphics';
 import { 
   Plus, CheckCircle2, TrendingUp, Trophy, ArrowRight,
-  Clock, Flame, BookOpen, Compass, RotateCcw, Trash2, AlertTriangle
+  Clock, Flame, BookOpen, Compass, RotateCcw, Trash2, AlertTriangle, Layers
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, differenceInCalendarDays } from 'date-fns';
@@ -258,11 +258,11 @@ export function Dashboard({ user }: { user: User }) {
           <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.95 }} transition={SPRING_BOUNCY} className="min-w-0">
               <Link 
-                to="/syllabus" 
-                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[#FFFFFF] dark:bg-[#1C1C1A] hover:bg-[#F3F0E0] dark:hover:bg-[#242421] text-[#141413] dark:text-[#FAF8EC] border-[1.5px] border-[#141413] dark:border-[#2E2E2A] px-3 sm:px-5 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0 whitespace-nowrap"
+                to="/flashcards" 
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-[#ECD5FF] dark:bg-[#242421] hover:bg-[#E2C2FF] dark:hover:bg-[#2E2E2A] text-[#141413] dark:text-[#ECD5FF] border-[1.5px] border-[#141413] dark:border-[#ECD5FF]/60 shadow-[3px_3px_0px_#141413] dark:shadow-[3px_3px_0px_#ECD5FF] px-3 sm:px-4 py-2.5 sm:py-3 min-h-[44px] sm:min-h-[46px] rounded-2xl font-bold transition-all w-full sm:w-auto text-xs sm:text-sm cursor-pointer shrink-0 whitespace-nowrap"
               >
-                <BookOpen className="w-4 h-4 text-[#0D47FF] dark:text-[#ECD5FF] shrink-0" />
-                <span>Syllabus & PDF</span>
+                <Layers className="w-4 h-4 shrink-0" />
+                <span>Flashcards</span>
               </Link>
             </motion.div>
 

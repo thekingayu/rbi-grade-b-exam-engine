@@ -578,6 +578,37 @@ html {
   }
 }
 
+/* ==========================================================================
+   Interactive 3D Flashcard Flip Engine
+   ========================================================================== */
+.fc-perspective {
+  perspective: 1400px;
+}
+
+.fc-card-3d {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.fc-card-3d.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.fc-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(0deg);
+}
+
+.fc-face-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(180deg);
+}
+
 /* Accessibility: honor OS reduced motion preference globally */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-left,
@@ -595,9 +626,11 @@ html {
   .u3d-glass,
   .u3d-circle,
   .u3d-action-btn,
-  .u3d-view-more {
+  .u3d-view-more,
+  .fc-card-3d {
     transition: none !important;
     transform: none !important;
   }
 }
+
 

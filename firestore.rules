@@ -59,5 +59,73 @@ service cloud.firestore {
       allow update: if isSignedIn() && isValidId(mistakeId) && existing().userId == request.auth.uid && (!('userId' in incoming()) || incoming().userId == request.auth.uid);
       allow delete: if isSignedIn() && isValidId(mistakeId) && existing().userId == request.auth.uid;
     }
+
+    function isValidFlashcardDeck(data) {
+      return data.keys().hasAll(['userId', 'subjectId', 'subjectSlug', 'subjectName', 'title', 'topic', 'sourceFileNames', 'sourceFileTypes', 'cardCount', 'cards', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'subjectId', 'subjectSlug', 'subjectName', 'title', 'topic', 'sourceFileNames', 'sourceFileTypes', 'cardCount', 'cards', 'createdAt', 'lastStudiedAt', 'bestEfficiency', 'totalSessions'])
+        && data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128
+        && data.subjectId is string && data.subjectId.size() >= 1 && data.subjectId.size() <= 128
+        && data.subjectSlug is string && data.subjectSlug.size() >= 1 && data.subjectSlug.size() <= 128
+        && data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 160
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 240
+        && data.sourceFileNames is list && data.sourceFileNames.size() <= 20
+        && data.sourceFileTypes is list && data.sourceFileTypes.size() <= 20
+        && data.cardCount is number && data.cardCount >= 1 && data.cardCount <= 60
+        && data.cards is list && data.cards.size() >= 1 && data.cards.size() <= 60
+        && data.createdAt is number && data.createdAt > 0
+        && (!('lastStudiedAt' in data) || (data.lastStudiedAt is number && data.lastStudiedAt >= 0))
+        && (!('bestEfficiency' in data) || (data.bestEfficiency is number && data.bestEfficiency >= 0 && data.bestEfficiency <= 100))
+        && (!('totalSessions' in data) || (data.totalSessions is number && data.totalSessions >= 0 && data.totalSessions <= 10000));
+    }
+
+    function isValidFlashcardSession(data) {
+      return data.keys().hasAll(['userId', 'deckId', 'deckTitle', 'subjectId', 'subjectSlug', 'subjectName', 'topic', 'mode', 'startedAt', 'completedAt', 'durationSeconds', 'totalCards', 'masteredCount', 'goodCount', 'hardCount', 'againCount', 'efficiencyScore', 'retentionRatePct', 'avgSecondsPerCard', 'weakCardIds', 'cardResults'])
+        && data.keys().hasOnly(['userId', 'deckId', 'deckTitle', 'subjectId', 'subjectSlug', 'subjectName', 'topic', 'mode', 'startedAt', 'completedAt', 'durationSeconds', 'totalCards', 'masteredCount', 'goodCount', 'hardCount', 'againCount', 'efficiencyScore', 'retentionRatePct', 'avgSecondsPerCard', 'weakCardIds', 'cardResults'])
+        && data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128
+        && data.deckId is string && data.deckId.size() >= 1 && data.deckId.size() <= 128
+        && data.deckTitle is string && data.deckTitle.size() >= 1 && data.deckTitle.size() <= 240
+        && data.subjectId is string && data.subjectId.size() >= 1 && data.subjectId.size() <= 128
+        && data.subjectSlug is string && data.subjectSlug.size() >= 1 && data.subjectSlug.size() <= 128
+        && data.subjectName is string && data.subjectName.size() >= 1 && data.subjectName.size() <= 160
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 240
+        && data.mode in ['full', 'weak-drill']
+        && data.startedAt is number && data.startedAt > 0
+        && data.completedAt is number && data.completedAt >= data.startedAt
+        && data.durationSeconds is number && data.durationSeconds >= 0 && data.durationSeconds <= 86400
+        && data.totalCards is number && data.totalCards >= 1 && data.totalCards <= 60
+        && data.masteredCount is number && data.masteredCount >= 0 && data.masteredCount <= 60
+        && data.goodCount is number && data.goodCount >= 0 && data.goodCount <= 60
+        && data.hardCount is number && data.hardCount >= 0 && data.hardCount <= 60
+        && data.againCount is number && data.againCount >= 0 && data.againCount <= 60
+        && data.efficiencyScore is number && data.efficiencyScore >= 0 && data.efficiencyScore <= 100
+        && data.retentionRatePct is number && data.retentionRatePct >= 0 && data.retentionRatePct <= 100
+        && data.avgSecondsPerCard is number && data.avgSecondsPerCard >= 0 && data.avgSecondsPerCard <= 3600
+        && data.weakCardIds is list && data.weakCardIds.size() <= 60
+        && data.cardResults is list && data.cardResults.size() >= 1 && data.cardResults.size() <= 60;
+    }
+
+    match /flashcardDecks/{deckId} {
+      allow create: if isSignedIn() && isValidId(deckId) && isValidFlashcardDeck(incoming());
+      allow get: if isSignedIn() && isValidId(deckId) && resource != null && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && isValidId(deckId)
+        && existing().userId == request.auth.uid
+        && isValidFlashcardDeck(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['lastStudiedAt', 'bestEfficiency', 'totalSessions', 'title', 'topic']);
+      allow delete: if isSignedIn() && isValidId(deckId) && existing().userId == request.auth.uid;
+    }
+
+    match /flashcardSessions/{sessionId} {
+      allow create: if isSignedIn() && isValidId(sessionId) && isValidFlashcardSession(incoming());
+      allow get: if isSignedIn() && isValidId(sessionId) && resource != null && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(sessionId) && existing().userId == request.auth.uid;
+    }
   }
 }
+
