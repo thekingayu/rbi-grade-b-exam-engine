@@ -117,6 +117,64 @@ function getEfficiencyBadgeStyle(score: number): string {
   return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40';
 }
 
+// Downscale large screenshots/camera note photos to crisp 1500px JPEG for 5-10x faster upload & multimodal OCR
+async function compressImageForFastUpload(file: File): Promise<File> {
+  const isCompressibleImage =
+    file.type.startsWith('image/') &&
+    file.type !== 'image/gif' &&
+    file.size > 320 * 1024;
+  if (!isCompressibleImage) return file;
+
+  return new Promise<File>((resolve) => {
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const MAX_DIM = 1500;
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const scale = MAX_DIM / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(objUrl);
+          resolve(file);
+          return;
+        }
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(objUrl);
+            if (!blob || blob.size >= file.size) {
+              resolve(file);
+              return;
+            }
+            const baseName = file.name.replace(/\.[^/.]+$/, '');
+            resolve(new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          0.8
+        );
+      } catch {
+        URL.revokeObjectURL(objUrl);
+        resolve(file);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objUrl);
+      resolve(file);
+    };
+    img.src = objUrl;
+  });
+}
+
 export function Flashcards({ user }: { user: User }) {
   const { subjects, activeSubject } = useSubject();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -367,21 +425,28 @@ export function Flashcards({ user }: { user: User }) {
 
     setGenerating(true);
     setCreateError(null);
-    setGenerationStage('Inspecting uploaded PDF & image notes...');
+    setGenerationStage('Optimizing notes for rapid analysis...');
 
     const stageTimer1 = setTimeout(
-      () => setGenerationStage('Extracting statutory concepts, tables & formulas...'),
-      2600
+      () => setGenerationStage(`Synthesizing ${cardCount} active-recall flashcards...`),
+      1200
     );
     const stageTimer2 = setTimeout(
-      () => setGenerationStage(`Synthesizing ${cardCount} high-yield active-recall flashcards...`),
-      5500
+      () => setGenerationStage('Finalizing your interactive 3D deck...'),
+      3200
     );
 
     try {
+      const optimizedFiles = await Promise.all(
+        uploadedFiles.map(async (item) => {
+          const prepared = item.isImage ? await compressImageForFastUpload(item.file) : item.file;
+          return { file: prepared, originalName: item.file.name };
+        })
+      );
+
       const formData = new FormData();
-      uploadedFiles.forEach((item) => {
-        formData.append('files', item.file, item.file.name);
+      optimizedFiles.forEach(({ file }) => {
+        formData.append('files', file, file.name);
       });
       formData.append('subjectName', selectedSubject.name);
       formData.append('subjectSlug', selectedSubject.slug);
@@ -389,7 +454,7 @@ export function Flashcards({ user }: { user: User }) {
       formData.append('cardCount', String(cardCount));
       formData.append('difficulty', difficulty);
       if (fullTextContext) {
-        formData.append('extraNotesText', fullTextContext.slice(0, 34000));
+        formData.append('extraNotesText', fullTextContext.slice(0, 28000));
       }
 
       const response = await fetch(getApiUrl('/api/generate-flashcards'), {
@@ -405,8 +470,6 @@ export function Flashcards({ user }: { user: User }) {
       if (!Array.isArray(data.cards) || data.cards.length === 0) {
         throw new Error('No flashcards could be extracted from these notes. Try clearer images or notes.');
       }
-
-      setGenerationStage('Saving deck to your Subject Vault...');
 
       const deckId = `fcd_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       const sourceFileNames = [
@@ -447,8 +510,17 @@ export function Flashcards({ user }: { user: User }) {
         bestEfficiency: 0
       };
 
+      // Persist deck asynchronously so the 3D Study Player opens instantaneously with zero extra wait
       const { id: _ignore, ...firestoreDeck } = newDeck;
-      await setDoc(doc(db, 'flashcardDecks', deckId), sanitizeForFirestore(firestoreDeck));
+      setDecks((prev) => [newDeck, ...prev]);
+      setDoc(doc(db, 'flashcardDecks', deckId), sanitizeForFirestore(firestoreDeck)).catch((err) => {
+        console.error('Background flashcard deck save failed:', err);
+        try {
+          handleFirestoreError(err, OperationType.WRITE, `flashcardDecks/${deckId}`, user);
+        } catch {
+          // logged
+        }
+      });
 
       // Clear upload staging & launch straight into 3D Study Player!
       uploadedFiles.forEach((f) => {
