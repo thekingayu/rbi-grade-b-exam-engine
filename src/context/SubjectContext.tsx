@@ -18,6 +18,7 @@ import { INITIAL_SUBJECTS } from '../data/subjects';
 import {
   sanitizeForFirestore,
   isSyncDocument,
+  isProfileSyncDocument,
   OperationType,
   buildFirestoreErrorInfo,
 } from '../utils/firestore';
@@ -301,7 +302,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (res.status === 'fulfilled') {
           res.value.docs.forEach((d) => {
             const data = d.data();
-            if (isSyncDocument(d.id, data)) {
+            if (isProfileSyncDocument(d.id, data)) {
               pushCandidate(data);
             }
           });
@@ -499,7 +500,7 @@ export const SubjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           (snapshot) => {
             snapshot.docs.forEach((d) => {
               const data = d.data();
-              if (d.id === 'profile_sync_' + userId || isSyncDocument(d.id, data)) {
+              if (d.id === 'profile_sync_' + userId || isProfileSyncDocument(d.id, data)) {
                 applyProfileData(data, userId);
               }
             });

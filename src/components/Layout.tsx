@@ -107,6 +107,10 @@ export function Layout({ user }: { user: User }) {
   const currentDisplayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Officer';
   const currentPhoto = userProfile?.photoURL || user.photoURL;
   const isNewExamRoute = location.pathname.startsWith('/new') || location.pathname.startsWith('/exam/new');
+  const hideFloatingDock =
+    isNewExamRoute ||
+    location.pathname.startsWith('/exam/') ||
+    location.pathname.startsWith('/flashcards');
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -160,7 +164,7 @@ export function Layout({ user }: { user: User }) {
                   whileTap={{ scale: 0.96 }}
                   transition={SPRING_TACTILE}
                   onClick={() => setShowSubjectMenu(!showSubjectMenu)}
-                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[34px] sm:min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer w-full max-w-[116px] sm:max-w-[170px] lg:max-w-[138px] xl:max-w-[178px] overflow-hidden"
+                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 min-h-[34px] sm:min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold bg-[#F3F0E0] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] dark:hover:border-[#ECD5FF]/60 transition-colors cursor-pointer w-full max-w-[104px] sm:max-w-[170px] lg:max-w-[138px] xl:max-w-[178px] overflow-hidden"
                   aria-expanded={showSubjectMenu}
                   aria-label="Switch subject scope"
                 >
@@ -315,7 +319,7 @@ export function Layout({ user }: { user: User }) {
                 aria-label="Open quick navigation palette"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">⌘K</span>
+                <span className="hidden md:inline">⌘K</span>
               </motion.button>
 
               <motion.button
@@ -504,7 +508,7 @@ export function Layout({ user }: { user: User }) {
 
         {/* Signature Floating Dark Bottom Countdown Dock (Desktop only) */}
         <AnimatePresence>
-          {!isNewExamRoute && (
+          {!hideFloatingDock && (
             <motion.div
               initial={{ opacity: 0, y: 28, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -537,7 +541,7 @@ export function Layout({ user }: { user: User }) {
           )}
         </AnimatePresence>
 
-        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-8 sm:pb-12 w-full relative">
+        <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-24 lg:pb-20 w-full relative">
           <AnimatePresence
             mode="wait"
             initial={false}

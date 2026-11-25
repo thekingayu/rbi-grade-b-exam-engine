@@ -37,8 +37,8 @@ export function sanitizeForFirestore<T>(input: T): T {
   return input;
 }
 
-export function isSyncDocument(id: string, data: any): boolean {
-  if (!id && !data) return true;
+export function isProfileSyncDocument(id: string, data: any): boolean {
+  if (!id && !data) return false;
   if (id.startsWith('profile_sync_') || id.startsWith('note_profile_')) return true;
   if (
     data?.isProfileSync === true ||
@@ -48,6 +48,24 @@ export function isSyncDocument(id: string, data: any): boolean {
     return true;
   }
   return false;
+}
+
+export function isFlashcardRecordDocument(id: string, data: any): boolean {
+  if (!id && !data) return false;
+  if (id.startsWith('fc_deck_') || id.startsWith('fc_sess_')) return true;
+  if (
+    data?.recordKind === 'flashcard_deck' ||
+    data?.recordKind === 'flashcard_session' ||
+    data?.isFlashcardRecord === true
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function isSyncDocument(id: string, data: any): boolean {
+  if (!id && !data) return true;
+  return isProfileSyncDocument(id, data) || isFlashcardRecordDocument(id, data);
 }
 
 export enum OperationType {

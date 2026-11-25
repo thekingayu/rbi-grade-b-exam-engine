@@ -5,10 +5,7 @@ import {
   collection,
   query,
   where,
-  onSnapshot,
-  doc,
-  setDoc,
-  deleteDoc
+  onSnapshot
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -46,7 +43,9 @@ import {
   FolderOpen,
   BarChart3,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { db } from '../firebase';
 import { useSubject } from '../context/SubjectContext';
@@ -57,11 +56,18 @@ import {
   Subject
 } from '../types';
 import {
-  sanitizeForFirestore,
   isSyncDocument,
   handleFirestoreError,
   OperationType
 } from '../utils/firestore';
+import {
+  readCachedFlashcardDecks,
+  readCachedFlashcardSessions,
+  saveFlashcardDeckToDb,
+  deleteFlashcardDeckFromDb,
+  deleteFlashcardSessionFromDb,
+  subscribeFlashcardData
+} from '../utils/flashcardStorage';
 import { getApiUrl } from '../utils/api';
 import { SubjectIcon } from '../components/dashboard/SubjectIcon';
 import { FlashcardStudyPlayer } from '../components/flashcards/FlashcardStudyPlayer';
@@ -206,11 +212,15 @@ export function Flashcards({ user }: { user: User }) {
     setSearchParams(next, { replace: true });
   };
 
-  // Firestore real-time state
-  const [decks, setDecks] = useState<FlashcardDeck[]>([]);
-  const [sessions, setSessions] = useState<FlashcardSession[]>([]);
+  // Firestore real-time state (hydrated instantaneously from uid-scoped cache)
+  const [decks, setDecks] = useState<FlashcardDeck[]>(() => readCachedFlashcardDecks(user.uid));
+  const [sessions, setSessions] = useState<FlashcardSession[]>(() =>
+    readCachedFlashcardSessions(user.uid)
+  );
   const [savedNotes, setSavedNotes] = useState<SubjectNote[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const [loadingData, setLoadingData] = useState(
+    () => readCachedFlashcardDecks(user.uid).length === 0 && readCachedFlashcardSessions(user.uid).length === 0
+  );
 
   // Create Studio state
   const [selectedSubjectSlug, setSelectedSubjectSlug] = useState<string>(
@@ -235,12 +245,13 @@ export function Flashcards({ user }: { user: User }) {
     subsetCardIds?: string[];
   } | null>(null);
 
-  // Decks & History filters + modals
+  // Decks & History filters + pagination + modals
   const [decksSubjectFilter, setDecksSubjectFilter] = useState<string>('all');
   const [decksSearch, setDecksSearch] = useState('');
   const [historySubjectFilter, setHistorySubjectFilter] = useState<string>('all');
   const [historySearch, setHistorySearch] = useState('');
   const [collapsedHistorySubjects, setCollapsedHistorySubjects] = useState<Record<string, boolean>>({});
+  const [historyPageBySubject, setHistoryPageBySubject] = useState<Record<string, number>>({});
 
   const [previewDeck, setPreviewDeck] = useState<FlashcardDeck | null>(null);
   const [inspectSession, setInspectSession] = useState<FlashcardSession | null>(null);
@@ -267,52 +278,13 @@ export function Flashcards({ user }: { user: User }) {
     };
   }, [uploadedFiles]);
 
-  // Real-time Firestore subscriptions for Decks, Sessions, and Saved Notes
+  // Real-time dual-target Firestore subscriptions for Decks, Sessions, and Saved Notes
   useEffect(() => {
-    let loadedDecks = false;
-    let loadedSessions = false;
-
-    const finishCheck = () => {
-      if (loadedDecks && loadedSessions) {
-        setLoadingData(false);
-      }
-    };
-
-    const unsubDecks = onSnapshot(
-      query(collection(db, 'flashcardDecks'), where('userId', '==', user.uid)),
-      (snap) => {
-        const list = snap.docs
-          .filter((d) => !isSyncDocument(d.id, d.data()))
-          .map((d) => ({ id: d.id, ...d.data() })) as FlashcardDeck[];
-        list.sort((a, b) => (b.lastStudiedAt || b.createdAt) - (a.lastStudiedAt || a.createdAt));
-        setDecks(list);
-        loadedDecks = true;
-        finishCheck();
-      },
-      (err) => {
-        console.error('Error loading flashcard decks:', err);
-        loadedDecks = true;
-        finishCheck();
-      }
-    );
-
-    const unsubSessions = onSnapshot(
-      query(collection(db, 'flashcardSessions'), where('userId', '==', user.uid)),
-      (snap) => {
-        const list = snap.docs
-          .filter((d) => !isSyncDocument(d.id, d.data()))
-          .map((d) => ({ id: d.id, ...d.data() })) as FlashcardSession[];
-        list.sort((a, b) => b.completedAt - a.completedAt);
-        setSessions(list);
-        loadedSessions = true;
-        finishCheck();
-      },
-      (err) => {
-        console.error('Error loading flashcard sessions:', err);
-        loadedSessions = true;
-        finishCheck();
-      }
-    );
+    const unsubFlashcards = subscribeFlashcardData(user.uid, {
+      onDecks: (list) => setDecks(list),
+      onSessions: (list) => setSessions(list),
+      onReady: () => setLoadingData(false)
+    });
 
     const unsubNotes = onSnapshot(
       query(collection(db, 'notes'), where('userId', '==', user.uid)),
@@ -326,9 +298,12 @@ export function Flashcards({ user }: { user: User }) {
       () => {}
     );
 
+    // Safety timeout so loader never hangs on slow networks
+    const readyTimeout = setTimeout(() => setLoadingData(false), 2500);
+
     return () => {
-      unsubDecks();
-      unsubSessions();
+      clearTimeout(readyTimeout);
+      unsubFlashcards();
       unsubNotes();
     };
   }, [user.uid]);
@@ -510,16 +485,10 @@ export function Flashcards({ user }: { user: User }) {
         bestEfficiency: 0
       };
 
-      // Persist deck asynchronously so the 3D Study Player opens instantaneously with zero extra wait
-      const { id: _ignore, ...firestoreDeck } = newDeck;
-      setDecks((prev) => [newDeck, ...prev]);
-      setDoc(doc(db, 'flashcardDecks', deckId), sanitizeForFirestore(firestoreDeck)).catch((err) => {
+      // Persist deck asynchronously across dual resilient Firestore targets so 3D Study Player opens immediately
+      setDecks((prev) => [newDeck, ...prev.filter((d) => d.id !== newDeck.id)]);
+      saveFlashcardDeckToDb(user, newDeck).catch((err) => {
         console.error('Background flashcard deck save failed:', err);
-        try {
-          handleFirestoreError(err, OperationType.WRITE, `flashcardDecks/${deckId}`, user);
-        } catch {
-          // logged
-        }
       });
 
       // Clear upload staging & launch straight into 3D Study Player!
@@ -550,16 +519,16 @@ export function Flashcards({ user }: { user: User }) {
     }
   };
 
-  // Delete Deck or Session
+  // Delete Deck or Session across all Firestore targets
   const confirmDelete = async () => {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
     try {
-      const colName = deleteTarget.kind === 'deck' ? 'flashcardDecks' : 'flashcardSessions';
-      await deleteDoc(doc(db, colName, deleteTarget.id));
       if (deleteTarget.kind === 'deck') {
+        await deleteFlashcardDeckFromDb(user.uid, deleteTarget.id);
         setDecks((prev) => prev.filter((d) => d.id !== deleteTarget.id));
       } else {
+        await deleteFlashcardSessionFromDb(user.uid, deleteTarget.id);
         setSessions((prev) => prev.filter((s) => s.id !== deleteTarget.id));
       }
       setDeleteTarget(null);
@@ -831,7 +800,7 @@ export function Flashcards({ user }: { user: User }) {
       subjectBySlug.get(studyingState.deck.subjectSlug)?.accentColor || '#0D47FF';
 
     return (
-      <MotionPage className="max-w-6xl mx-auto pt-2 pb-16">
+      <MotionPage className="max-w-6xl mx-auto pt-1 sm:pt-2 pb-10">
         <FlashcardStudyPlayer
           user={user}
           deck={studyingState.deck}
@@ -843,22 +812,52 @@ export function Flashcards({ user }: { user: User }) {
             setStudyingState(null);
             switchTab('history');
           }}
+          onSessionSaved={(savedSession) => {
+            setSessions((prev) => [
+              savedSession,
+              ...prev.filter((s) => s.id !== savedSession.id)
+            ]);
+            setDecks((prev) =>
+              prev.map((d) =>
+                d.id === savedSession.deckId
+                  ? {
+                      ...d,
+                      lastStudiedAt: savedSession.completedAt,
+                      bestEfficiency: Math.max(d.bestEfficiency || 0, savedSession.efficiencyScore),
+                      totalSessions: (d.totalSessions || 0) + 1
+                    }
+                  : d
+              )
+            );
+          }}
         />
       </MotionPage>
     );
   }
 
-  const tabs: Array<{ id: ActiveTab; label: string; icon: React.ElementType; count?: number }> = [
-    { id: 'create', label: 'Upload & Generate', icon: Sparkles },
-    { id: 'decks', label: 'My Decks', icon: Layers, count: decks.length },
-    { id: 'history', label: 'Past Flashcards & Results', icon: History, count: sessions.length }
+  const tabs: Array<{
+    id: ActiveTab;
+    label: string;
+    mobileLabel: string;
+    icon: React.ElementType;
+    count?: number;
+  }> = [
+    { id: 'create', label: 'Upload & Generate', mobileLabel: 'Generate', icon: Sparkles },
+    { id: 'decks', label: 'My Decks', mobileLabel: 'Decks', icon: Layers, count: decks.length },
+    {
+      id: 'history',
+      label: 'Past Flashcards & Results',
+      mobileLabel: 'History',
+      icon: History,
+      count: sessions.length
+    }
   ];
 
   return (
-    <MotionPage className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pt-1 sm:pt-2 pb-16 relative z-10">
+    <MotionPage className="max-w-7xl mx-auto space-y-5 sm:space-y-8 pt-1 sm:pt-2 pb-24 lg:pb-20 relative z-10">
       {/* 1. Editorial Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6">
-        <div>
+        <div className="min-w-0">
           <p className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#66665E] dark:text-[#A3A399] mb-1.5">
             ACTIVE RECALL ENGINE · MULTIMODAL NOTES TO MEMORY MASTERY
           </p>
@@ -873,21 +872,21 @@ export function Flashcards({ user }: { user: User }) {
           </p>
         </div>
 
-        {/* Quick Global Efficiency Pill Summary */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
-          <div className="px-3.5 py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
+        {/* Quick Global Efficiency Summary */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
+          <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
+            <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block truncate">
               Decks
             </span>
-            <span className="font-heading text-xl font-black text-[#141413] dark:text-[#FAF8EC] tabular-nums">
+            <span className="font-heading text-lg sm:text-xl font-black text-[#141413] dark:text-[#FAF8EC] tabular-nums">
               <AnimatedNumber value={decks.length} />
             </span>
           </div>
-          <div className="px-3.5 py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
-              Avg Efficiency
+          <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
+            <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block truncate">
+              Avg Eff.
             </span>
-            <span className="font-heading text-xl font-black text-[#0D47FF] dark:text-[#ECD5FF] tabular-nums">
+            <span className="font-heading text-lg sm:text-xl font-black text-[#0D47FF] dark:text-[#ECD5FF] tabular-nums">
               {globalStats.totalSessions > 0 ? (
                 <AnimatedNumber value={globalStats.avgEfficiency} suffix="%" />
               ) : (
@@ -895,19 +894,19 @@ export function Flashcards({ user }: { user: User }) {
               )}
             </span>
           </div>
-          <div className="px-3.5 py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
+          <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A]">
+            <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block truncate">
               Mastered
             </span>
-            <span className="font-heading text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+            <span className="font-heading text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
               <AnimatedNumber value={globalStats.totalMastered} />
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2. Animated Segmented Tab Switcher */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#F3F0E0] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/50 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF] overflow-x-auto no-scrollbar">
+      {/* 2. Responsive Animated Segmented Tab Switcher (3 equal columns on mobile, full labels on sm+) */}
+      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-2xl bg-[#F3F0E0] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/50 shadow-[4px_4px_0px_#141413] dark:shadow-[4px_4px_0px_#ECD5FF]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -916,7 +915,7 @@ export function Flashcards({ user }: { user: User }) {
               key={tab.id}
               type="button"
               onClick={() => switchTab(tab.id)}
-              className={`relative flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`relative flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[11px] sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer min-w-0 ${
                 isActive
                   ? 'text-[#FAF8EC] dark:text-[#141413]'
                   : 'text-[#66665E] dark:text-[#A3A399] hover:text-[#141413] dark:hover:text-[#FAF8EC]'
@@ -929,12 +928,13 @@ export function Flashcards({ user }: { user: User }) {
                   className="absolute inset-0 rounded-xl bg-[#141413] dark:bg-[#ECD5FF] shadow-sm"
                 />
               )}
-              <span className="relative z-10 flex items-center gap-2">
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{tab.label}</span>
+              <span className="relative z-10 flex items-center gap-1 sm:gap-2 min-w-0">
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden truncate">{tab.mobileLabel}</span>
+                <span className="hidden sm:inline truncate">{tab.label}</span>
                 {typeof tab.count === 'number' && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-md font-mono text-[10px] tabular-nums ${
+                    className={`px-1.5 py-0.5 rounded-md font-mono text-[9px] sm:text-[10px] tabular-nums shrink-0 ${
                       isActive
                         ? 'bg-white/20 dark:bg-black/15'
                         : 'bg-[#E5E1CE] dark:bg-[#2E2E2A]'
@@ -1776,12 +1776,12 @@ export function Flashcards({ user }: { user: User }) {
 
             {/* Subject-Wise Segregated Past Flashcards & Results */}
             {groupedHistory.length === 0 ? (
-              <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-dashed border-[#141413]/30 dark:border-[#FAF8EC]/25 p-12 text-center space-y-4">
+              <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[1.5px] border-dashed border-[#141413]/30 dark:border-[#FAF8EC]/25 p-8 sm:p-12 text-center space-y-4">
                 <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFD426]/35 dark:bg-[#242421] flex items-center justify-center text-[#141413] dark:text-[#FFD426]">
                   <BarChart3 className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-heading text-xl font-black text-[#141413] dark:text-[#FAF8EC]">
+                  <h3 className="font-heading text-lg sm:text-xl font-black text-[#141413] dark:text-[#FAF8EC]">
                     No Past Flashcard Results Yet
                   </h3>
                   <p className="text-xs sm:text-sm text-[#66665E] dark:text-[#A3A399] mt-1 max-w-md mx-auto">
@@ -1798,10 +1798,20 @@ export function Flashcards({ user }: { user: User }) {
                 </button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-5 sm:space-y-6">
                 {groupedHistory.map((group) => {
                   const accent = group.subject?.accentColor || '#0D47FF';
                   const isCollapsed = Boolean(collapsedHistorySubjects[group.subjectSlug]);
+                  const PAGE_SIZE = 5;
+                  const totalPages = Math.max(1, Math.ceil(group.sessions.length / PAGE_SIZE));
+                  const currentPage = Math.min(
+                    totalPages,
+                    Math.max(1, historyPageBySubject[group.subjectSlug] || 1)
+                  );
+                  const paginatedSessions = group.sessions.slice(
+                    (currentPage - 1) * PAGE_SIZE,
+                    currentPage * PAGE_SIZE
+                  );
 
                   return (
                     <MotionSection
@@ -1817,11 +1827,11 @@ export function Flashcards({ user }: { user: User }) {
                             [group.subjectSlug]: !prev[group.subjectSlug]
                           }))
                         }
-                        className="w-full p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 bg-[#FAF8EC] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] text-left cursor-pointer"
+                        className="w-full p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#FAF8EC] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] text-left cursor-pointer"
                       >
-                        <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border"
+                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 border"
                             style={{
                               backgroundColor: `${accent}18`,
                               borderColor: `${accent}45`,
@@ -1833,9 +1843,9 @@ export function Flashcards({ user }: { user: User }) {
                               className="w-5 h-5"
                             />
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-heading text-lg font-black text-[#141413] dark:text-[#FAF8EC] truncate">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-heading text-base sm:text-lg font-black text-[#141413] dark:text-[#FAF8EC] truncate">
                                 {group.subjectName}
                               </h3>
                               {group.subject?.phase && (
@@ -1844,7 +1854,7 @@ export function Flashcards({ user }: { user: User }) {
                                 </span>
                               )}
                             </div>
-                            <p className="font-mono text-[11px] text-[#66665E] dark:text-[#A3A399] tabular-nums">
+                            <p className="font-mono text-[10px] sm:text-[11px] text-[#66665E] dark:text-[#A3A399] tabular-nums">
                               {group.sessions.length}{' '}
                               {group.sessions.length === 1 ? 'Session' : 'Sessions'} ·{' '}
                               {group.totalCardsReviewed} Cards Tested
@@ -1852,27 +1862,27 @@ export function Flashcards({ user }: { user: User }) {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 sm:gap-5">
-                          <div className="text-right">
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5 pl-13 sm:pl-0">
+                          <div className="text-left sm:text-right">
                             <span className="font-mono text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
-                              Subject Avg Efficiency
+                              Avg Efficiency
                             </span>
                             <span
-                              className="font-heading text-xl font-black tabular-nums"
+                              className="font-heading text-lg sm:text-xl font-black tabular-nums"
                               style={{ color: accent }}
                             >
                               {group.avgEfficiency}%
                             </span>
                           </div>
-                          <div className="hidden sm:block text-right">
+                          <div className="text-left sm:text-right">
                             <span className="font-mono text-[9px] uppercase tracking-wider text-[#66665E] dark:text-[#A3A399] block">
                               Retention
                             </span>
-                            <span className="font-heading text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            <span className="font-heading text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
                               {group.avgRetention}%
                             </span>
                           </div>
-                          <div className="w-8 h-8 rounded-lg bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-center text-[#66665E]">
+                          <div className="w-8 h-8 rounded-lg bg-[#FFFFFF] dark:bg-[#1C1C1A] border border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-center text-[#66665E] shrink-0">
                             {isCollapsed ? (
                               <ChevronDown className="w-4 h-4" />
                             ) : (
@@ -1892,7 +1902,7 @@ export function Flashcards({ user }: { user: User }) {
                             transition={{ duration: 0.24 }}
                             className="divide-y divide-[#E5E1CE] dark:divide-[#2E2E2A]"
                           >
-                            {group.sessions.map((sess) => {
+                            {paginatedSessions.map((sess) => {
                               const weakLen = sess.weakCardIds?.length || 0;
                               return (
                                 <div
@@ -1915,10 +1925,10 @@ export function Flashcards({ user }: { user: User }) {
                                     </div>
 
                                     <div>
-                                      <h4 className="font-heading text-base font-black text-[#141413] dark:text-[#FAF8EC]">
+                                      <h4 className="font-heading text-sm sm:text-base font-black text-[#141413] dark:text-[#FAF8EC] break-words">
                                         {sess.deckTitle}
                                       </h4>
-                                      <p className="text-xs text-[#66665E] dark:text-[#A3A399]">
+                                      <p className="text-xs text-[#66665E] dark:text-[#A3A399] break-words">
                                         Topic: {sess.topic} · {sess.totalCards} cards in{' '}
                                         {formatDuration(sess.durationSeconds)} ({sess.avgSecondsPerCard}s/card)
                                       </p>
@@ -1973,17 +1983,17 @@ export function Flashcards({ user }: { user: User }) {
                                       whileTap={{ scale: 0.95 }}
                                       type="button"
                                       onClick={() => setInspectSession(sess)}
-                                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] cursor-pointer"
+                                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF8EC] dark:bg-[#141413] border border-[#E5E1CE] dark:border-[#2E2E2A] hover:border-[#141413] text-xs font-bold text-[#141413] dark:text-[#FAF8EC] cursor-pointer"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
-                                      Inspect Result
+                                      Inspect
                                     </motion.button>
 
                                     <motion.button
                                       whileTap={{ scale: 0.95 }}
                                       type="button"
                                       onClick={() => launchFromPastSession(sess, 'full')}
-                                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
+                                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
                                     >
                                       <RotateCw className="w-3.5 h-3.5" />
                                       Re-Study
@@ -1994,10 +2004,10 @@ export function Flashcards({ user }: { user: User }) {
                                         whileTap={{ scale: 0.95 }}
                                         type="button"
                                         onClick={() => launchFromPastSession(sess, 'weak-drill')}
-                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FFD426] text-[#141413] text-xs font-bold ink-btn-hard cursor-pointer"
+                                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FFD426] text-[#141413] text-xs font-bold ink-btn-hard cursor-pointer"
                                       >
                                         <Flame className="w-3.5 h-3.5" />
-                                        Drill {weakLen} Weak
+                                        Drill {weakLen}
                                       </motion.button>
                                     )}
 
@@ -2022,6 +2032,51 @@ export function Flashcards({ user }: { user: User }) {
                                 </div>
                               );
                             })}
+
+                            {/* Subject Session Page-by-Page Pagination */}
+                            {totalPages > 1 && (
+                              <div className="px-4 sm:px-5 py-3 bg-[#FAF8EC]/70 dark:bg-[#141413]/70 flex items-center justify-between gap-2">
+                                <button
+                                  type="button"
+                                  disabled={currentPage <= 1}
+                                  onClick={() =>
+                                    setHistoryPageBySubject((prev) => ({
+                                      ...prev,
+                                      [group.subjectSlug]: Math.max(1, currentPage - 1)
+                                    }))
+                                  }
+                                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+                                    currentPage > 1
+                                      ? 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#141413] dark:border-[#FAF8EC]/60 text-[#141413] dark:text-[#FAF8EC] cursor-pointer'
+                                      : 'border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E]/40 cursor-not-allowed'
+                                  }`}
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                  Prev
+                                </button>
+                                <span className="font-mono text-[11px] font-bold text-[#66665E] dark:text-[#A3A399] tabular-nums">
+                                  Page {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={currentPage >= totalPages}
+                                  onClick={() =>
+                                    setHistoryPageBySubject((prev) => ({
+                                      ...prev,
+                                      [group.subjectSlug]: Math.min(totalPages, currentPage + 1)
+                                    }))
+                                  }
+                                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+                                    currentPage < totalPages
+                                      ? 'bg-[#FFFFFF] dark:bg-[#1C1C1A] border-[#141413] dark:border-[#FAF8EC]/60 text-[#141413] dark:text-[#FAF8EC] cursor-pointer'
+                                      : 'border-[#E5E1CE] dark:border-[#2E2E2A] text-[#66665E]/40 cursor-not-allowed'
+                                  }`}
+                                >
+                                  Next
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -2043,17 +2098,17 @@ export function Flashcards({ user }: { user: User }) {
         maxWidthClass="max-w-3xl"
       >
         {previewDeck && (
-          <div className="rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF] overflow-hidden flex flex-col max-h-[82vh]">
-            <div className="p-5 bg-[#FFFFFF] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between gap-3 shrink-0">
+          <div className="rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF] overflow-hidden flex flex-col max-h-[86dvh]">
+            <div className="p-3.5 sm:p-5 bg-[#FFFFFF] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-center justify-between gap-2.5 sm:gap-3 shrink-0">
               <div className="min-w-0">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF]">
+                <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#0D47FF] dark:text-[#ECD5FF] block truncate">
                   {previewDeck.subjectName} · {previewDeck.cards.length} Cards
                 </span>
-                <h3 className="font-heading text-lg font-black text-[#141413] dark:text-[#FAF8EC] truncate">
+                <h3 className="font-heading text-base sm:text-lg font-black text-[#141413] dark:text-[#FAF8EC] truncate">
                   {previewDeck.title}
                 </h3>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -2061,10 +2116,11 @@ export function Flashcards({ user }: { user: User }) {
                     setPreviewDeck(null);
                     setStudyingState({ deck: target, mode: 'full' });
                   }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  Study Now
+                  <span className="hidden xs:inline sm:inline">Study</span>
+                  <span className="hidden sm:inline">Now</span>
                 </button>
                 <button
                   type="button"
@@ -2080,7 +2136,7 @@ export function Flashcards({ user }: { user: User }) {
             <div
               data-lenis-prevent
               onWheel={(e) => e.stopPropagation()}
-              className="p-5 overflow-y-auto overscroll-contain space-y-3"
+              className="p-3.5 sm:p-5 overflow-y-auto overscroll-contain space-y-3"
             >
               {previewDeck.cards.map((card, idx) => (
                 <div
@@ -2117,8 +2173,8 @@ export function Flashcards({ user }: { user: User }) {
         maxWidthClass="max-w-3xl"
       >
         {inspectSession && (
-          <div className="rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF] overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="p-5 bg-[#FFFFFF] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-start justify-between gap-3 shrink-0">
+          <div className="rounded-3xl bg-[#FAF8EC] dark:bg-[#1C1C1A] border-[1.5px] border-[#141413] dark:border-[#FAF8EC]/70 shadow-[6px_6px_0px_#141413] dark:shadow-[6px_6px_0px_#ECD5FF] overflow-hidden flex flex-col max-h-[88dvh]">
+            <div className="p-3.5 sm:p-5 bg-[#FFFFFF] dark:bg-[#141413] border-b border-[#E5E1CE] dark:border-[#2E2E2A] flex items-start justify-between gap-2.5 sm:gap-3 shrink-0">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span
@@ -2133,7 +2189,7 @@ export function Flashcards({ user }: { user: User }) {
                     {format(new Date(inspectSession.completedAt), 'dd MMM yyyy, hh:mm a')}
                   </span>
                 </div>
-                <h3 className="font-heading text-lg font-black text-[#141413] dark:text-[#FAF8EC]">
+                <h3 className="font-heading text-base sm:text-lg font-black text-[#141413] dark:text-[#FAF8EC] break-words">
                   {inspectSession.deckTitle}
                 </h3>
               </div>
@@ -2150,7 +2206,7 @@ export function Flashcards({ user }: { user: User }) {
             <div
               data-lenis-prevent
               onWheel={(e) => e.stopPropagation()}
-              className="p-5 overflow-y-auto overscroll-contain space-y-5"
+              className="p-3.5 sm:p-5 overflow-y-auto overscroll-contain space-y-4 sm:space-y-5"
             >
               {/* Metrics Row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -2235,12 +2291,12 @@ export function Flashcards({ user }: { user: User }) {
               </div>
             </div>
 
-            <div className="p-4 bg-[#FFFFFF] dark:bg-[#141413] border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-wrap items-center justify-end gap-2.5 shrink-0">
+            <div className="p-3.5 sm:p-4 bg-[#FFFFFF] dark:bg-[#141413] border-t border-[#E5E1CE] dark:border-[#2E2E2A] flex flex-col sm:flex-row sm:items-center justify-end gap-2 shrink-0">
               {inspectSession.weakCardIds.length > 0 && (
                 <button
                   type="button"
                   onClick={() => launchFromPastSession(inspectSession, 'weak-drill')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FFD426] text-[#141413] text-xs font-bold ink-btn-hard cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl bg-[#FFD426] text-[#141413] text-xs font-bold ink-btn-hard cursor-pointer"
                 >
                   <Flame className="w-3.5 h-3.5" />
                   Drill {inspectSession.weakCardIds.length} Weak Cards
@@ -2249,7 +2305,7 @@ export function Flashcards({ user }: { user: User }) {
               <button
                 type="button"
                 onClick={() => launchFromPastSession(inspectSession, 'full')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl bg-[#0D47FF] text-white text-xs font-bold ink-btn-hard cursor-pointer"
               >
                 <RotateCw className="w-3.5 h-3.5" />
                 Re-Study Full Deck
